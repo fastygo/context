@@ -28,7 +28,8 @@ This module exists because plain RAG is not enough for long-lived projects:
 
 The engine is designed to combine deterministic information retrieval,
 source-backed context packs, typed tools, replaceable model adapters, and
-agent/subagent orchestration without baking product identity into the core.
+agent/subagent orchestration without baking product identity or scenario-specific
+products into the core.
 
 ## What It Provides
 
@@ -38,6 +39,8 @@ The module is intended to provide foundations for:
 - deterministic indexing with manifests and incremental updates;
 - hybrid retrieval over dense vectors, sparse/keyword indexes, exact matching,
   graph traversal, source filters, recency, and tool outputs;
+- focus policies that keep retrieval and context packing scoped to the current
+  task;
 - replayable `ContextPack` objects for model calls, tools, and subagents;
 - typed tool registration with permissions, risk levels, and structured results;
 - foreground and background `AgentRun` traces;
@@ -65,12 +68,16 @@ The module is intended to provide foundations for:
   observable, cancellable, and auditable.
 - **Brand neutrality is required**: downstream products and companions configure
   identity on top of the core; core packages stay generic.
+- **Specific products are plugins**: message catalogs, timelines, CRM flows,
+  calendars, dashboards, and methodology packs belong in adapters or downstream
+  repositories.
 
 ## Core Runtime Model
 
 ```text
 TaskIntent
   -> PolicySnapshot
+  -> FocusProfile
   -> RetrievalPlan
   -> RetrieverCalls
   -> CandidateSet
@@ -94,6 +101,8 @@ decisions can be debugged later.
   history, or tool output.
 - `Artifact`: stored source material or generated intermediate output.
 - `Chunk`: an indexed span with metadata and provenance.
+- `FocusProfile`: the task-specific lens that defines scope, freshness,
+  exactness, citation strictness, budgets, allowed tools, and irrelevant areas.
 - `ContextPack`: selected evidence and instructions for a model/tool/agent step.
 - `AgentRun`: a foreground, background, scheduled, or event-triggered execution
   trace.
@@ -129,6 +138,7 @@ Retrieval is a planning problem, not one vector query:
 
 ```text
 task intent
+  -> focus profile
   -> retrieval plan
   -> parallel retriever calls
   -> candidate merge
@@ -173,6 +183,11 @@ or artifacts to the parent run. This keeps broad search, long-running shell
 work, browser automation, research, and verification from polluting the main
 task context.
 
+Concrete products should integrate through adapters, tools, graph projections,
+rules, skills, contracts, or companion configuration. The core should not know
+whether a source came from a messaging archive, calendar, issue tracker, CRM, or
+enterprise catalog beyond generic source metadata and adapter-provided fields.
+
 ## Architecture Guidance
 
 The canonical planning documents live in `.project/`:
@@ -206,6 +221,7 @@ internal/
   models/                   # LLM, embedding, reranker interfaces
   policy/                   # permissions, risks, approvals
   retrieval/                # planners, retrievers, rerankers, context packs
+                            # and focus profiles
   storage/                  # metadata store abstractions and adapters
   tools/                    # registry, schemas, execution
   tracing/                  # append-only runtime events and redaction
@@ -241,6 +257,7 @@ replay the trace.
 - Generic autonomous control of arbitrary systems.
 - Unlimited web crawling.
 - Plugin marketplace.
+- Scenario-specific products in the core package tree.
 - Multi-tenant billing.
 - Complex UI framework ownership.
 - Hard dependency on one model provider.

@@ -18,6 +18,8 @@ Reject or redesign if:
 
 - A provider name appears in a domain interface.
 - Product-specific terminology leaks into core packages.
+- Scenario-specific product concepts become core package names or domain
+  entities instead of adapters, tools, graph projections, or plugins.
 - A global singleton controls behavior that should be project-scoped.
 - A model response becomes trusted data without verification.
 
@@ -58,6 +60,8 @@ Reject or redesign if:
 - `Source` is where knowledge comes from.
 - `Artifact` is stored raw or generated material.
 - `Chunk` is an indexed span with provenance.
+- `FocusProfile` is the task lens that constrains retrieval, budget, freshness,
+  exactness, citation strictness, and allowed tools.
 - `ContextPack` is the selected evidence handoff.
 - `AgentRun` is an execution trace, not a chat transcript.
 - `ToolCall` is a typed side-effect attempt with policy.
@@ -79,6 +83,7 @@ Do not mix these roles.
 Every retrieval change should answer:
 
 - Which retriever did this improve?
+- Which focus profile constraints shape this retrieval?
 - Which metric should change?
 - How are scores explained?
 - Are access filters applied before rerank and model calls?
@@ -191,7 +196,10 @@ For any source, retrieval, tool, or agent change:
 Stop and redesign when you see:
 
 - provider logic in domain packages;
+- concrete product scenarios embedded in core names instead of plugins or
+  adapters;
 - stringly typed tool inputs where schemas are required;
+- unbounded retrieval with no focus profile;
 - unversioned chunks or embeddings;
 - hidden global state;
 - generated prompts with no source refs;

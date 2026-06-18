@@ -8,7 +8,10 @@ This roadmap treats the module as infrastructure for project-scoped corpora,
 scientific/legal/linguistic text retrieval, browser assistants, background
 agents, and downstream companions. Product-specific personas, names, workflows,
 and UI surfaces belong in consumer applications or adapters, not in the reusable
-core.
+core. Scenario-specific systems such as message atlases, enterprise catalogs,
+project timelines, CRM assistants, methodology packs, and companion products
+must be built as plugins, adapters, or separate repositories over the neutral
+engine.
 
 ## Executive Summary
 
@@ -38,6 +41,8 @@ should be designed for, but not prematurely implemented.
 - Deterministic source parsing, chunking, enrichment, and manifest generation.
 - Hybrid retrieval over dense vectors, sparse/keyword indexes, exact matching,
   metadata filters, recency, graph edges, and tool outputs.
+- Focus policies that constrain retrieval scope, evidence budgets, source
+  preferences, freshness, and verification strictness for a task.
 - Context pack construction with source-backed evidence and model budget hints.
 - Model, embedding, reranker, storage, and vector database adapter boundaries.
 - Typed tool registration, permission policy, execution traces, and structured
@@ -51,6 +56,9 @@ should be designed for, but not prematurely implemented.
 
 - Brand-specific companion names, mascots, prompts, or marketing copy.
 - Product-specific UI, dashboard layout, CRM screens, or generated app code.
+- Scenario-specific domain products such as messaging-platform catalogs,
+  timeline/Gantt tools, CRM workflows, calendar assistants, or methodology
+  runtimes.
 - Arbitrary remote code execution without a consumer-provided sandbox policy.
 - Billing and subscription enforcement in the library core.
 - A hard dependency on any one LLM provider, embedding provider, vector store,
@@ -144,6 +152,42 @@ runtime over a persistent per-project corpus:
   policy, trace, cancellation, and report.
 - The core must not assume that every interaction is a chat message.
 
+### Product And Plugin Boundary
+
+Concrete products should be expressed through adapters, tools, policies,
+contracts, and companion configuration:
+
+- Messaging archives are source adapters plus graph projections, not core
+  package names.
+- Calendars, Gantt charts, issue trackers, and project dashboards are event and
+  tool adapters over core timelines and traces.
+- CRM, catalog, and enterprise-document assistants are downstream products over
+  sources, chunks, retrieval plans, and context packs.
+- Methodology-specific systems are optional rule, skill, contract, or graph
+  plugins.
+
+The core should provide stable generic primitives so these products can exist
+without forks or hardcoded assumptions.
+
+### Focus Control
+
+Large corpora need deterministic focusing before model calls. A `FocusProfile`
+or `FocusPolicy` should describe the current task lens:
+
+- task objective;
+- active project scope;
+- preferred and forbidden source types;
+- required source trust level;
+- freshness window;
+- exactness level;
+- citation strictness;
+- context budget;
+- allowed tools and subagents;
+- negative assumptions or known irrelevant areas.
+
+Focus control is not a product feature. It is a neutral runtime policy that
+prevents context overflow, topic drift, and unnecessary model usage.
+
 ## Architecture Tenets
 
 1. Evidence before generation.
@@ -186,6 +230,7 @@ runtime over a persistent per-project corpus:
 ```text
 TaskIntent
   -> PolicySnapshot
+  -> FocusProfile
   -> RetrievalPlan
   -> RetrieverCalls
   -> CandidateSet
@@ -288,6 +333,7 @@ internal/
     candidates.go           # merge, dedupe, score normalization
     rerank.go               # reranking pipeline
     contextpack.go          # central handoff artifact
+    focus.go                # task focus profiles and scope constraints
     budget.go               # token/window/model budget planner
     verifier.go             # evidence validation before generation
 
@@ -412,6 +458,29 @@ Required fields:
 - `verification_requirements`
 - `created_at`
 - `checksum`
+
+### FocusProfile
+
+Represents the task-specific focus lens applied before retrieval and context
+packing.
+
+Required fields:
+
+- `id`
+- `project_id`
+- `task_id`
+- `objective`
+- `scope`
+- `preferred_source_types`
+- `forbidden_source_types`
+- `required_trust_level`
+- `freshness_window`
+- `exactness_level`
+- `citation_strictness`
+- `context_budget`
+- `allowed_tools`
+- `allowed_subagents`
+- `negative_assumptions`
 
 ### AgentRun
 
@@ -557,6 +626,7 @@ Inputs:
 
 - User intent or event trigger.
 - Project policy.
+- Focus profile.
 - Available indexes.
 - Current active artifacts.
 - Model budget.
@@ -886,6 +956,7 @@ Scope:
 - QDrant dense vector adapter behind an interface.
 - Simple sparse keyword retriever.
 - Retrieval planner with dense + sparse + exact path.
+- Baseline focus profile that constrains source types and context budget.
 - Context pack builder.
 - One LLM adapter interface with a fake deterministic test model.
 - Tool registry with one read-only example tool.
@@ -923,6 +994,7 @@ Scope:
 - QDrant payload filters and versioned embeddings.
 - Ignore patterns for source and indexing exclusion.
 - Rule and skill config loading.
+- Focus profile inspection and persistence.
 - Tool permission policy.
 - Background job abstraction.
 - Explorer and verifier subagents.
@@ -1002,6 +1074,7 @@ Scope:
 - Stable `pkg/contextkit` API.
 - Adapter SDK.
 - Tool SDK.
+- Plugin boundary guide for scenario-specific products and methodologies.
 - Companion configuration format.
 - Self-hosting guide.
 - Example projects with neutral names.
@@ -1267,6 +1340,20 @@ Options:
 
 Recommended path: adapter interface first, simple English/Russian-friendly
 normalization baseline, then language-specific plugins.
+
+### Product Plugin Boundary
+
+Scenario-specific systems must choose one of these integration shapes:
+
+- source adapter;
+- parser/chunker/enricher plugin;
+- graph projection;
+- tool pack;
+- rule/skill pack;
+- companion configuration;
+- downstream product repository.
+
+They should not add scenario names to core package names or domain entities.
 
 ### Web Crawling
 

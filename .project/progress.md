@@ -16,6 +16,9 @@ should live under `.project/decisions/` and be referenced by the relevant chunk.
 
 - Keep the core brand-neutral: no product, mascot, or companion identity in
   core packages, comments, examples, or public APIs.
+- Keep concrete scenarios as adapters/plugins/downstream products. Do not move
+  message catalogs, timelines, CRM flows, calendars, dashboards, or methodology
+  runtimes into neutral core packages.
 - Prefer `internal` packages until interfaces prove stable.
 - Start with deterministic behavior and in-memory/local adapters before adding
   infrastructure.
@@ -93,7 +96,7 @@ Plan and then implement:
 1. Create internal package folders for corpus, artifacts, indexing, retrieval,
    tools, agentruntime, models, policy, tracing, storage, and evals.
 2. Define Project, Source, Artifact, Chunk, SourceRef, EvidenceItem,
-   ContextPack, AgentRun, ToolCall, Evaluation domain structs.
+   FocusProfile, ContextPack, AgentRun, ToolCall, Evaluation domain structs.
 3. Use explicit IDs as typed strings or small value types.
 4. Add validation methods only where invariants are obvious.
 5. Define store interfaces but provide no durable database adapter yet.
@@ -217,8 +220,8 @@ Work in @Context only. Implement ContextPack construction as the central runtime
 handoff object. Keep it independent from real LLM providers.
 
 Plan and then implement:
-1. Define RetrievalPlan model with task summary, strategies, budgets, and
-   verification requirements.
+1. Define FocusProfile and RetrievalPlan models with task summary, scope,
+   strategies, budgets, and verification requirements.
 2. Implement candidate merge and ranking pipeline.
 3. Implement ContextPackBuilder with token/character budget estimates.
 4. Include evidence, source refs, rank signals, rejected candidates, and next

@@ -30,6 +30,8 @@ When this skill applies:
 
 - Keep the core brand-neutral. Product, mascot, companion, and app identity
   belongs in consumers, adapters, or configuration.
+- Keep concrete scenarios as adapters, plugins, tools, graph projections, or
+  downstream repositories, not as core package names or domain entities.
 - Prefer `internal` packages until an interface has proven stable.
 - Do not hardcode infrastructure providers into domain logic.
 - Do not let LLM output become source truth. Preserve source spans, checksums,
@@ -46,7 +48,8 @@ When this skill applies:
 Use these principles as practical constraints, not slogans:
 
 - **DDD:** keep domain language explicit: `Project`, `Source`, `Artifact`,
-  `Chunk`, `ContextPack`, `AgentRun`, `ToolCall`, `Evaluation`.
+  `Chunk`, `FocusProfile`, `ContextPack`, `AgentRun`, `ToolCall`,
+  `Evaluation`.
 - **Clean Architecture:** domain models and interfaces must not depend on
   QDrant, PostgreSQL, filesystem paths, HTTP clients, or model vendors.
 - **SOLID:** keep interfaces narrow; inject adapters; avoid hidden global state.
@@ -64,7 +67,10 @@ Before implementation, answer:
 - Which plan chunk from `.project/progress.md` is active?
 - Which roadmap section justifies this work?
 - Which future-layer concern must be designed for but not implemented now?
+- Which concrete scenario is being kept outside the core as an adapter or
+  plugin?
 - What domain types or interfaces are affected?
+- What focus profile constraints prevent context drift?
 - What storage/model/vector/tool adapter boundaries must stay replaceable?
 - What tests prove the behavior?
 - What is explicitly out of scope?

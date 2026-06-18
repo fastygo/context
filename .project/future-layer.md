@@ -142,6 +142,46 @@ or configuration.
 - Query parsing is test-covered with golden inputs.
 - Query interpretation is visible in retrieval traces.
 
+## Layer 04A: Focus Control And Memory Tiers
+
+### Why This Matters
+
+When a project has too many documents, messages, tasks, logs, and tool outputs,
+accuracy drops unless the runtime can focus retrieval before calling a model.
+Focus control is a neutral core concern because every downstream product needs
+it, regardless of domain.
+
+### Future Capabilities
+
+- `FocusProfile` persistence and inspection.
+- Memory tiers:
+  - raw artifacts;
+  - indexed chunks;
+  - active task context;
+  - accepted decisions;
+  - summaries with source refs;
+  - negative assumptions;
+  - rejected candidates.
+- Focus constraints for:
+  - source types;
+  - source trust levels;
+  - freshness windows;
+  - exactness level;
+  - citation strictness;
+  - token/context budget;
+  - allowed tools and subagents;
+  - explicitly irrelevant areas.
+- Focus inspector for debugging why a context pack used some sources and ignored
+  others.
+- Focus regression tests for large corpora.
+
+### Acceptance Gate
+
+- Large corpora can be searched through a bounded focus profile.
+- The runtime can explain which focus constraints shaped retrieval.
+- A model call never receives broad corpus context without an explicit focus
+  decision.
+
 ## Layer 05: Snippet, Highlighting, And Evidence Presentation
 
 ### Why This Matters
@@ -433,6 +473,8 @@ tools, and adapters without forks.
 - Adapter contract tests.
 - Tool SDK.
 - Companion configuration format.
+- Scenario plugin contracts for source adapters, graph projections, tool packs,
+  rule packs, and methodology packs.
 - Migration policy.
 - Semantic versioning policy.
 - Deprecation policy.
@@ -487,17 +529,18 @@ Recommended order after the current proof loop:
 1. Threat model and prompt-injection fixtures.
 2. Fine-grained retrieval ACL.
 3. Index lifecycle management.
-4. Query language and snippet/highlighting engine.
-5. Relevance feedback events.
-6. Distributed job control.
-7. Tool sandbox and side-effect model.
-8. Operational SLOs and capacity tests.
-9. Claim/contradiction graph for scientific/legal corpora.
-10. Crawler governance.
-11. Privacy/encryption/retention.
-12. Multi-tenant/team governance.
-13. Binary/multi-modal adapters.
-14. Stable SDK and ecosystem contracts.
+4. Focus control and memory tiers.
+5. Query language and snippet/highlighting engine.
+6. Relevance feedback events.
+7. Distributed job control.
+8. Tool sandbox and side-effect model.
+9. Operational SLOs and capacity tests.
+10. Claim/contradiction graph for scientific/legal corpora.
+11. Crawler governance.
+12. Privacy/encryption/retention.
+13. Multi-tenant/team governance.
+14. Binary/multi-modal adapters.
+15. Stable SDK and ecosystem contracts.
 
 ## What Must Not Move Into The First PoC
 
@@ -507,6 +550,8 @@ Recommended order after the current proof loop:
 - Multi-tenant billing.
 - Full sandboxed code execution.
 - Marketplace/plugin ecosystem.
+- Messaging catalogs, calendar/Gantt products, CRM workflows, dashboards, or
+  methodology runtimes inside the neutral core.
 - Distributed worker orchestration.
 - Complex binary document extraction.
 - Production-grade query language.
