@@ -1,0 +1,51 @@
+---
+description: Keep fastygo/context from becoming another generic RAG wrapper
+alwaysApply: true
+---
+
+# Context Core, Not Another RAG
+
+This repository is a minimal context operating core, not a generic RAG
+framework, chat app, agent demo, or wrapper around vendor SDKs.
+
+## Rule
+
+Every design and implementation decision must preserve this direction:
+
+```text
+deterministic project memory
+  -> precise indexing
+  -> hybrid retrieval
+  -> source-backed ContextPack
+  -> typed tool/model/subagent step
+  -> verification
+  -> replayable trace
+```
+
+## Guardrails
+
+- No extra code without a roadmap/progress chunk, invariant, adapter boundary, or
+  failing test that justifies it.
+- No extra request: avoid broad crawling, unbounded model calls, repeated
+  retrieval, or background work without a task, budget, owner, and trace.
+- No extra dependency: prefer standard library and internal interfaces until a
+  measured need requires an adapter.
+- Do not start with "vector search + prompt". Start with source identity,
+  artifact storage, chunk spans, checksums, manifests, sparse/exact retrieval,
+  and provenance.
+- Do not trust LLM output as source truth. Model output may summarize, plan, or
+  draft only after evidence is selected and traceable.
+- Do not let agent orchestration drive the domain model. Agents sit on top of
+  project memory, retrieval, context packs, tools, policy, and verification.
+- Keep classic deterministic IR first-class: exact search, sparse/BM25-style
+  search, phrase/proximity path, morphology hooks, fuzzy matching, and
+  source-span lookup.
+- Keep provider choices replaceable: QDrant, PostgreSQL, object storage, LLMs,
+  rerankers, crawlers, and product integrations are adapters.
+
+## Review Question
+
+Before accepting a change, ask:
+
+> Does this make the core more precise, auditable, minimal, and replayable, or
+> does it move the project toward another opaque RAG framework?

@@ -1,0 +1,30 @@
+---
+description: Keep the context core neutral and reusable across brands, products, and companions
+alwaysApply: true
+---
+
+# Brand-Neutral Core
+
+This repository is a universal context-management engine. Keep source code,
+package names, comments, documentation, examples, tests, fixtures, and commit or
+PR text neutral unless the user explicitly asks for a product-specific artifact.
+
+## Rules
+
+- Do not bake chat-specific product, brand, mascot, companion, customer, or app
+  names into this repository's code or general documentation.
+- Treat names mentioned in chat as external use cases, not as core terminology.
+- Prefer generic terms such as `project`, `workspace`, `agent`, `companion`,
+  `tool`, `source`, `artifact`, `context pack`, `adapter`, and `runtime`.
+- Design public APIs so different brands, companions, and products can configure
+  their own names, rules, skills, tools, and policies on top of the core.
+- If a concrete example is needed, use neutral placeholder names like
+  `ExampleProject`, `ExampleCompanion`, or `example.com`.
+- Keep product-specific integrations outside the generic core unless they are
+  expressed through adapters or configuration.
+
+## Boundary
+
+The core may support branded downstream systems, but it must not depend on their
+identity. Brand and persona belong in configuration, adapters, or consumer
+applications, not in the reusable engine.

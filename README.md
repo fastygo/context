@@ -1,133 +1,158 @@
 # context
 
-Universal Go core for project-scoped context management, retrieval, and agent
-orchestration.
+Universal Go core for project-scoped context management, retrieval, indexing,
+and agent orchestration.
 
-The module is designed as an engine for systems that need to turn user intent,
-files, documents, logs, tool outputs, and external sources into precise,
-auditable context for automated work.
+`github.com/fastygo/context` is not a chat application. It is a reusable context
+operating layer for systems that need to turn user intent, files, documents,
+logs, tool outputs, and external sources into precise, inspectable, auditable
+context for automated work.
 
-## Purpose
+## Why
 
-`github.com/fastygo/context` provides the foundation for:
+Large language models are useful, but they do not solve context management by
+themselves. A serious agent system needs to know what evidence was selected,
+where it came from, why other evidence was rejected, which tool was allowed to
+run, which model saw which context, and how the final result can be replayed or
+debugged.
 
-- indexing project-specific knowledge;
-- retrieving relevant evidence for a task;
-- building compact context packs for model calls;
-- routing work through tools and subagents;
-- tracking provenance, decisions, and verification results;
-- supporting foreground and background automation.
+This module exists because plain RAG is not enough for long-lived projects:
 
-The goal is not to be a chat application. The goal is to provide a reliable
-context operating layer that other products, companions, dashboards, and
-automation systems can build on top of.
+- vector search misses exact facts, citations, morphology, and operational
+  boundaries;
+- unbounded chat history is noisy, lossy, and hard to audit;
+- tool calls without typed policy create hidden side effects;
+- background agents need ownership, cancellation, traces, and verification;
+- source-backed work must preserve spans, versions, checksums, and decisions;
+- model, vector, storage, and tool providers must remain replaceable.
+
+The engine is designed to combine deterministic information retrieval,
+source-backed context packs, typed tools, replaceable model adapters, and
+agent/subagent orchestration without baking product identity into the core.
+
+## What It Provides
+
+The module is intended to provide foundations for:
+
+- project-scoped source and artifact memory;
+- deterministic indexing with manifests and incremental updates;
+- hybrid retrieval over dense vectors, sparse/keyword indexes, exact matching,
+  graph traversal, source filters, recency, and tool outputs;
+- replayable `ContextPack` objects for model calls, tools, and subagents;
+- typed tool registration with permissions, risk levels, and structured results;
+- foreground and background `AgentRun` traces;
+- verification and evaluation loops for retrieval quality and factuality;
+- adapter boundaries for LLMs, embeddings, rerankers, vector stores, metadata
+  stores, artifact stores, crawlers, and product integrations.
 
 ## Design Principles
 
 - **Project scoped by default**: every index, artifact, run, and decision belongs
   to an explicit project or workspace.
-- **Evidence before generation**: model calls should receive selected,
-  inspectable context, not unbounded history.
-- **Provenance is mandatory**: facts should point back to source spans,
-  versions, checksums, or tool outputs.
-- **Hybrid retrieval wins**: semantic vectors, keyword search, exact matching,
-  graph traversal, and recency signals should cooperate.
+- **Evidence before generation**: model calls receive selected context, not
+  unbounded history.
+- **Provenance is mandatory**: facts point back to source spans, versions,
+  checksums, or tool outputs.
+- **Hybrid retrieval wins**: dense vectors, sparse search, exact matching,
+  morphology, graph traversal, and recency signals cooperate.
 - **Models are replaceable**: LLMs, embedding models, and rerankers are adapters,
   not hardcoded infrastructure.
-- **Tools are typed**: every tool should have a name, schema, permission policy,
-  risk level, and structured result.
-- **Agents are configurations**: orchestration policy, rules, skills, and tool
-  access should be data-driven where possible.
-- **Background work is explicit**: scheduled or event-triggered agents should be
+- **Tools are typed**: every tool has a name, schema, permission policy, risk
+  level, and structured result.
+- **Agents are configurations**: orchestration policy, rules, skills, tools, and
+  model preferences are data-driven where possible.
+- **Background work is explicit**: scheduled or event-triggered agents are
   observable, cancellable, and auditable.
+- **Brand neutrality is required**: downstream products and companions configure
+  identity on top of the core; core packages stay generic.
+
+## Core Runtime Model
+
+```text
+TaskIntent
+  -> PolicySnapshot
+  -> RetrievalPlan
+  -> RetrieverCalls
+  -> CandidateSet
+  -> RerankedEvidence
+  -> ContextPack
+  -> ModelCall | ToolCall | SubagentRun
+  -> Verification
+  -> Decision | Artifact | Result
+  -> EvaluationTrace
+```
+
+The central object is `ContextPack`: the selected, ranked, budget-aware,
+source-backed context handed to a model, tool, verifier, or subagent. It should
+be versioned and replayable so bad retrieval, bad generation, or bad tool
+decisions can be debugged later.
 
 ## Core Concepts
 
-### Project Memory
-
-Project memory is the durable record of what the system knows and what it has
-done.
-
-Expected entities include:
-
 - `Project`: an isolated workspace or tenant boundary.
-- `Source`: a file, document, URL, log stream, database snapshot, or tool output.
+- `Source`: a file, document, URL, log stream, database snapshot, spec, chat
+  history, or tool output.
 - `Artifact`: stored source material or generated intermediate output.
 - `Chunk`: an indexed span with metadata and provenance.
-- `ContextPack`: the selected evidence passed into a model or agent step.
-- `AgentRun`: a foreground or background execution trace.
-- `ToolCall`: a typed invocation with inputs, outputs, status, and permissions.
+- `ContextPack`: selected evidence and instructions for a model/tool/agent step.
+- `AgentRun`: a foreground, background, scheduled, or event-triggered execution
+  trace.
+- `ToolCall`: a typed invocation with input, output, status, permissions, and
+  side-effect metadata.
 - `Decision`: an accepted plan, spec, architectural note, or human approval.
 - `Evaluation`: a reproducible check for retrieval quality or task correctness.
 
-### Indexing Pipeline
+## Indexing Pipeline
 
-The indexing pipeline should be source-agnostic:
+The indexing pipeline is source-agnostic:
 
 ```text
 source adapter
+  -> artifact store
   -> parser
   -> chunker
   -> enricher
-  -> embedder
-  -> sparse index
-  -> vector index
-  -> graph index
   -> manifest
+  -> dense vector index
+  -> sparse/exact index
+  -> graph index
+  -> metadata store
 ```
 
 Different source types need different chunking strategies. Source code,
-technical documentation, scientific text, chat history, logs, and web pages
-should not be split with the same rules.
+technical documentation, scientific text, legal text, chat history, logs, web
+captures, and tool output should not be split with the same rules.
 
-### Retrieval Pipeline
+## Retrieval Pipeline
 
-Retrieval is a planning problem, not a single vector search.
+Retrieval is a planning problem, not one vector query:
 
 ```text
 task intent
   -> retrieval plan
-  -> parallel searches
+  -> parallel retriever calls
   -> candidate merge
+  -> deduplication
   -> reranking
   -> evidence validation
   -> context pack
 ```
 
-Supported retrieval strategies should include:
+Supported retrieval paths should include:
 
 - dense vector search;
-- sparse or keyword search;
-- exact phrase and symbol search;
-- source and citation lookup;
-- entity and metadata filtering;
+- sparse/BM25-style search;
+- exact phrase and source-span search;
+- entity and metadata filters;
+- citation lookup;
 - graph traversal;
-- recent activity search;
-- tool result search;
-- external source search.
+- recent activity retrieval;
+- tool result retrieval;
+- external source retrieval through explicit adapters.
 
-### Context Packs
+## Tool And Agent Runtime
 
-A `ContextPack` is the central handoff object between retrieval, models, tools,
-and agents.
-
-It should contain:
-
-- task summary;
-- selected evidence;
-- source references;
-- confidence and ranking signals;
-- excluded or rejected candidates when useful;
-- model budget hints;
-- instructions for the next step;
-- verification requirements.
-
-Context packs should be versioned and replayable so behavior can be debugged,
-evaluated, and improved.
-
-### Tool Registry
-
-Tools should be registered through typed metadata:
+Tools are registered through typed metadata:
 
 ```text
 tool
@@ -137,108 +162,109 @@ tool
   output schema
   permission policy
   risk level
-  cost class
-  latency class
+  side-effect class
+  timeout
   background support
 ```
 
-The runtime should be able to decide whether a tool can run automatically,
-requires user approval, or is forbidden in the current policy.
-
-### Agent Runtime
-
-Agents coordinate retrieval, model calls, tools, and subagents.
-
-An agent should be defined by:
-
-- system instructions;
-- rules and skills;
-- model preferences;
-- available tools;
-- approval policy;
-- context budget;
-- foreground or background mode;
-- verification requirements.
-
-Subagents should run with isolated context and return structured summaries or
-artifacts to the parent agent. This keeps noisy exploration, long-running shell
+Agents coordinate retrieval, context packs, model calls, tools, verifiers, and
+subagents. Subagents run with isolated context and return structured summaries
+or artifacts to the parent run. This keeps broad search, long-running shell
 work, browser automation, research, and verification from polluting the main
 task context.
 
-## Suggested Package Layout
+## Architecture Guidance
 
-The public API should stay small until the engine boundaries are stable.
+The canonical planning documents live in `.project/`:
+
+- `.project/roadmap-context-core.md` — architectural baseline and phased roadmap.
+- `.project/progress.md` — copy-paste plan chunks from baseline to PoC.
+- `.project/future-layer.md` — deferred production-grade layers and review gates.
+
+The project skill lives in `.cursor/skills/context-core-steward/` and should be
+used when planning, implementing, reviewing, or debugging this repository. It
+keeps work aligned with DDD, Clean Architecture, SOLID, DRY, TDD, traceability,
+brand-neutral API boundaries, and the current roadmap.
+
+## Suggested Package Direction
+
+The public API should stay small until boundaries are stable.
 
 ```text
+cmd/
+  context-dev/              # local developer CLI for indexing, search, evals
+
 internal/
-  agents/       # agent runtime, runs, subagent coordination
-  adapters/     # source, model, storage, and tool adapters
-  evals/        # retrieval and task evaluation harnesses
-  graph/        # entity, citation, dependency, and relation indexes
-  indexing/     # parsing, chunking, enrichment, manifests
-  memory/       # project memory, artifacts, provenance
-  models/       # LLM, embedding, and reranker interfaces
-  retrieval/    # planners, retrievers, rerankers, context packs
-  tools/        # registry, schemas, permissions, execution
+  agentruntime/             # agent runs, orchestration, subagents, scheduling
+  artifacts/                # artifact metadata and stores
+  config/                   # project config, rules, ignore patterns
+  corpus/                   # projects, sources, chunks, provenance
+  evals/                    # retrieval and task evaluation harnesses
+  graph/                    # entity, citation, co-occurrence, dependency edges
+  indexing/                 # parsing, chunking, enrichment, manifests
+  linguistic/               # normalization, tokens, morphology, fuzzy matching
+  models/                   # LLM, embedding, reranker interfaces
+  policy/                   # permissions, risks, approvals
+  retrieval/                # planners, retrievers, rerankers, context packs
+  storage/                  # metadata store abstractions and adapters
+  tools/                    # registry, schemas, execution
+  tracing/                  # append-only runtime events and redaction
 
 pkg/
-  contextkit/   # stable public interfaces, added only when needed
+  contextkit/               # stable public interfaces, added only when proven
 ```
 
 Prefer `internal` while interfaces are changing. Move packages to `pkg` only
 when another module needs a stable import surface.
 
-## MVP Scope
+## First Proof Target
 
-The first useful version should prove the full loop:
+The current hypothesis-validation path is:
 
 ```text
-intent
-  -> retrieve project context
-  -> build context pack
-  -> generate a spec or plan
-  -> call typed tools
-  -> verify result
-  -> persist trace and decisions
+local project corpus
+  -> deterministic indexing
+  -> QDrant + PostgreSQL-backed metadata/search path
+  -> real CLI ingestion and retrieval
+  -> context pack creation
+  -> fake model/tool agent run
+  -> source-backed verification trace
 ```
 
-Recommended MVP components:
-
-- project memory schema;
-- source adapters for files and stored artifacts;
-- incremental indexing manifest;
-- dense and sparse retrieval;
-- model provider abstraction;
-- tool registry and permission policy;
-- agent run tracing;
-- context pack inspection;
-- basic verifier for source-backed answers.
+The first proof is not a polished product. It is a working CLI loop that shows
+the architecture can ingest project sources, retrieve relevant evidence, build a
+context pack, execute a typed model/tool step, verify source-backed claims, and
+replay the trace.
 
 ## Non-Goals For The First Version
 
-- generic autonomous control of arbitrary systems;
-- unlimited web crawling;
-- plugin marketplace;
-- multi-tenant billing;
-- complex UI framework ownership;
-- hard dependency on one model provider;
-- hard dependency on one vector database;
-- implicit background writes without audit and approval policy.
+- Generic autonomous control of arbitrary systems.
+- Unlimited web crawling.
+- Plugin marketplace.
+- Multi-tenant billing.
+- Complex UI framework ownership.
+- Hard dependency on one model provider.
+- Hard dependency on one vector database.
+- Implicit background writes without audit and approval policy.
+- Full distributed worker orchestration.
+- Production-grade query language.
 
 ## Engineering Notes
 
-- Keep raw source storage, embeddings, metadata, and generated artifacts as
-  separate concerns.
-- Version embedding models and chunking algorithms; retrieval quality depends on
-  both.
+- Keep raw source storage, embeddings, metadata, indexes, traces, and generated
+  artifacts separate.
+- Version embedding models, parsers, chunkers, enrichers, sparse indexes, and
+  graph schemas.
 - Treat long tool outputs as artifacts that can be searched and read in slices.
 - Prefer deterministic verification for claims that depend on source material.
 - Record enough run data to reproduce bad retrieval and bad tool decisions.
-- Design every background action as an event with policy, trace, and ownership.
+- Enforce permission and side-effect decisions outside the model.
+- Design every background action as an event with policy, trace, owner, and
+  cancellation.
 
 ## Status
 
 Early design-stage module. Public APIs are expected to change until the core
-runtime and MVP workflows stabilize.
+runtime and proof-of-concept workflows stabilize.
 
 **License:** [MIT](LICENSE)
