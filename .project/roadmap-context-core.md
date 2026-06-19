@@ -28,10 +28,11 @@ source spans, checksums, permissions, and evaluation signals.
 
 The first implementation should stay deliberately small: one local project, one
 file/artifact source adapter, one QDrant-backed vector store adapter, one sparse
-or keyword search path, one context-pack builder, one tool registry, one agent
-run trace, and one deterministic verifier. Horizontal scale, copy-on-write
-index reuse, background agents, billing, multi-tenant security, and browser UI
-should be designed for, but not prematurely implemented.
+search path via the `context-sparse` Tantivy sidecar (ADR-0009), one context-pack
+builder, one tool registry, one agent run trace, and one deterministic verifier.
+Horizontal scale, copy-on-write index reuse, background agents, billing,
+multi-tenant security, and browser UI should be designed for, but not prematurely
+implemented.
 
 ## Product-Agnostic Design Boundaries
 
@@ -844,12 +845,15 @@ Execution must:
 - In-memory metadata store for tests.
 - Local filesystem artifact store.
 - QDrant local/dev adapter.
-- Optional SQLite or Postgres only if persistence is needed immediately.
+- `context-sparse` local/dev sidecar for sparse retrieval parity.
+- PostgreSQL compose path for the end-to-end CLI proof and metadata persistence
+  checks; SQLite remains optional for a later single-node/offline adapter.
 
 ### MVP
 
 - Postgres for metadata, runs, decisions, permissions, and eval results.
 - QDrant for vector search.
+- `context-sparse` for sparse search.
 - Local or S3-compatible object storage for artifacts.
 - Background job queue abstraction.
 
@@ -1322,12 +1326,13 @@ Recommended path: memory first, Postgres by MVP.
 
 Options:
 
-- Simple in-memory inverted index.
-- Postgres full-text search.
-- QDrant sparse vectors.
-- Dedicated sparse n-gram index.
+- Tantivy via `context-sparse` Docker sidecar (**chosen**, ADR-0009).
+- Bleve as test double behind the same HTTP interface.
+- QDrant sparse vectors (optional later).
+- Postgres full-text search (fallback for metadata-only search).
 
-Recommended path: simple deterministic sparse retriever first, then measure.
+Recommended path: `context-sparse` sidecar from PoC; Bleve optional for unit tests
+without Docker.
 
 ### Morphology
 
@@ -1360,15 +1365,45 @@ They should not add scenario names to core package names or domain entities.
 Web crawling can create legal, reliability, and abuse risks. Start with explicit
 URL capture and strict limits. Defer broad crawling.
 
+## Architecture decisions
+
+Normative decisions live under [`.project/decisions/`](decisions/README.md) (14
+ADRs as of 2026-06-17). Phase mapping:
+
+- **Domain and no-service baseline:** ADR-0001–0006 define internal-first
+  packages, metadata/artifact/model/trace interfaces, deterministic fakes, and
+  replayable `AgentRun`/`ContextPack` snapshots.
+- **PoC index contracts:** ADR-0007–0011 and ADR-0013–0014 define embedded KV as
+  cache/intermediate storage only, hybrid QDrant + `context-sparse` + manifest,
+  dual Merkle (`source_merkle_root`, `chunk_set_hash`), `IndexSnapshot`,
+  `VectorNamespace`, `SparseIndexRef`, `ContextRef`, `PathAlias`, and storage
+  role separation.
+- **MVP/local-cloud parity:** ADR-0010 and ADR-0012 make QDrant,
+  `context-sparse`, metadata store, and artifact store endpoint-compatible
+  across local and cloud deployments. Snapshot export/import and local pull are
+  planned after the local CLI proof.
+- **Future-layer deferrals:** simhash copy-on-write seeding, cross-user Merkle
+  proofs, incremental segment sync, broad crawling, production governance, and
+  large-scale distributed workers remain in `future-layer.md`.
+
+Draft research notes stay in `.project/.draft/` and are non-normative.
+
 ## Immediate Next Steps
 
-1. Add architecture decision records under `.project/decisions/`.
+1. ~~Add architecture decision records under `.project/decisions/`.~~ **Done** — see
+   [decisions/README.md](decisions/README.md).
 2. Create the internal package skeleton without external dependencies.
-3. Implement domain models and interfaces only.
+3. Implement domain models and interfaces only, including `IndexSnapshot`,
+   `ManifestNode`, `ContextRef`, `PathAlias`, `VectorNamespace`,
+   `SparseIndexRef`, and `PolicySnapshot` from the ADR set.
 4. Add deterministic unit tests for manifest, chunking, context pack, and tool
    schema behavior.
 5. Implement local artifact store and in-memory metadata store.
-6. Implement one source adapter, one parser, one chunker, and one retriever.
-7. Add QDrant adapter behind an interface after the in-memory path is tested.
-8. Add a fake model provider and fake tool executor for agent-run tests.
-9. Build the first golden retrieval dataset before adding more algorithms.
+6. Implement one source adapter, one parser, one chunker, dual Merkle manifest,
+   and `IndexSnapshot` commit model.
+7. Implement retrieval interfaces, exact lookup, fake sparse client, and hybrid
+   candidate merge without requiring live services in unit tests.
+8. Add QDrant adapter and `context-sparse` HTTP/gRPC client behind interfaces
+   after local service contracts exist (ADR-0004, ADR-0008, ADR-0009).
+9. Add a fake model provider and fake tool executor for agent-run tests.
+10. Build the first golden retrieval dataset before adding more algorithms.

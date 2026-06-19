@@ -80,7 +80,28 @@ Acceptance criteria:
 - The next implementation chunk can start from stable decisions.
 ```
 
-Status: pending
+Status: **completed** (2026-06-17)
+
+### Completion notes
+
+- Created `.project/decisions/` with 14 accepted ADRs (see
+  [decisions/README.md](decisions/README.md)).
+- **Domain/interface baseline for Plan Chunks 02–04:** ADR-0001–0006 define
+  internal-first packages, metadata/artifact store interfaces, `VectorNamespace`,
+  fake model adapters, append-only `AgentRun`/`ContextPack` replay, and the first
+  no-service test path.
+- **Index architecture for Plan Chunks 04, 09, 10, and 12:** ADR-0007–0014 make
+  the hybrid index normative: QDrant dense vectors + `context-sparse` Tantivy
+  sidecar + `IndexSnapshot` manifest, dual Merkle (`source_merkle_root` +
+  `chunk_set_hash`), `ContextRef`/`PathAlias`, storage role separation, and
+  local/cloud service parity.
+- **Supersedes:** the original in-memory sparse-first path is replaced by
+  ADR-0009. Unit tests may use fake/Bleve-style doubles behind the same
+  interface, but the PoC sparse engine is the `context-sparse` sidecar.
+- **Future-layer deferrals:** simhash copy-on-write seeding, cross-user Merkle
+  proofs, incremental segment sync, production multi-tenant governance, and
+  broad web crawling stay in `future-layer.md` until after the CLI proof works.
+- Background drafts remain non-normative under `.project/.draft/`.
 
 ## Plan Chunk 02: Internal Package Skeleton And Domain Models
 
@@ -95,16 +116,18 @@ interfaces needed for tests. Do not add external services yet.
 Plan and then implement:
 1. Create internal package folders for corpus, artifacts, indexing, retrieval,
    tools, agentruntime, models, policy, tracing, storage, and evals.
-2. Define Project, Source, Artifact, Chunk, SourceRef, EvidenceItem,
-   FocusProfile, ContextPack, AgentRun, ToolCall, Evaluation domain structs.
-3. Use explicit IDs as typed strings or small value types.
-4. Add validation methods only where invariants are obvious.
-5. Define store interfaces but provide no durable database adapter yet.
-6. Define model, embedding, reranker interfaces without provider dependencies.
-7. Define tool registry schema types without executing tools yet.
-8. Define trace event type and recorder interface.
-9. Add unit tests for basic invariants and zero-value rejection.
-10. Keep public API empty or minimal; prefer internal packages.
+2. Define core domain structs: Project, Source, Artifact, Chunk, SourceRef,
+   EvidenceItem, FocusProfile, ContextPack, AgentRun, ToolCall, Evaluation.
+3. Define indexing/sync structs from ADRs: IndexSnapshot, ManifestNode,
+   ChunkAlias, ContextRef, PathAlias, VectorNamespace, SparseIndexRef,
+   PolicySnapshot, ModelCall.
+4. Use explicit IDs as typed strings or small value types.
+5. Add validation methods only where invariants are obvious.
+6. Define store interfaces but provide no durable database adapter yet.
+7. Define model, embedding, reranker interfaces without provider dependencies.
+8. Define tool registry schema types without executing tools yet.
+9. Define trace event type and recorder interface.
+10. Add unit tests for basic invariants and zero-value rejection.
 11. Run go test ./...
 12. Update .project/progress.md completion notes.
 
@@ -165,48 +188,57 @@ Plan and then implement:
 4. Implement Markdown parser that preserves heading ancestry at a basic level.
 5. Implement paragraph-aware text chunker with span_start/span_end checksums.
 6. Implement Markdown section-aware chunker.
-7. Implement Merkle-style manifest for project source trees.
-8. Implement manifest diff for added, removed, changed, unchanged sources.
-9. Record parser/chunker/manifest versions in chunks.
-10. Add golden tests for stable chunks and stable manifest hashes.
+7. Implement dual Merkle baseline: source tree hash and chunk set hash.
+8. Implement manifest diff for added, removed, changed, unchanged sources and
+   changed chunks.
+9. Implement minimal IndexSnapshot commit model with parser/chunker/embed/morph
+   version fields and status values.
+10. Add golden tests for stable chunks, stable manifest hashes, and snapshot IDs.
 11. Run go test ./...
 12. Update progress completion notes.
 
 Acceptance criteria:
 - Re-running indexing over unchanged files produces stable hashes.
 - Editing one file marks only that branch/source as changed.
-- Chunk spans and checksums are test-covered.
+- Chunk spans, checksums, dual Merkle roots, and IndexSnapshot fields are
+  test-covered.
 ```
 
 Status: pending
 
-## Plan Chunk 05: Deterministic Sparse And Exact Retrieval
+## Plan Chunk 05: Retrieval Contracts, Exact Lookup, And Sparse Client Contract
 
 Copy-paste prompt:
 
 ```text
-Work in @Context only. Implement the first non-vector retrieval path before
-QDrant. This must support deterministic local tests and exact evidence lookup.
+Work in @Context only. Implement retrieval contracts and the deterministic exact
+lookup path, then define the sparse-search client contract required by ADR-0009.
+Do not build a separate in-memory sparse engine as the production path.
 
 Plan and then implement:
 1. Define Retriever interface and Candidate model.
 2. Implement exact source/span lookup retriever.
-3. Implement simple in-memory inverted index for keyword retrieval.
-4. Add basic Unicode normalization hooks but avoid complex morphology for now.
-5. Add optional token filters for stop words through configuration.
-6. Implement candidate score normalization for sparse results.
-7. Implement candidate deduplication by source/span/checksum.
-8. Preserve score explanation fields.
+3. Define SparseSearchClient interface for `context-sparse` with project_id and
+   snapshot_id required on every query.
+4. Add fake sparse client or optional Bleve-style test double behind the same
+   interface for unit tests only.
+5. Add basic Unicode normalization hooks but avoid complex morphology for now.
+6. Implement candidate score normalization for exact and sparse results.
+7. Implement candidate deduplication by chunk_id/source/span/checksum.
+8. Preserve score explanation fields and snapshot_id.
 9. Add golden tests for exact phrase, keyword, typo-negative, and citation-like
    lookup if fixtures exist.
-10. Add retrieval trace events for query, candidates, and selected results.
+10. Add retrieval trace events for query, candidates, snapshot, and selected results.
 11. Run go test ./...
 12. Update progress completion notes.
 
 Acceptance criteria:
-- A local corpus can be searched without vectors.
+- A local corpus can be searched without vectors through exact lookup and a fake
+  sparse client.
 - Candidate explanations are inspectable.
 - Exact retrieval remains deterministic and source-backed.
+- The production sparse path is still `context-sparse`, not a Go-native postings
+  implementation.
 ```
 
 Status: pending
@@ -309,7 +341,7 @@ Acceptance criteria:
 
 Status: pending
 
-## Plan Chunk 09: Local Server Environment With QDrant And PostgreSQL
+## Plan Chunk 09: Local Server Environment With QDrant, Context-Sparse, And PostgreSQL
 
 Copy-paste prompt:
 
@@ -319,54 +351,61 @@ validation path. Do not rewrite core contracts unless needed. Prefer Docker
 Compose or clear shell scripts if the repository already uses that style.
 
 Plan and then implement:
-1. Add local development compose/config for QDrant and PostgreSQL.
+1. Add local development compose/config for QDrant, `context-sparse`, and
+   PostgreSQL.
 2. Add .env.example or documented environment variables if needed.
 3. Add Makefile or scripts for dev-up, dev-down, dev-reset, dev-logs, dev-ps if
    appropriate.
-4. Add health-check documentation for QDrant and PostgreSQL.
-5. Add storage configuration structs for metadata, vector, and artifact stores.
+4. Add health-check documentation for QDrant, `context-sparse`, and PostgreSQL.
+5. Add storage configuration structs for metadata, vector, sparse, and artifact
+   stores.
 6. Keep secrets out of git.
 7. Add README or .project note for local server setup commands.
 8. Verify containers start locally.
 9. Verify QDrant health endpoint.
-10. Verify PostgreSQL connection.
-11. Run go test ./...
-12. Update progress completion notes with exact setup and verification commands.
+10. Verify `context-sparse` health/search contract endpoint.
+11. Verify PostgreSQL connection.
+12. Run go test ./... and update progress completion notes with exact setup and
+   verification commands.
 
 Acceptance criteria:
-- A new developer can start QDrant and PostgreSQL locally.
+- A new developer can start QDrant, `context-sparse`, and PostgreSQL locally.
 - Health checks are documented.
 - Core still runs tests without services unless integration tests are requested.
 ```
 
 Status: pending
 
-## Plan Chunk 10: QDrant Dense Retrieval Adapter
+## Plan Chunk 10: Hybrid Retrieval Adapters
 
 Copy-paste prompt:
 
 ```text
-Work in @Context only. Implement QDrant as a replaceable dense vector adapter.
-Keep tests isolated and skip integration tests unless QDrant is available.
+Work in @Context only. Implement QDrant and `context-sparse` as replaceable
+retrieval adapters behind interfaces. Keep tests isolated and skip integration
+tests unless the relevant services are available.
 
 Plan and then implement:
 1. Add QDrant client dependency only if needed.
-2. Define VectorStore and VectorNamespace interfaces if not already stable.
-3. Implement QDrant adapter under internal/retrieval/dense/qdrant.
-4. Support collection creation or validation.
-5. Support upsert of chunk vectors with payload filters.
-6. Support query by vector and project/source filters.
-7. Record embedding_version and chunker_version in payloads.
-8. Add fake embedding provider for deterministic vector tests.
-9. Add integration tests gated by environment variable.
-10. Add CLI mode that uses QDrant when configured.
+2. Add `context-sparse` HTTP/gRPC client without importing Tantivy or Rust into
+   the Go core.
+3. Define VectorStore, VectorNamespace, SparseSearchClient, and HybridRetriever
+   interfaces if not already stable.
+4. Implement QDrant adapter under internal/retrieval/dense/qdrant.
+5. Implement `context-sparse` client under an adapter package.
+6. Require project_id and snapshot_id filters on dense and sparse search.
+7. Record embedding_version, chunker_version, morph_version, context_ref, and
+   snapshot_id in payloads/results.
+8. Add fake embedding provider and fake sparse client for deterministic tests.
+9. Add integration tests gated by environment variables per service.
+10. Add CLI mode that uses hybrid retrieval when services are configured.
 11. Run unit tests and, if services are up, integration tests.
 12. Update progress completion notes with commands and results.
 
 Acceptance criteria:
-- Dense retrieval works through the interface.
-- QDrant can be swapped without changing domain models.
-- Integration tests do not fail when QDrant is absent.
+- Dense and sparse retrieval work through interfaces.
+- QDrant and `context-sparse` can be swapped without changing domain models.
+- Integration tests do not fail when services are absent.
 ```
 
 Status: pending
@@ -381,12 +420,14 @@ existing store interfaces. Keep migrations explicit and tests gated.
 
 Plan and then implement:
 1. Add PostgreSQL driver and migration approach only if needed.
-2. Create schema for projects, sources, artifacts, chunks, context packs,
-   agent runs, tool calls, evaluations, and trace events.
+2. Create schema for projects, sources, artifacts, chunks, index_snapshots,
+   manifest_nodes, chunk_aliases, context packs, agent runs, tool calls,
+   evaluations, and trace events.
 3. Add migration files under an internal or migrations folder.
 4. Implement PostgreSQL store adapter behind existing interfaces.
 5. Preserve transaction boundaries for indexing and agent run updates.
-6. Add indexes for project_id, source_id, chunk_id, run_id, timestamps.
+6. Add indexes for project_id, source_id, chunk_id, snapshot_id, context_ref,
+   run_id, timestamps.
 7. Add integration tests gated by environment variable.
 8. Add CLI option to use PostgreSQL metadata store.
 9. Verify rollback/reset workflow for local development.
@@ -412,10 +453,10 @@ local infrastructure. The goal is evidence that the architecture works, not a
 polished UX.
 
 Plan and then implement/fix only what is needed:
-1. Start QDrant and PostgreSQL locally.
+1. Start QDrant, `context-sparse`, and PostgreSQL locally.
 2. Initialize a demo project through the CLI.
 3. Ingest README.md and .project/*.md as the first project corpus.
-4. Build sparse and dense indexes where available.
+4. Build sparse and dense indexes for a committed IndexSnapshot where available.
 5. Run exact, sparse, dense, and hybrid search queries.
 6. Generate a ContextPack for a roadmap-related query.
 7. Run fake-model agent flow using the ContextPack.
@@ -427,7 +468,7 @@ Plan and then implement/fix only what is needed:
 
 Acceptance criteria:
 - Real CLI commands prove ingest -> search -> context pack -> agent run -> trace.
-- QDrant and PostgreSQL are exercised if their adapters exist.
+- QDrant, `context-sparse`, and PostgreSQL are exercised if their adapters exist.
 - The proof produces enough artifacts to debug failure or demonstrate success.
 ```
 

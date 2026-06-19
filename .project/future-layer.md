@@ -110,6 +110,35 @@ will become unreliable and hard to debug.
 - Deleted sources cannot appear in new context packs.
 - The system can explain which index version produced a result.
 
+## Layer 03A: Snapshot Replication And Index Reuse Hardening
+
+### Why This Matters
+
+ADR-0012 defines `IndexSnapshot` as the sync unit so local and cloud retrieval can
+share the same ranking inputs. The first PoC should prove local snapshot commit
+and search. Production-grade replication, reuse, and cross-device parity require
+additional safety gates.
+
+### Future Capabilities
+
+- Snapshot export/import CLI and service APIs.
+- Sparse index bundle hashes in manifest records.
+- QDrant point export or snapshot restore validation by `snapshot_id`.
+- Local pull command that verifies `source_merkle_root`, `chunk_set_hash`, bundle
+  hashes, and engine versions before flipping `active_snapshot_id`.
+- Incremental segment sync for sparse bundles.
+- Snapshot retention and garbage collection.
+- Simhash over chunk multisets for near-duplicate snapshot discovery.
+- Copy-on-write seed for project templates or near-identical workspaces.
+- Merkle content proofs before any cross-user or cross-team index reuse.
+
+### Acceptance Gate
+
+- Local and cloud search can prove they are using the same snapshot and engine
+  versions.
+- A corrupted or partial snapshot cannot become active.
+- Cross-user reuse is impossible until content proofs and ACL filters are tested.
+
 ## Layer 04: Query Language And Advanced Search Semantics
 
 ### Why This Matters
@@ -529,23 +558,26 @@ Recommended order after the current proof loop:
 1. Threat model and prompt-injection fixtures.
 2. Fine-grained retrieval ACL.
 3. Index lifecycle management.
-4. Focus control and memory tiers.
-5. Query language and snippet/highlighting engine.
-6. Relevance feedback events.
-7. Distributed job control.
-8. Tool sandbox and side-effect model.
-9. Operational SLOs and capacity tests.
-10. Claim/contradiction graph for scientific/legal corpora.
-11. Crawler governance.
-12. Privacy/encryption/retention.
-13. Multi-tenant/team governance.
-14. Binary/multi-modal adapters.
-15. Stable SDK and ecosystem contracts.
+4. Snapshot replication and index reuse hardening.
+5. Focus control and memory tiers.
+6. Query language and snippet/highlighting engine.
+7. Relevance feedback events.
+8. Distributed job control.
+9. Tool sandbox and side-effect model.
+10. Operational SLOs and capacity tests.
+11. Claim/contradiction graph for scientific/legal corpora.
+12. Crawler governance.
+13. Privacy/encryption/retention.
+14. Multi-tenant/team governance.
+15. Binary/multi-modal adapters.
+16. Stable SDK and ecosystem contracts.
 
 ## What Must Not Move Into The First PoC
 
 - Broad web crawling.
 - Cross-user index reuse.
+- Simhash copy-on-write seeding and Merkle content proofs.
+- Incremental sparse segment sync beyond simple snapshot export/import.
 - Custom embedding-model training.
 - Multi-tenant billing.
 - Full sandboxed code execution.
