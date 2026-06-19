@@ -499,11 +499,19 @@ tools, and adapters without forks.
 ### Future Capabilities
 
 - Stable `pkg/contextkit` API.
+- Dockerized `context-core` service for BFF/API consumers.
+- HTTP/gRPC API contract for ingest, search, context pack, agent run, trace, and
+  snapshot inspection.
+- Thin client SDKs generated from or aligned with the service contract.
 - Adapter contract tests.
 - Tool SDK.
 - Companion configuration format.
+- Lab-facing JSON/DTO compatibility tests using proof artifacts from
+  `.project/proof/`.
 - Scenario plugin contracts for source adapters, graph projections, tool packs,
   rule packs, and methodology packs.
+- DSL schemas for FocusProfile, RetrievalPlan, ContextPackTemplate, ToolPolicy,
+  SourceAdapterConfig, and AgentRunPolicy.
 - Migration policy.
 - Semantic versioning policy.
 - Deprecation policy.
@@ -514,6 +522,37 @@ tools, and adapters without forks.
 - Third-party adapters can be tested without private internals.
 - Public APIs are versioned and documented.
 - Breaking changes are intentional and announced.
+- A downstream BFF or lab shell can consume the service/SDK without importing
+  internal packages.
+
+## Layer 15A: Lab-Driven UX/DX/DSL Workbench
+
+### Why This Matters
+
+The CLI proves the engine. A browser lab proves whether humans and product BFFs
+can understand and operate it. This is a downstream concern, but it should feed
+neutral contract improvements back into the core.
+
+### Future Capabilities
+
+- UX fixture screens for project corpus, source list, search results, snippets,
+  FocusProfile, ContextPack, AgentRun, and trace timeline.
+- DX dashboard for QDrant, `context-sparse`, PostgreSQL, active snapshot,
+  source/chunk counts, and integration test status.
+- BFF adapter that calls the Context service or consumes `context-dev` JSON
+  during local development.
+- DSL workbench for editing/visualizing FocusProfile, RetrievalPlan,
+  ContextPackTemplate, ToolPolicy, SourceAdapterConfig, and AgentRunPolicy.
+- Contract tests proving Lab fixture JSON and Context CLI/API JSON stay
+  compatible.
+
+### Acceptance Gate
+
+- Lab can demonstrate ingest -> search -> context pack -> fake agent -> trace
+  without importing Context internals.
+- Any Lab-discovered requirement is translated into a neutral Context contract
+  or explicitly kept in Lab.
+- UX/DX/DSL screens do not change core semantics without an ADR.
 
 ## Layer 16: Production Review Gates
 
@@ -571,6 +610,7 @@ Recommended order after the current proof loop:
 14. Multi-tenant/team governance.
 15. Binary/multi-modal adapters.
 16. Stable SDK and ecosystem contracts.
+17. Lab-driven UX/DX/DSL workbench hardening.
 
 ## What Must Not Move Into The First PoC
 
@@ -582,6 +622,8 @@ Recommended order after the current proof loop:
 - Multi-tenant billing.
 - Full sandboxed code execution.
 - Marketplace/plugin ecosystem.
+- Dockerized `context-core` service and public SDKs before CLI contracts settle.
+- Lab-specific UX, widgets, BFF routes, or DSL screens inside Context core.
 - Messaging catalogs, calendar/Gantt products, CRM workflows, dashboards, or
   methodology runtimes inside the neutral core.
 - Distributed worker orchestration.

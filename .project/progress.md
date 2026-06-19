@@ -27,6 +27,9 @@ should live under `.project/decisions/` and be referenced by the relevant chunk.
   traceable.
 - Do not build a chat app. Build the context engine that chat, browser
   assistants, background agents, and downstream products can use.
+- Treat `Lab` as the first downstream UX/DX/DSL laboratory shell. `Lab` may
+  consume CLI JSON, service APIs, SDKs, and exported traces, but `Context` must
+  not import or depend on `Lab`.
 - For each implementation chunk, update this file with completion notes only
   after tests or manual verification have run.
 
@@ -47,6 +50,25 @@ local project corpus
 The proof is not a polished product. The proof is a working CLI loop that shows
 the architecture can index project sources, retrieve relevant evidence, build a
 context pack, execute a typed tool/model step, and replay/debug what happened.
+
+## UX / DX / DSL Consumer Track
+
+`Lab` is the practical downstream workspace for checking whether the core is
+usable by humans and product BFFs. Keep this as a consumer track, not a core
+dependency.
+
+| Stage | Context progress | Lab responsibility | Boundary |
+| --- | --- | --- | --- |
+| UX fixtures | Chunks 02-05 | Mock project corpus, search results, evidence snippets, FocusProfile, ContextPack, trace screens | Fixtures only; no Context import |
+| DX CLI bridge | Chunk 08 | Read `context-dev` JSON output and render it in a browser shell | Lab consumes CLI artifacts; Context stays CLI-first |
+| Local stack dashboard | Chunks 09-12 | Show QDrant, `context-sparse`, PostgreSQL, active snapshot, source/chunk counts, and trace status | Lab reads health/status contracts |
+| BFF/API consumer | After CLI proof | Call a `context-core` HTTP/gRPC service through a thin client | Service contract before Go SDK |
+| DSL workbench | After ContextPack/FocusProfile stabilize | Edit/visualize FocusProfile, RetrievalPlan, ContextPackTemplate, ToolPolicy, AgentRunPolicy | DSL objects belong to Context contracts |
+
+Do not add Lab-specific package names, screens, widgets, or workflows to
+`Context`. Any UX requirement discovered in Lab should become a neutral DTO,
+trace field, API contract, or ADR only when it benefits more than that one
+consumer.
 
 ## Plan Chunk 01: Architecture Baseline And Decisions
 
@@ -328,7 +350,8 @@ Plan and then implement:
 6. Add command: agent-run --project <id> --query <text> using fake model/tool.
 7. Add command: trace --run <id>.
 8. Use local artifact store and in-memory or file-backed metadata only if ready.
-9. Print machine-readable JSON for key outputs.
+9. Print stable machine-readable JSON for key outputs so Lab can consume it
+   without importing Context internals.
 10. Add CLI smoke tests where practical.
 11. Run go test ./... and manually run at least one CLI command.
 12. Update progress completion notes with exact commands used.
@@ -337,6 +360,7 @@ Acceptance criteria:
 - A developer can ingest sample docs and search them from CLI.
 - ContextPack JSON can be inspected without a UI.
 - A fake agent run can be launched and traced from CLI.
+- Lab can consume the CLI JSON as fixtures without a Go dependency on Context.
 ```
 
 Status: pending
@@ -461,7 +485,8 @@ Plan and then implement/fix only what is needed:
 6. Generate a ContextPack for a roadmap-related query.
 7. Run fake-model agent flow using the ContextPack.
 8. Run verifier and inspect trace output.
-9. Capture command outputs or summaries in .project/proof/ if appropriate.
+9. Capture command outputs, JSON fixtures, or summaries in .project/proof/ if
+   appropriate so Lab can replay the UX without hitting live services.
 10. Fix only blocking bugs discovered by the proof.
 11. Record known gaps and next decisions in progress.md.
 12. Report whether the hypothesis is validated, partially validated, or failed.
@@ -470,6 +495,8 @@ Acceptance criteria:
 - Real CLI commands prove ingest -> search -> context pack -> agent run -> trace.
 - QDrant, `context-sparse`, and PostgreSQL are exercised if their adapters exist.
 - The proof produces enough artifacts to debug failure or demonstrate success.
+- The proof exports enough neutral JSON for Lab to render project corpus, search,
+  ContextPack, FocusProfile, AgentRun, and trace views.
 ```
 
 Status: pending

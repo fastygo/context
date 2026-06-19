@@ -170,6 +170,30 @@ contracts, and companion configuration:
 The core should provide stable generic primitives so these products can exist
 without forks or hardcoded assumptions.
 
+### Lab As Downstream UX/DX/DSL Consumer
+
+`Lab` is the current downstream laboratory shell for validating usability, BFF
+integration, and DSL ergonomics. It is not a core dependency.
+
+- **UX:** Lab can render fixture or real JSON views for project corpus status,
+  evidence snippets, FocusProfile, ContextPack, AgentRun, and trace timelines.
+- **DX:** Lab can consume `context-dev` CLI output, health/status responses, and
+  proof artifacts to make debugging visible in a browser.
+- **DSL:** Lab can later edit and visualize neutral contracts such as
+  FocusProfile, RetrievalPlan, ContextPackTemplate, ToolPolicy, SourceAdapter
+  configuration, and AgentRunPolicy.
+
+The dependency direction is always:
+
+```text
+Lab -> Context CLI/API/SDK contracts
+Context -> no Lab dependency
+```
+
+When Lab exposes a useful requirement, promote it into Context only as a neutral
+contract, DTO, trace field, API endpoint, or ADR. Do not add Lab-specific package
+names or UI concepts to the core.
+
 ### Focus Control
 
 Large corpora need deterministic focusing before model calls. A `FocusProfile`
@@ -966,6 +990,7 @@ Scope:
 - Tool registry with one read-only example tool.
 - Agent run trace.
 - Verifier requiring source-backed evidence.
+- Machine-readable CLI JSON that downstream UX shells can consume as fixtures.
 
 Demo flow:
 
@@ -986,6 +1011,8 @@ Exit criteria:
 - A context pack is persisted and inspectable.
 - A model/tool/subagent step can be replayed from stored trace metadata.
 - Factual output includes source spans.
+- A downstream lab shell can render proof artifacts without importing Context
+  internals.
 
 ### Phase 2: MVP
 
@@ -1005,6 +1032,8 @@ Scope:
 - Web capture adapter with strict crawl limits.
 - Eval harness with golden retrieval datasets.
 - Context inspector output format for browser UI consumers.
+- Thin HTTP/gRPC service contract or SDK-client contract suitable for Lab/BFF
+  integration, after CLI contracts stabilize.
 
 Exit criteria:
 
@@ -1014,6 +1043,8 @@ Exit criteria:
 - Model provider can be swapped through config.
 - The system can explain why a context pack was built.
 - Verifier catches unsupported factual claims in tests.
+- A BFF consumer can call Context through a service/client boundary without
+  depending on internal packages.
 
 ### Phase 3: Reliable Beta
 
@@ -1079,6 +1110,8 @@ Scope:
 - Adapter SDK.
 - Tool SDK.
 - Plugin boundary guide for scenario-specific products and methodologies.
+- DSL schema guide for FocusProfile, RetrievalPlan, ContextPackTemplate,
+  ToolPolicy, SourceAdapterConfig, and AgentRunPolicy.
 - Companion configuration format.
 - Self-hosting guide.
 - Example projects with neutral names.
