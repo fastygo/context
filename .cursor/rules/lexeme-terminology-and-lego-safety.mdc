@@ -1,0 +1,68 @@
+---
+description: Safe use of legō/lexeme terminology and LEGO trademark references
+alwaysApply: true
+---
+
+# Lexeme Terminology And LEGO Safety
+
+This repository is a linguistic and context-engineering project.  
+Use precise terminology and avoid trademark risk in code and docs.
+
+## Terminology Separation
+
+- `legō` (Greek verb) is an etymology/linguistics term.
+- `lexis`, `lexeme`, `lexicon`, `lemma`, `wordform`, `morphology` are linguistic terms.
+- `LEGO` is a registered trademark and must not be treated as a generic engineering term.
+
+## Default Writing Policy
+
+Use neutral wording by default:
+
+- "modular assembly"
+- "block-based composition"
+- "lexeme-based composition"
+- "morpheme/lexeme pipeline"
+
+Avoid default wording:
+
+- "lego architecture"
+- "lego blocks"
+- "лего-архитектура"
+- "lego-like" in API/code naming
+
+## Code And API Naming (Strict)
+
+Forbidden in identifiers, package names, commands, config keys, and schemas:
+
+- `lego`, `Lego`, `LEGO`, `лего`
+
+Use neutral alternatives instead:
+
+- `modular`
+- `block`
+- `lexeme`
+- `morph`
+- `assembly`
+
+## Allowed Trademark Mentions
+
+`LEGO` mention is allowed only when all conditions hold:
+
+1. Comparative, historical, or citation context only.
+2. Not in product/module naming.
+3. First mention uses uppercase `LEGO®`.
+4. Include a short disclaimer in docs where the mention appears.
+
+Recommended disclaimer:
+
+"LEGO® is a trademark of the LEGO Group. This project is not affiliated with,
+endorsed by, or sponsored by the LEGO Group."
+
+## Review Gate
+
+Before merging docs/comments/copy:
+
+- Is this linguistic term precise (`lexeme` vs `wordform` vs `lemma`)?
+- Is `legō` clearly marked as Greek etymology if used?
+- Is any `LEGO` mention necessary and compliant?
+- Can it be replaced with neutral wording without meaning loss?

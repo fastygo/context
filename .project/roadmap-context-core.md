@@ -27,12 +27,12 @@ traceable back to a task, retrieval plan, selected evidence, rejected evidence,
 source spans, checksums, permissions, and evaluation signals.
 
 The first implementation should stay deliberately small: one local project, one
-file/artifact source adapter, one QDrant-backed vector store adapter, one sparse
-search path via the `context-sparse` Tantivy sidecar (ADR-0009), one context-pack
+file/artifact source adapter, one PostgreSQL-backed metadata store, one pgvector
+`VectorStore` adapter, one exact/sparse retrieval baseline, one context-pack
 builder, one tool registry, one agent run trace, and one deterministic verifier.
-Horizontal scale, copy-on-write index reuse, background agents, billing,
-multi-tenant security, and browser UI should be designed for, but not prematurely
-implemented.
+QDrant, Turbopuffer, `context-sparse`, horizontal scale, copy-on-write index
+reuse, background agents, billing, multi-tenant security, and browser UI should
+be designed for, but not prematurely implemented.
 
 ## Product-Agnostic Design Boundaries
 
@@ -40,6 +40,8 @@ implemented.
 
 - Project-scoped source registration and artifact tracking.
 - Deterministic source parsing, chunking, enrichment, and manifest generation.
+- Language-neutral lexical and morphology contracts for tokens, lemmas, lexemes,
+  wordforms, feature bundles, and analyzer versions.
 - Hybrid retrieval over dense vectors, sparse/keyword indexes, exact matching,
   metadata filters, recency, graph edges, and tool outputs.
 - Focus policies that constrain retrieval scope, evidence budgets, source
@@ -64,6 +66,8 @@ implemented.
 - Billing and subscription enforcement in the library core.
 - A hard dependency on any one LLM provider, embedding provider, vector store,
   crawler, database, or web framework.
+- Language-specific dictionaries, grammar rules, lexicons, morphology engines,
+  or query-expansion heuristics inside the neutral core.
 
 ## Current Repository Findings
 
@@ -122,6 +126,10 @@ large-model behavior:
 - Unicode normalization and script-aware tokenization.
 - Lemmas, stems, surface forms, and language-specific morphology through
   adapters.
+- Lexeme, lemma, wordform, token-span, and morphology-feature contracts that are
+  stable across languages.
+- Explicit ambiguity handling: analyzers may return multiple candidate analyses,
+  and retrieval traces must show which candidates were used or rejected.
 - Sparse/BM25-style retrieval for lexical precision.
 - Exact phrase and source-span lookup for citations and legal/scientific text.
 - N-gram, trigram, or sparse n-gram indexes when measured latency requires them.
@@ -129,6 +137,35 @@ large-model behavior:
   matching.
 - Text metrics such as entropy, density, repetition, and stop-word ratio where
   they help analysis or quality gates.
+
+### Multilingual Language Adapter Boundary
+
+The core is multilingual by contract, not by embedding every language inside the
+repository. Language-specific complexity belongs in versioned adapters.
+
+```text
+fastygo/context
+  -> multilingual contracts
+  -> provenance, spans, snapshots, ContextPack, retrieval orchestration
+  -> no language-specific dictionaries or grammar rules
+
+context-lang-*
+  -> language-specific analyzers
+  -> lexeme paradigms
+  -> morphology generation
+  -> query expansion
+  -> language evaluation fixtures
+```
+
+Core contracts should be compatible with Universal Dependencies and UniMorph as
+cross-language feature schemes. Adapter-specific raw tags such as OpenCorpora
+grammemes are allowed only as adapter-owned metadata carried through a neutral
+`MorphFeatureSet`.
+
+Initial language adapters should be planned outside the core for Russian,
+English, German, Spanish, French, Hindi, and broader Indic language families.
+Each adapter must preserve source offsets, analyzer versions, dictionary
+versions, ambiguity candidates, and query-expansion provenance.
 
 ### Neural Layer
 
@@ -238,8 +275,9 @@ prevents context overflow, topic drift, and unnecessary model usage.
    model request, tool calls, and verifier result.
 
 6. Adapters own infrastructure.
-   QDrant, Postgres, object storage, local filesystem, specific LLMs, web
-   crawlers, and product integrations must be replaceable behind interfaces.
+   PostgreSQL/pgvector, QDrant, Turbopuffer, object storage, local filesystem,
+   specific LLMs, web crawlers, and product integrations must be replaceable
+   behind interfaces.
 
 7. Background work is policy-bound.
    Event-triggered agents, scheduled monitors, and long-running subagents must
@@ -335,9 +373,14 @@ internal/
     citationaware/          # paragraph/citation/span-aware chunker
 
   linguistic/
-    normalize.go            # Unicode, casing, punctuation, script handling
-    token.go                # tokens, lemmas, stems, surface forms
-    morphology.go           # morphology adapter interface
+    language.go             # language/script identifiers and adapter metadata
+    normalize.go            # neutral Unicode, casing, punctuation contracts
+    token.go                # tokens, token spans, lemmas, wordforms
+    lexeme.go               # lexeme and lemma contracts, not dictionaries
+    morphology.go           # morphology analyzer/generator interfaces
+    features.go             # UD/UniMorph-compatible feature-set carrier
+    queryexpand.go          # explainable lexical/morphology expansion contract
+    registry.go             # adapter discovery without importing language repos
     fuzzy.go                # edit distance, Jaro-Winkler, phonetic hooks
     metrics.go              # water ratio, density, entropy, term statistics
 
@@ -363,17 +406,23 @@ internal/
     verifier.go             # evidence validation before generation
 
   retrieval/dense/
-    qdrant/                 # QDrant adapter
+    postgresvector/         # first live pgvector VectorStore adapter
+    qdrant/                 # future QDrant VectorStore adapter
+    turbopuffer/            # future managed VectorStore adapter
     memory/                 # in-memory test adapter
 
   retrieval/sparse/
     inverted/               # baseline inverted index
     trigram/                # future exact/fuzzy phrase index
 
+  linguistic/adapters/
+    noop/                   # deterministic no-op adapter for tests
+    simple/                 # small fixture adapter for PoC contract tests
+
   storage/
     tx.go                   # transaction boundary abstractions
     memory/                 # deterministic tests
-    postgres/               # future durable metadata adapter
+    postgres/               # durable metadata and pgvector-backed PoC adapter
 
   tools/
     schema.go               # typed input/output schema model
@@ -457,13 +506,97 @@ Required fields:
 - `span_end`
 - `text_checksum`
 - `language`
-- `tokens`
+- `token_spans`
 - `lemmas`
+- `lexeme_refs`
+- `wordforms`
+- `morph_features`
+- `morph_analysis_refs`
 - `entities`
 - `citations`
 - `metadata`
 - `embedding_version`
 - `sparse_version`
+
+### TokenOccurrence
+
+Represents an offset-preserving token occurrence inside a source span. It is
+not a dictionary entry.
+
+Required fields:
+
+- `id`
+- `project_id`
+- `source_id`
+- `chunk_id`
+- `language`
+- `script`
+- `surface`
+- `normalized`
+- `span_start`
+- `span_end`
+- `tokenizer_version`
+- `normalizer_version`
+
+### Lexeme And WordForm
+
+The core stores language-neutral references to lexical objects. Full
+language-specific paradigms belong in adapters.
+
+Required fields:
+
+- `lexeme_id`
+- `language`
+- `lemma`
+- `wordform`
+- `feature_scheme`: `UD`, `UniMorph`, or adapter-specific.
+- `features`
+- `raw_feature_scheme`
+- `raw_features`
+- `adapter_id`
+- `dictionary_version`
+
+### MorphAnalysis
+
+Represents one possible analysis of a token occurrence. Ambiguity is explicit:
+one token may have multiple analyses with confidence and selection state.
+
+Required fields:
+
+- `id`
+- `token_id`
+- `language`
+- `lemma`
+- `lexeme_id`
+- `part_of_speech`
+- `features`
+- `raw_features`
+- `confidence`
+- `selected`
+- `selection_reason`
+- `analyzer_id`
+- `analyzer_version`
+- `dictionary_version`
+
+### QueryExpansion
+
+Represents explainable lexical or morphology-driven query expansion. It must
+never silently change the user's meaning.
+
+Required fields:
+
+- `id`
+- `query_id`
+- `language`
+- `original_term`
+- `expanded_term`
+- `expansion_type`: `lemma`, `wordform`, `compound`, `accent`, `fuzzy`,
+  `synonym`, `transliteration`
+- `features`
+- `confidence`
+- `reason`
+- `adapter_id`
+- `adapter_version`
 
 ### ContextPack
 
@@ -553,6 +686,8 @@ SourceAdapter
   -> ArtifactStore
   -> Parser
   -> Chunker
+  -> Tokenizer
+  -> LanguageAdapter
   -> Enricher
   -> ManifestBuilder
   -> DenseWriter
@@ -612,6 +747,8 @@ Baseline:
 - Parent hash: deterministic hash of child names and hashes.
 - Manifest version: includes parser, chunker, enricher, embedding, sparse, and
   graph schema versions.
+- Linguistic version fields include tokenizer, normalizer, morphology adapter,
+  analyzer, generator, dictionary, and feature-schema versions.
 - Diff mode: only reparse/rechunk/reindex changed branches.
 
 Future:
@@ -620,26 +757,43 @@ Future:
 - Copy-on-write index reuse across project templates or team workspaces.
 - Content proofs to prevent shared-index leakage.
 
-### QDrant Strategy
+### VectorStore Strategy
 
-Use QDrant as an adapter, not as the domain model.
+Use `VectorStore` as the domain-facing port. PostgreSQL/pgvector, QDrant,
+Turbopuffer, and any future managed vector backend are adapters, not the domain
+model.
 
-Recommended initial mapping:
+Recommended first PoC mapping:
 
-- One collection per environment or tenant class, with `project_id` payload
-  filters, unless operational tests prove collection-per-project is better.
-- Payload fields: `project_id`, `source_id`, `artifact_id`, `chunk_id`,
-  `span_start`, `span_end`, `language`, `source_type`, `tags`, `entities`,
-  `embedding_version`, `chunker_version`, `trust_level`.
-- Dense vectors for semantic similarity.
-- Sparse vectors or a sidecar sparse index for BM25-like retrieval.
+- PostgreSQL stores metadata, chunks, traces, and pgvector embedding rows in one
+  local Docker service.
+- Every vector row includes `project_id`, `snapshot_id`, `source_id`,
+  `artifact_id`, `chunk_id`, `context_ref`, `span_start`, `span_end`,
+  `embedding_version`, `chunker_version`, `language`, `source_type`, and
+  `trust_level`.
+- `VectorNamespace` is still required, but it describes a logical index
+  boundary rather than a QDrant collection.
+- Dense vectors provide semantic recall; exact and sparse search remain separate
+  retrieval paths.
+
+Future adapters:
+
+- **QDrant:** use when vector volume, filter latency, quantization, memory
+  tuning, or independent vector scaling outgrow pgvector.
+- **Turbopuffer:** use when a managed serverless vector backend is preferred and
+  adapter tests prove project/snapshot filters, replayability, and provenance
+  constraints are preserved.
+- **Other backends:** allowed only through the same `VectorStore` contract and
+  capability model.
 
 Decision to revisit:
 
-- Collection-per-project is conceptually clean and close to Cursor-style
-  namespaces, but may create operational overhead with many small projects.
-- Shared collection with strict payload filters is easier to operate early.
-- Build an internal `VectorNamespace` abstraction so this can change later.
+- pgvector keeps the PoC simple and debuggable, but it should not leak into
+  domain models.
+- Collection-per-project, namespace-per-project, and shared-index payload
+  filters are backend-specific implementation choices.
+- Build adapter capability checks for dimension, metric, filter semantics,
+  namespace behavior, payload limits, and managed-service consistency guarantees.
 
 ## Retrieval Architecture
 
@@ -663,6 +817,8 @@ Outputs:
 - Dense semantic searches.
 - Sparse keyword searches.
 - Exact phrase searches.
+- Lemma/wordform searches.
+- Morphology-expanded searches.
 - Entity/citation lookups.
 - Graph traversals.
 - Recent activity retrieval.
@@ -678,6 +834,7 @@ Required behaviors:
 - Deduplicate by `source_id + span_start + span_end + checksum`.
 - Preserve all contributing scores.
 - Normalize scores per retriever type.
+- Preserve lexical/morphology expansion reasons for every contributing score.
 - Track why a candidate was included or rejected.
 - Enforce source access and project boundary filters before reranking.
 
@@ -705,6 +862,8 @@ Required behaviors:
 
 - Keep source spans complete where possible.
 - Avoid duplicate evidence.
+- Preserve original surface text even when retrieval matched a lemma, generated
+  wordform, compound part, accent-folded form, or fuzzy variant.
 - Include short evidence summaries only after preserving source references.
 - Separate facts, instructions, policies, and tool outputs.
 - Include verification requirements.
@@ -721,13 +880,33 @@ Implement or adapt in phases:
 
 - Unicode normalization and script detection.
 - Tokenization.
+- Token-span preservation for snippets, citations, highlighting, and replay.
+- Lemma, lexeme, wordform, and morphology-feature contracts.
+- Ambiguity-aware morphology analysis with explicit selected/rejected analyses.
 - Stop-word handling.
 - Lemmatization/morphology adapter interface.
+- Morphology generation adapter interface for controlled wordform expansion.
+- Explainable query expansion with `lemma`, `wordform`, `compound`, `accent`,
+  `fuzzy`, and `transliteration` reasons.
 - Damerau-Levenshtein for typo-tolerant matching.
 - Jaro-Winkler for prefix-sensitive fuzzy matching.
 - N-gram fingerprints for candidate narrowing.
 - Phonetic hooks such as Metaphone/Double Metaphone where relevant.
 - Text metrics: water ratio, keyword density, entropy, repeated-term patterns.
+
+Language-specific behavior must be implemented outside the core:
+
+- Russian: rich inflection, aspect, animacy, `ё/е` policy, OpenCorpora-like raw
+  tags, and ambiguity resolution.
+- German: case/gender agreement, separable verbs, compound splitting, and
+  capitalization-sensitive nouns.
+- Spanish: verb conjugation, gender/number agreement, accent policy, and clitic
+  handling.
+- French: elision, contractions, accents, agreement, and silent morphology.
+- Hindi: Devanagari normalization, postpositions, oblique case, gender/number,
+  and compound verbs.
+- Indic family: script-specific normalization, transliteration boundaries,
+  segmentation, and adapter-specific dictionary resources.
 
 ### Neural Layer
 
@@ -868,23 +1047,28 @@ Execution must:
 
 - In-memory metadata store for tests.
 - Local filesystem artifact store.
-- QDrant local/dev adapter.
-- `context-sparse` local/dev sidecar for sparse retrieval parity.
-- PostgreSQL compose path for the end-to-end CLI proof and metadata persistence
-  checks; SQLite remains optional for a later single-node/offline adapter.
+- PostgreSQL compose path with pgvector enabled for metadata persistence,
+  vector search, and end-to-end CLI proof checks.
+- PostgreSQL full-text search or fake sparse adapters for first lexical tests.
+- SQLite remains optional for a later single-node/offline adapter.
+- QDrant, Turbopuffer, and `context-sparse` remain optional adapters after the
+  pgvector PoC proves the contracts.
 
 ### MVP
 
-- Postgres for metadata, runs, decisions, permissions, and eval results.
-- QDrant for vector search.
-- `context-sparse` for sparse search.
+- Postgres for metadata, runs, decisions, permissions, eval results, and
+  pgvector-backed embeddings unless measurements justify a separate VectorStore.
+- Optional QDrant or Turbopuffer adapter behind `VectorStore`.
+- Optional `context-sparse` adapter for lexical retrieval when PostgreSQL
+  full-text search is no longer enough.
 - Local or S3-compatible object storage for artifacts.
 - Background job queue abstraction.
 
 ### Stable
 
 - Postgres with migrations and backups.
-- QDrant cluster or managed vector store.
+- Specialized VectorStore backend if needed: QDrant cluster, Turbopuffer, or
+  another managed store.
 - Object storage lifecycle policies.
 - Redis/NATS/Temporal-like queue adapter if needed.
 - Per-tenant/project quotas.
@@ -940,7 +1124,7 @@ Optimize after measurement:
 - Code AST assumptions do not map directly to scientific/legal text.
 - Embeddings are not a substitute for morphology or citation graphs.
 - Long autonomous runs are unsafe without approval policy and replayable traces.
-- Namespace-per-project may be operationally costly without testing QDrant
+- Namespace-per-project may be operationally costly without testing real backend
   behavior at high namespace counts.
 
 ## Roadmap
@@ -953,16 +1137,18 @@ Deliverables:
 
 - This roadmap accepted as planning baseline.
 - Architecture decision records for:
-  - QDrant namespace strategy.
+  - VectorStore backend and namespace strategy.
   - Metadata store choice.
   - Artifact store choice.
+  - Multilingual linguistic contracts and language adapter boundary.
   - First supported source types.
   - First supported model providers.
 - Package layout skeleton under `internal`.
 - Core domain models for project, source, artifact, chunk, context pack,
-  agent run, tool call, and evaluation.
+  agent run, tool call, evaluation, token occurrences, lexeme references,
+  wordforms, and morphology analyses.
 - Interface-only boundaries for models, storage, retrieval, indexing, tools,
-  and tracing.
+  language adapters, and tracing.
 
 Exit criteria:
 
@@ -979,11 +1165,14 @@ Scope:
 - File and artifact source adapters.
 - Plain text and Markdown parsing.
 - Paragraph and Markdown section chunking.
+- Neutral token-span capture and simple/fake language analyzer contracts.
 - Local artifact store.
 - In-memory metadata store.
-- QDrant dense vector adapter behind an interface.
-- Simple sparse keyword retriever.
+- PostgreSQL/pgvector dense vector adapter behind `VectorStore`.
+- Simple sparse keyword retriever or PostgreSQL full-text baseline.
 - Retrieval planner with dense + sparse + exact path.
+- Explainable query-expansion trace shape, even if the PoC uses only fake/simple
+  adapters.
 - Baseline focus profile that constrains source types and context budget.
 - Context pack builder.
 - One LLM adapter interface with a fake deterministic test model.
@@ -1011,6 +1200,8 @@ Exit criteria:
 - A context pack is persisted and inspectable.
 - A model/tool/subagent step can be replayed from stored trace metadata.
 - Factual output includes source spans.
+- Lexical/morphology metadata is versioned and traceable without requiring a
+  full Russian, German, Spanish, French, Hindi, or Indic adapter in core.
 - A downstream lab shell can render proof artifacts without importing Context
   internals.
 
@@ -1022,7 +1213,8 @@ Scope:
 
 - Durable Postgres metadata adapter.
 - Artifact store abstraction with local and S3-compatible implementations.
-- QDrant payload filters and versioned embeddings.
+- Versioned embeddings through `VectorStore`; evaluate QDrant or Turbopuffer if
+  pgvector measurements no longer satisfy scale, filtering, or latency goals.
 - Ignore patterns for source and indexing exclusion.
 - Rule and skill config loading.
 - Focus profile inspection and persistence.
@@ -1031,6 +1223,7 @@ Scope:
 - Explorer and verifier subagents.
 - Web capture adapter with strict crawl limits.
 - Eval harness with golden retrieval datasets.
+- Language adapter contract-test harness with fixture analyzers.
 - Context inspector output format for browser UI consumers.
 - Thin HTTP/gRPC service contract or SDK-client contract suitable for Lab/BFF
   integration, after CLI contracts stabilize.
@@ -1039,6 +1232,7 @@ Exit criteria:
 
 - Multiple projects can coexist safely.
 - Indexing and retrieval are deterministic under test fixtures.
+- Language adapter outputs are deterministic under contract fixtures.
 - A downstream product can register tools without modifying core code.
 - Model provider can be swapped through config.
 - The system can explain why a context pack was built.
@@ -1108,6 +1302,7 @@ Scope:
 
 - Stable `pkg/contextkit` API.
 - Adapter SDK.
+- Language adapter SDK/testkit for `context-lang-*` repositories.
 - Tool SDK.
 - Plugin boundary guide for scenario-specific products and methodologies.
 - DSL schema guide for FocusProfile, RetrievalPlan, ContextPackTemplate,
@@ -1117,6 +1312,8 @@ Scope:
 - Example projects with neutral names.
 - Reference eval datasets.
 - Compatibility tests for third-party adapters.
+- Compatibility tests for language adapters across `LanguageCode`,
+  `MorphFeatureSet`, `TokenSpan`, and query-expansion contracts.
 
 Exit criteria:
 
@@ -1132,6 +1329,10 @@ Required from Phase 1:
 
 - Chunker span correctness.
 - Unicode normalization.
+- Token-span offset preservation.
+- MorphFeatureSet validation without language-specific enums in core.
+- MorphAnalysis ambiguity and selection invariants.
+- QueryExpansion reason and confidence validation.
 - Manifest hash stability.
 - Merkle diff behavior.
 - Candidate deduplication.
@@ -1146,7 +1347,9 @@ Required from Phase 1:
 Required from MVP:
 
 - File source -> parser -> chunker -> metadata store.
-- File source -> QDrant adapter -> dense retrieval.
+- File source -> tokenizer -> simple language adapter -> metadata store.
+- File source -> VectorStore adapter -> dense retrieval, with pgvector as the
+  first live adapter.
 - Dense + sparse candidate merge.
 - Context pack persistence and replay.
 - Tool execution with artifact output.
@@ -1158,6 +1361,9 @@ Create small corpora with expected answers:
 
 - Exact phrase query.
 - Morphological variant query.
+- Lemma-vs-wordform query.
+- Ambiguous wordform query.
+- Query-expansion false-positive query.
 - Fuzzy typo query.
 - Citation lookup.
 - Ambiguous entity query.
@@ -1169,6 +1375,10 @@ Metrics:
 - Recall@k.
 - MRR.
 - Citation accuracy.
+- Lemma recall@k.
+- Inflection coverage.
+- Morph expansion precision.
+- False morph expansion rate.
 - Unsupported-claim rate.
 - Context token waste.
 - Duplicate evidence rate.
@@ -1191,6 +1401,10 @@ Add after baseline:
 
 - Parser and chunker fuzzing.
 - Unicode edge cases.
+- Script detection edge cases.
+- Token/span round-trip invariants.
+- MorphFeatureSet serialization invariants.
+- QueryExpansion does not cross project/source/trust boundaries.
 - Path normalization.
 - Manifest diff invariants.
 - Tool schema validation fuzzing.
@@ -1202,7 +1416,7 @@ Measure before optimizing:
 
 - Indexing throughput.
 - Chunk count per document.
-- QDrant query latency by project size.
+- Vector query latency by backend, project size, snapshot size, and filter shape.
 - Sparse search latency.
 - Context pack build latency.
 - Model-independent agent overhead.
@@ -1212,7 +1426,7 @@ Measure before optimizing:
 
 Required before stable:
 
-- QDrant unavailable.
+- VectorStore unavailable or degraded.
 - Metadata store unavailable.
 - Artifact store read/write failure.
 - Embedding provider timeout.
@@ -1231,6 +1445,8 @@ Every run should produce an append-only trace:
 - Policy snapshot.
 - Retrieval plan.
 - Retriever calls.
+- Language adapter calls and versions when used.
+- Query expansions and rejected expansion candidates.
 - Candidate counts and scores.
 - Context pack checksum.
 - Model calls and provider versions.
@@ -1246,6 +1462,7 @@ The engine should emit data suitable for these views:
 - Project index status.
 - Source manifest diff.
 - Retrieval trace.
+- Language/morphology trace.
 - Context pack inspector.
 - Tool call timeline.
 - Agent run timeline.
@@ -1295,6 +1512,8 @@ Checklist:
 - Does the change improve a measured metric?
 - Does it preserve exact/citation retrieval?
 - Are score contributions explainable?
+- Are lexical/morphology expansions explainable?
+- Are analyzer, dictionary, and feature-schema versions recorded?
 - Are rejected candidates available for debugging when needed?
 - Are source filters enforced before model calls?
 - Are embedding/chunking versions recorded?
@@ -1330,20 +1549,28 @@ Checklist:
 - Claims have source spans.
 - Scientific/legal text preserves citations and versions.
 - Morphology/fuzzy matching does not silently change meaning.
+- Ambiguous morphology remains explicit instead of being silently collapsed.
+- Language-specific rules stay in adapters, not core domain models.
+- Token spans remain stable for snippets, citations, and highlighting.
 - Summaries distinguish evidence from inference.
 - Uncertainty is represented instead of hidden.
 
 ## Open Decisions
 
-### QDrant Namespace Strategy
+### VectorStore Backend Strategy
 
 Decide between:
 
-- Collection per project.
-- Shared collection with `project_id` filters.
-- Collection per tenant plus `project_id` filters.
+- PostgreSQL/pgvector for the first local PoC.
+- QDrant for a dedicated vector engine.
+- Turbopuffer for a managed/serverless vector backend.
+- Collection, namespace, or table per project.
+- Shared collection/table with strict `project_id` and `snapshot_id` filters.
+- Tenant-level namespace plus project filters.
 
-Start with an abstraction and benchmark before committing.
+Recommended path: PostgreSQL/pgvector first, `VectorStore` abstraction always,
+QDrant or Turbopuffer only after measurements or deployment constraints justify
+another backend.
 
 ### Metadata Store
 
@@ -1351,21 +1578,22 @@ Options:
 
 - In-memory for tests.
 - SQLite for local single-node deployments.
-- Postgres for MVP and multi-user systems.
+- Postgres for the first live PoC and multi-user systems.
 
-Recommended path: memory first, Postgres by MVP.
+Recommended path: memory first, Postgres by PoC.
 
 ### Sparse Search
 
 Options:
 
-- Tantivy via `context-sparse` Docker sidecar (**chosen**, ADR-0009).
+- PostgreSQL full-text search for the first one-container PoC.
+- Tantivy via `context-sparse` Docker sidecar after lexical scale is proven.
 - Bleve as test double behind the same HTTP interface.
 - QDrant sparse vectors (optional later).
-- Postgres full-text search (fallback for metadata-only search).
 
-Recommended path: `context-sparse` sidecar from PoC; Bleve optional for unit tests
-without Docker.
+Recommended path: PostgreSQL full-text or fake sparse first; `context-sparse`
+only after the pgvector PoC proves retrieval contracts and lexical requirements
+justify another service.
 
 ### Morphology
 
@@ -1376,8 +1604,28 @@ Options:
 - cgo/Rust adapters.
 - Language-specific plugins.
 
-Recommended path: adapter interface first, simple English/Russian-friendly
-normalization baseline, then language-specific plugins.
+Recommended path: multilingual contracts first, simple/no-op adapters for PoC
+tests, then language-specific `context-lang-*` repositories with contract tests.
+The core must not encode Russian, German, Spanish, French, Hindi, or Indic
+grammar as first-class domain enums.
+
+### Language Adapter Repositories
+
+Planned external repositories:
+
+- `context-lang-ru`
+- `context-lang-en`
+- `context-lang-de`
+- `context-lang-es`
+- `context-lang-fr`
+- `context-lang-hi`
+- `context-lang-indic`
+- `context-lang-testkit`
+
+Recommended path: define the adapter contract in core and keep repository
+roadmaps under `.project/plugins/`. Add official adapters only after the PoC
+proves `TokenSpan`, `MorphFeatureSet`, `MorphAnalysis`, `QueryExpansion`, and
+trace compatibility.
 
 ### Product Plugin Boundary
 
@@ -1407,14 +1655,22 @@ ADRs as of 2026-06-17). Phase mapping:
   packages, metadata/artifact/model/trace interfaces, deterministic fakes, and
   replayable `AgentRun`/`ContextPack` snapshots.
 - **PoC index contracts:** ADR-0007–0011 and ADR-0013–0014 define embedded KV as
-  cache/intermediate storage only, hybrid QDrant + `context-sparse` + manifest,
-  dual Merkle (`source_merkle_root`, `chunk_set_hash`), `IndexSnapshot`,
+  cache/intermediate storage only, hybrid retrieval + manifest, dual Merkle
+  (`source_merkle_root`, `chunk_set_hash`), `IndexSnapshot`, `VectorStore`,
   `VectorNamespace`, `SparseIndexRef`, `ContextRef`, `PathAlias`, and storage
   role separation.
-- **MVP/local-cloud parity:** ADR-0010 and ADR-0012 make QDrant,
-  `context-sparse`, metadata store, and artifact store endpoint-compatible
-  across local and cloud deployments. Snapshot export/import and local pull are
-  planned after the local CLI proof.
+- **Multilingual language contracts:** add a follow-up ADR before implementation
+  reaches domain model work for token spans, lexeme references, wordforms,
+  morphology feature sets, analyzer/generator interfaces, query expansion, and
+  language adapter repositories.
+- **2026-06 planning correction:** the first live PoC uses PostgreSQL/pgvector as
+  the initial `VectorStore` adapter and PostgreSQL full-text or fake sparse
+  search for lexical tests. QDrant, Turbopuffer, and `context-sparse` remain
+  explicit future adapters. Add a superseding ADR before implementation reaches
+  the local server chunk.
+- **MVP/local-cloud parity:** ADR-0010 and ADR-0012 still require endpoint-style
+  parity across metadata, vector, sparse, and artifact stores. Snapshot
+  export/import and local pull are planned after the local CLI proof.
 - **Future-layer deferrals:** simhash copy-on-write seeding, cross-user Merkle
   proofs, incremental segment sync, broad crawling, production governance, and
   large-scale distributed workers remain in `future-layer.md`.
@@ -1428,7 +1684,9 @@ Draft research notes stay in `.project/.draft/` and are non-normative.
 2. Create the internal package skeleton without external dependencies.
 3. Implement domain models and interfaces only, including `IndexSnapshot`,
    `ManifestNode`, `ContextRef`, `PathAlias`, `VectorNamespace`,
-   `SparseIndexRef`, and `PolicySnapshot` from the ADR set.
+   `SparseIndexRef`, `PolicySnapshot`, `LanguageCode`, `ScriptCode`,
+   `TokenOccurrence`, `MorphFeatureSet`, `MorphAnalysis`, and `QueryExpansion`
+   from the ADR set.
 4. Add deterministic unit tests for manifest, chunking, context pack, and tool
    schema behavior.
 5. Implement local artifact store and in-memory metadata store.
@@ -1436,7 +1694,9 @@ Draft research notes stay in `.project/.draft/` and are non-normative.
    and `IndexSnapshot` commit model.
 7. Implement retrieval interfaces, exact lookup, fake sparse client, and hybrid
    candidate merge without requiring live services in unit tests.
-8. Add QDrant adapter and `context-sparse` HTTP/gRPC client behind interfaces
-   after local service contracts exist (ADR-0004, ADR-0008, ADR-0009).
+8. Add PostgreSQL/pgvector as the first live `VectorStore` adapter after local
+   service contracts exist; keep QDrant, Turbopuffer, and `context-sparse` as
+   measured later adapters behind the same interfaces.
 9. Add a fake model provider and fake tool executor for agent-run tests.
-10. Build the first golden retrieval dataset before adding more algorithms.
+10. Build the first golden retrieval dataset, including lexical/morphology
+    fixture cases, before adding more algorithms.

@@ -123,7 +123,7 @@ additional safety gates.
 
 - Snapshot export/import CLI and service APIs.
 - Sparse index bundle hashes in manifest records.
-- QDrant point export or snapshot restore validation by `snapshot_id`.
+- VectorStore point export or snapshot restore validation by `snapshot_id`.
 - Local pull command that verifies `source_merkle_root`, `chunk_set_hash`, bundle
   hashes, and engine versions before flipping `active_snapshot_id`.
 - Incremental segment sync for sparse bundles.
@@ -236,6 +236,57 @@ context is safe to include.
   differently from the index.
 - Highlighting is stable across repeated runs.
 - Snippets preserve provenance.
+
+## Layer 05A: Multilingual Linguistic Adapter Lifecycle
+
+### Why This Matters
+
+The core must support Russian, English, German, Spanish, French, Hindi, Indic
+languages, and future languages without becoming a language-specific NLP engine.
+Each language has different morphology, scripts, dictionaries, segmentation
+rules, and ambiguity patterns. These differences affect retrieval quality,
+snippets, citations, chunking, query expansion, and context-pack evidence.
+
+### Future Capabilities
+
+- Public language adapter contract for:
+  - normalization;
+  - tokenization;
+  - lexeme/lemma/wordform analysis;
+  - morphology generation;
+  - query expansion;
+  - ambiguity reporting;
+  - adapter capability reporting.
+- `context-lang-testkit` with shared contract tests.
+- Adapter lifecycle states: `experimental`, `supported`, `deprecated`,
+  `retired`.
+- Versioned analyzer, dictionary, normalizer, tokenizer, generator, and
+  feature-schema metadata in `IndexSnapshot`, retrieval traces, and proof
+  artifacts.
+- Morphology ambiguity resolution with explicit candidate lists and selected
+  analysis reason.
+- German compound splitting and separable-verb handling.
+- Spanish and French accent, elision, contraction, agreement, and clitic
+  handling.
+- Hindi Devanagari normalization, postposition/oblique-case handling, gender and
+  number agreement, and compound-verb support.
+- Indic script normalization, transliteration boundaries, segmentation, and
+  dictionary-resource policy.
+- Language-specific golden eval sets for lemma recall, inflection coverage,
+  expansion precision, false expansion rate, snippet stability, and citation
+  span accuracy.
+
+### Acceptance Gate
+
+- A language adapter can be released, upgraded, deprecated, and tested without
+  changing core domain models.
+- Adapter output preserves source offsets and snippet/citation provenance.
+- Ambiguity is explicit and traceable; no adapter silently collapses competing
+  analyses.
+- Query expansion explains every generated term and can be disabled by
+  `FocusProfile`.
+- Re-indexing with a new adapter or dictionary version produces a new
+  `IndexSnapshot` instead of mutating past evidence.
 
 ## Layer 06: Relevance Feedback And Learning Loop
 
@@ -372,7 +423,7 @@ and incident response becomes subjective.
   - context pack build latency
   - agent startup latency
   - background job completion
-  - QDrant availability
+  - VectorStore availability
   - metadata store availability
   - artifact store availability
 - RPO/RTO targets.
@@ -537,8 +588,9 @@ neutral contract improvements back into the core.
 
 - UX fixture screens for project corpus, source list, search results, snippets,
   FocusProfile, ContextPack, AgentRun, and trace timeline.
-- DX dashboard for QDrant, `context-sparse`, PostgreSQL, active snapshot,
-  source/chunk counts, and integration test status.
+- DX dashboard for PostgreSQL/pgvector, optional VectorStore backends,
+  optional sparse backends, active snapshot, source/chunk counts, language
+  adapter versions, and integration test status.
 - BFF adapter that calls the Context service or consumes `context-dev` JSON
   during local development.
 - DSL workbench for editing/visualizing FocusProfile, RetrievalPlan,
@@ -600,17 +652,18 @@ Recommended order after the current proof loop:
 4. Snapshot replication and index reuse hardening.
 5. Focus control and memory tiers.
 6. Query language and snippet/highlighting engine.
-7. Relevance feedback events.
-8. Distributed job control.
-9. Tool sandbox and side-effect model.
-10. Operational SLOs and capacity tests.
-11. Claim/contradiction graph for scientific/legal corpora.
-12. Crawler governance.
-13. Privacy/encryption/retention.
-14. Multi-tenant/team governance.
-15. Binary/multi-modal adapters.
-16. Stable SDK and ecosystem contracts.
-17. Lab-driven UX/DX/DSL workbench hardening.
+7. Multilingual linguistic adapter lifecycle.
+8. Relevance feedback events.
+9. Distributed job control.
+10. Tool sandbox and side-effect model.
+11. Operational SLOs and capacity tests.
+12. Claim/contradiction graph for scientific/legal corpora.
+13. Crawler governance.
+14. Privacy/encryption/retention.
+15. Multi-tenant/team governance.
+16. Binary/multi-modal adapters.
+17. Stable SDK and ecosystem contracts.
+18. Lab-driven UX/DX/DSL workbench hardening.
 
 ## What Must Not Move Into The First PoC
 
@@ -624,6 +677,10 @@ Recommended order after the current proof loop:
 - Marketplace/plugin ecosystem.
 - Dockerized `context-core` service and public SDKs before CLI contracts settle.
 - Lab-specific UX, widgets, BFF routes, or DSL screens inside Context core.
+- Production-grade Russian, German, Spanish, French, Hindi, or Indic morphology
+  engines inside Context core.
+- Language-specific dictionaries, grammar rules, and broad lexicons inside the
+  neutral core.
 - Messaging catalogs, calendar/Gantt products, CRM workflows, dashboards, or
   methodology runtimes inside the neutral core.
 - Distributed worker orchestration.
