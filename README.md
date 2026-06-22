@@ -1,35 +1,38 @@
 # context
 
 Universal Go core for project-scoped context management, retrieval, indexing,
-and agent orchestration.
+lexical evidence, and agent orchestration.
 
-`github.com/fastygo/context` is not a chat application. It is a reusable context
-operating layer for systems that need to turn user intent, files, documents,
-logs, tool outputs, and external sources into precise, inspectable, auditable
-context for automated work.
+`github.com/fastygo/context` is not a chat application, a generic RAG wrapper,
+or a product companion. It is a reusable context operating layer for systems
+that need to turn user intent, files, documents, logs, tool outputs, rules,
+lexicons, and external sources into precise, inspectable, auditable context for
+automated work.
 
 ## Why
 
-Large language models are useful, but they do not solve context management by
-themselves. A serious agent system needs to know what evidence was selected,
-where it came from, why other evidence was rejected, which tool was allowed to
-run, which model saw which context, and how the final result can be replayed or
-debugged.
+Large language models are useful, but they do not solve context management. A
+serious agent system needs to know what evidence was selected, where it came
+from, why other evidence was rejected, which tool was allowed to run, which
+model saw which context, and how the final result can be replayed or debugged.
 
 This module exists because plain RAG is not enough for long-lived projects:
 
-- vector search misses exact facts, citations, morphology, and operational
-  boundaries;
+- vector search misses exact facts, citations, wordforms, morphology, source
+  authority, and operational boundaries;
 - unbounded chat history is noisy, lossy, and hard to audit;
+- normalized text cannot replace original source text, snippets, quotes, or
+  attestations;
 - tool calls without typed policy create hidden side effects;
 - background agents need ownership, cancellation, traces, and verification;
 - source-backed work must preserve spans, versions, checksums, and decisions;
-- model, vector, storage, and tool providers must remain replaceable.
+- model, vector, storage, language, lexicon, and tool providers must remain
+  replaceable.
 
 The engine is designed to combine deterministic information retrieval,
-source-backed context packs, typed tools, replaceable model adapters, and
-agent/subagent orchestration without baking product identity or scenario-specific
-products into the core.
+source-backed context packs, typed tools, replaceable adapters, and
+agent/subagent orchestration without baking product identity, language-specific
+grammar, dictionary content, or scenario-specific products into the core.
 
 ## What It Provides
 
@@ -38,7 +41,12 @@ The module is intended to provide foundations for:
 - project-scoped source and artifact memory;
 - deterministic indexing with manifests and incremental updates;
 - hybrid retrieval over dense vectors, sparse/keyword indexes, exact matching,
-  graph traversal, source filters, recency, and tool outputs;
+  morphology-aware lexical paths, graph traversal, source filters, recency, and
+  tool outputs;
+- language-neutral contracts for tokens, lemmas, lexemes, wordforms,
+  morphology features, analyses, and query expansion;
+- lexicographic contracts for senses, concepts, attestations, variants,
+  registers, regions, time periods, and lexicon sources;
 - focus policies that keep retrieval and context packing scoped to the current
   task;
 - replayable `ContextPack` objects for model calls, tools, and subagents;
@@ -46,7 +54,8 @@ The module is intended to provide foundations for:
 - foreground and background `AgentRun` traces;
 - verification and evaluation loops for retrieval quality and factuality;
 - adapter boundaries for LLMs, embeddings, rerankers, vector stores, metadata
-  stores, artifact stores, crawlers, and product integrations.
+  stores, artifact stores, language analyzers, lexicon resources, crawlers, and
+  product integrations.
 
 ## Design Principles
 
@@ -55,9 +64,17 @@ The module is intended to provide foundations for:
 - **Evidence before generation**: model calls receive selected context, not
   unbounded history.
 - **Provenance is mandatory**: facts point back to source spans, versions,
-  checksums, or tool outputs.
+  checksums, attestations, or tool outputs.
+- **Original text is preserved**: normalization, lemmatization, query expansion,
+  and concept mapping never replace source text.
 - **Hybrid retrieval wins**: dense vectors, sparse search, exact matching,
-  morphology, graph traversal, and recency signals cooperate.
+  morphology, graph traversal, recency, sense/concept filters, and citation
+  signals cooperate.
+- **Multilingual by contract**: the core defines stable contracts; language
+  complexity lives in `context-lang-*` adapters.
+- **Lexicons are evidence resources**: dictionaries, thesauri, historical
+  lexicons, slang, and regional vocabularies live in resource adapters, not in
+  the core.
 - **Models are replaceable**: LLMs, embedding models, and rerankers are adapters,
   not hardcoded infrastructure.
 - **Tools are typed**: every tool has a name, schema, permission policy, risk
@@ -68,9 +85,6 @@ The module is intended to provide foundations for:
   observable, cancellable, and auditable.
 - **Brand neutrality is required**: downstream products and companions configure
   identity on top of the core; core packages stay generic.
-- **Specific products are plugins**: message catalogs, timelines, CRM flows,
-  calendars, dashboards, and methodology packs belong in adapters or downstream
-  repositories.
 
 ## Core Runtime Model
 
@@ -100,7 +114,22 @@ decisions can be debugged later.
 - `Source`: a file, document, URL, log stream, database snapshot, spec, chat
   history, or tool output.
 - `Artifact`: stored source material or generated intermediate output.
-- `Chunk`: an indexed span with metadata and provenance.
+- `Chunk`: an indexed source span with metadata and provenance.
+- `TokenOccurrence`: original token text with stable source offsets.
+- `Lexeme`, `Lemma`, `WordForm`: language-neutral references for lexical forms.
+- `MorphAnalysis`: one possible morphology analysis; ambiguity stays explicit.
+- `QueryExpansion`: explainable lexical or morphology-driven expansion.
+- `Sense`: a specific meaning of a lexeme.
+- `Concept`: a language-independent or domain concept connected to labels and
+  senses.
+- `Attestation`: witnessed usage in a source, with quote, span, date, region,
+  register, authority, and confidence.
+- `Variant`: orthographic, historical, regional, slang, spelling, or script
+  variant.
+- `MultiwordExpression`: lexical unit spanning multiple tokens or syntactic
+  words.
+- `LexiconSource`: dictionary, corpus, thesaurus, glossary, authority list, or
+  community vocabulary source.
 - `FocusProfile`: the task-specific lens that defines scope, freshness,
   exactness, citation strictness, budgets, allowed tools, and irrelevant areas.
 - `ContextPack`: selected evidence and instructions for a model/tool/agent step.
@@ -108,8 +137,54 @@ decisions can be debugged later.
   trace.
 - `ToolCall`: a typed invocation with input, output, status, permissions, and
   side-effect metadata.
-- `Decision`: an accepted plan, spec, architectural note, or human approval.
 - `Evaluation`: a reproducible check for retrieval quality or task correctness.
+
+## Linguistic And Lexicon Boundaries
+
+The core is multilingual by contract, not by embedding every language inside the
+repository.
+
+```text
+fastygo/context
+  -> language-neutral contracts
+  -> source spans, snapshots, retrieval, ContextPack, traces
+  -> no language-specific dictionaries or grammar rules
+
+context-lang-*
+  -> normalization
+  -> tokenization
+  -> lexeme and wordform analysis
+  -> morphology generation
+  -> query expansion
+  -> language-specific eval fixtures
+```
+
+Language adapters may support Russian, English, German, Spanish, French, Hindi,
+Indic languages, and future languages. They must preserve source offsets,
+analyzer versions, dictionary versions, ambiguity candidates, and expansion
+provenance. Core contracts should stay compatible with portable schemes such as
+Universal Dependencies and UniMorph while allowing adapter-owned raw metadata.
+
+Lexicon resource adapters are separate from language analyzers. They map
+dictionaries, TEI resources, SKOS/ISO 25964 concept schemes, historical
+lexicons, regional vocabularies, slang, and community terminology to neutral
+contracts such as `Sense`, `Concept`, `Attestation`, and `LexiconSource`.
+
+```text
+TokenOccurrence
+  -> WordForm
+  -> Lemma
+  -> Lexeme
+  -> Sense
+  -> Concept
+  -> Attestation
+  -> SourceSpan
+  -> ContextPackEvidence
+```
+
+Lexeme and morphology answer "which form." Sense, concept, and attestation
+answer "which meaning, where, when, in which register, and according to which
+evidence."
 
 ## Indexing Pipeline
 
@@ -120,6 +195,8 @@ source adapter
   -> artifact store
   -> parser
   -> chunker
+  -> tokenizer
+  -> language adapter
   -> enricher
   -> manifest
   -> dense vector index
@@ -129,8 +206,9 @@ source adapter
 ```
 
 Different source types need different chunking strategies. Source code,
-technical documentation, scientific text, legal text, chat history, logs, web
-captures, and tool output should not be split with the same rules.
+technical documentation, scientific text, legal text, dictionary entries, usage
+citations, chat history, logs, web captures, and tool output should not be split
+with the same rules.
 
 ## Retrieval Pipeline
 
@@ -153,12 +231,18 @@ Supported retrieval paths should include:
 - dense vector search;
 - sparse/BM25-style search;
 - exact phrase and source-span search;
+- lemma, wordform, and morphology-expanded search;
+- sense, concept, attestation, register, region, and time-period filters;
 - entity and metadata filters;
 - citation lookup;
 - graph traversal;
 - recent activity retrieval;
 - tool result retrieval;
 - external source retrieval through explicit adapters.
+
+Every retrieval contribution should be explainable. A candidate that matched
+through a generated wordform, fuzzy variant, concept label, or attestation must
+preserve the original surface text and source span.
 
 ## Tool And Agent Runtime
 
@@ -179,22 +263,21 @@ tool
 
 Agents coordinate retrieval, context packs, model calls, tools, verifiers, and
 subagents. Subagents run with isolated context and return structured summaries
-or artifacts to the parent run. This keeps broad search, long-running shell
-work, browser automation, research, and verification from polluting the main
-task context.
-
-Concrete products should integrate through adapters, tools, graph projections,
-rules, skills, contracts, or companion configuration. The core should not know
-whether a source came from a messaging archive, calendar, issue tracker, CRM, or
-enterprise catalog beyond generic source metadata and adapter-provided fields.
+or artifacts to the parent run. Concrete products should integrate through
+adapters, tools, graph projections, rules, skills, contracts, or companion
+configuration.
 
 ## Architecture Guidance
 
 The canonical planning documents live in `.project/`:
 
-- `.project/roadmap-context-core.md` — architectural baseline and phased roadmap.
-- `.project/progress.md` — copy-paste plan chunks from baseline to PoC.
-- `.project/future-layer.md` — deferred production-grade layers and review gates.
+- `.project/roadmap-context-core.md`: architectural baseline and phased roadmap.
+- `.project/progress.md`: copy-paste plan chunks from baseline to PoC.
+- `.project/future-layer.md`: deferred production-grade layers and review gates.
+- `.project/plugins/language-adapters.md`: roadmap for `context-lang-*`
+  language adapters.
+- `.project/plugins/lexicon-resources.md`: roadmap for dictionaries, thesauri,
+  attestations, historical lexicons, and controlled vocabulary resources.
 
 The project skill lives in `.cursor/skills/context-core-steward/` and should be
 used when planning, implementing, reviewing, or debugging this repository. It
@@ -217,7 +300,8 @@ internal/
   evals/                    # retrieval and task evaluation harnesses
   graph/                    # entity, citation, co-occurrence, dependency edges
   indexing/                 # parsing, chunking, enrichment, manifests
-  linguistic/               # normalization, tokens, morphology, fuzzy matching
+  lexicon/                  # sense, concept, attestation, resource contracts
+  linguistic/               # language-neutral contracts and simple adapters
   models/                   # LLM, embedding, reranker interfaces
   policy/                   # permissions, risks, approvals
   retrieval/                # planners, retrievers, rerankers, context packs
@@ -240,7 +324,7 @@ The current hypothesis-validation path is:
 ```text
 local project corpus
   -> deterministic indexing
-  -> QDrant + PostgreSQL-backed metadata/search path
+  -> PostgreSQL + pgvector-backed metadata/vector search path
   -> real CLI ingestion and retrieval
   -> context pack creation
   -> fake model/tool agent run
@@ -250,7 +334,8 @@ local project corpus
 The first proof is not a polished product. It is a working CLI loop that shows
 the architecture can ingest project sources, retrieve relevant evidence, build a
 context pack, execute a typed model/tool step, verify source-backed claims, and
-replay the trace.
+replay the trace. It should prove neutral contracts with simple/fake language
+and lexicon fixtures before adding production language or dictionary adapters.
 
 ## Non-Goals For The First Version
 
@@ -262,6 +347,9 @@ replay the trace.
 - Complex UI framework ownership.
 - Hard dependency on one model provider.
 - Hard dependency on one vector database.
+- Language-specific dictionaries, grammar rules, or morphology engines in core.
+- TEI/SKOS importers, historical dictionaries, regional vocabularies, slang
+  lexicons, or community lexicon resources in the first PoC.
 - Implicit background writes without audit and approval policy.
 - Full distributed worker orchestration.
 - Production-grade query language.
@@ -270,8 +358,12 @@ replay the trace.
 
 - Keep raw source storage, embeddings, metadata, indexes, traces, and generated
   artifacts separate.
-- Version embedding models, parsers, chunkers, enrichers, sparse indexes, and
-  graph schemas.
+- Version embedding models, parsers, chunkers, tokenizers, analyzers,
+  dictionaries, sparse indexes, and graph schemas.
+- Never replace original source text with normalized text.
+- Do not collapse senses into lemmas or concepts into labels.
+- Treat generated wordforms as expansion candidates, not as attestations unless
+  they are witnessed in a source.
 - Treat long tool outputs as artifacts that can be searched and read in slices.
 - Prefer deterministic verification for claims that depend on source material.
 - Record enough run data to reproduce bad retrieval and bad tool decisions.
