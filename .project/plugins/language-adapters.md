@@ -80,16 +80,21 @@ Each adapter declares which features it supports:
 - Unicode normalization.
 - Script detection.
 - Tokenization with offset preservation.
+- Multiword token handling.
+- Multiword expression hints where the language analyzer can provide them.
 - Lemmatization.
 - Lexeme lookup.
 - Wordform generation.
 - Morphology analysis.
 - Ambiguity scoring.
+- Sense hints where available, without claiming dictionary authority.
 - Query expansion.
 - Compound splitting.
 - Transliteration.
 - Stop-word policy.
 - Accent/diacritic policy.
+- Orthographic and historical variant hints.
+- Register and dialect metadata where available.
 - Snippet/highlight metadata.
 
 Unsupported capabilities must be explicit. A missing capability is better than a
@@ -109,6 +114,7 @@ reproducible:
 - dictionary version;
 - feature scheme;
 - raw feature scheme when applicable.
+- dictionary/resource license metadata when bundled resources are used.
 
 `IndexSnapshot`, retrieval traces, proof artifacts, and `ContextPack` evidence
 must preserve these versions when language processing affects a result.
@@ -126,6 +132,8 @@ pass:
 - selected analyses include reasons;
 - generated wordforms round-trip where the language allows it;
 - query expansion is explainable and can be disabled;
+- multiword tokens and expressions preserve original source spans;
+- sense hints are marked as hints, not authoritative dictionary entries;
 - expansions do not cross project, source, trust, or permission boundaries;
 - feature sets serialize and deserialize without losing scheme information;
 - adapter version changes can force a new `IndexSnapshot`.
@@ -276,6 +284,9 @@ Language processing may influence:
 - candidate ranking;
 - snippets and highlighting;
 - citation extraction;
+- multiword-expression detection;
+- orthographic/historical variant matching;
+- register or dialect hints;
 - `ContextPack` evidence selection;
 - verifier checks for factual claims.
 
@@ -289,6 +300,9 @@ Every influence must be traceable.
 - No silent query expansion.
 - No morphology result without source offsets.
 - No official adapter without contract tests.
+- No bundled dictionary or corpus resource without license metadata.
+- No authoritative sense/concept/attestation claims from a language adapter
+  unless backed by a lexicon resource adapter.
 - No product or brand-specific language workflows in these adapters.
 
 ## Acceptance Gate

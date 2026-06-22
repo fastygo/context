@@ -27,6 +27,10 @@ references. If more durable decisions are created, they should live under
 - Keep the core multilingual by contract: language-specific dictionaries,
   grammar rules, morphology engines, and query expansion must live in language
   adapters/plugins, not core domain models.
+- Keep lexicographic resources evidence-first: senses, concepts, attestations,
+  variants, registers, regions, time periods, and lexicon sources are neutral
+  contracts; real dictionaries, thesauri, slang lists, regional vocabularies, and
+  historical corpora stay in adapters/resources.
 - Every runtime behavior that can affect a model or tool decision must become
   traceable.
 - Do not build a chat app. Build the context engine that chat, browser
@@ -96,12 +100,15 @@ Plan and then implement:
 7. Add ADR for multilingual linguistic contracts and language adapter boundary:
    token spans, lexeme references, wordforms, morphology features, analyzer
    versions, query expansion, and `context-lang-*` repositories.
-8. Add ADR for model adapters: fake deterministic provider first, real providers
+8. Add ADR for sense/concept/attestation and lexicon resource interoperability:
+   neutral contracts for senses, concepts, attestations, variants, multiword
+   expressions, registers, dialect/region, time periods, and lexicon sources.
+9. Add ADR for model adapters: fake deterministic provider first, real providers
    behind interface later.
-9. Add ADR for trace/event model: append-only events and replayability.
-10. Keep language brand-neutral and compatible with the MIT library boundary.
-11. Update .project/progress.md completion notes for this chunk.
-12. Run a read-only sanity check of changed markdown and report blockers only if
+10. Add ADR for trace/event model: append-only events and replayability.
+11. Keep language brand-neutral and compatible with the MIT library boundary.
+12. Update .project/progress.md completion notes, run a read-only sanity check of
+   changed markdown, and report blockers only if
    they block the next chunk.
 
 Acceptance criteria:
@@ -130,6 +137,11 @@ Status: **completed** (2026-06-17)
   core can model `TokenOccurrence`, `LexemeID`, `Lemma`, `WordForm`,
   `MorphFeatureSet`, `MorphAnalysis`, and `QueryExpansion` without importing
   Russian, German, Spanish, French, Hindi, or Indic implementations.
+- **Needs superseding ADR before Chunk 02 implementation:** lexicographic
+  context contracts must be recorded so the core can model `Sense`, `Concept`,
+  `Attestation`, `Variant`, `MultiwordExpression`, `Register`, `DialectRegion`,
+  `TimePeriod`, and `LexiconSource` without importing TEI/SKOS/dictionary
+  adapters or resource data.
 - **2026-06 planning correction:** the first PoC narrows the live dense-vector
   backend to PostgreSQL + pgvector behind `VectorStore`. QDrant and Turbopuffer
   remain explicit later adapters, not first-stack requirements. The existing
@@ -165,22 +177,28 @@ Plan and then implement:
 4. Define neutral linguistic structs: LanguageCode, ScriptCode,
    TokenOccurrence, LexemeID, Lemma, WordForm, MorphFeatureSet, MorphAnalysis,
    QueryExpansion, AnalyzerVersion, DictionaryVersion.
-5. Use explicit IDs as typed strings or small value types.
-6. Add validation methods only where invariants are obvious.
-7. Define store interfaces but provide no durable database adapter yet.
-8. Define model, embedding, reranker, morphology analyzer/generator, lexical
+5. Define neutral lexicographic structs: Sense, Concept, Attestation, Variant,
+   MultiwordExpression, Register, DialectRegion, TimePeriod, and LexiconSource.
+6. Use explicit IDs as typed strings or small value types.
+7. Add validation methods only where invariants are obvious.
+8. Define store interfaces but provide no durable database adapter yet.
+9. Define model, embedding, reranker, morphology analyzer/generator, lexical
    normalizer, and query expander interfaces without provider or language
    dependencies.
-9. Define tool registry schema types without executing tools yet.
-10. Define trace event type and recorder interface, including fields for
-   analyzer, dictionary, feature-schema, and query-expansion versions.
-11. Add unit tests for basic invariants and zero-value rejection.
-12. Run go test ./... and update .project/progress.md completion notes.
+10. Define lexicon resource and attestation source interfaces without TEI,
+   SKOS, dictionary, thesaurus, or corpus dependencies.
+11. Define tool registry schema types and trace event type/recorder interface,
+   including fields for analyzer, dictionary, feature-schema,
+   query-expansion, sense/concept mapping, and attestation versions.
+12. Add unit tests for basic invariants and zero-value rejection; run go test
+   ./... and update .project/progress.md completion notes.
 
 Acceptance criteria:
 - go test ./... passes.
 - Domain types compile without external infrastructure.
 - Linguistic contracts compile without importing language-specific adapters.
+- Lexicographic contracts compile without importing dictionary/thesaurus/corpus
+  adapters.
 - No implementation package imports downstream products.
 ```
 
@@ -239,13 +257,15 @@ Plan and then implement:
    text and byte/rune offset mapping for snippets and citations.
 8. Add no-op/simple language adapter hooks that record tokenizer, normalizer,
    analyzer, dictionary, and feature-schema versions without full morphology.
-9. Implement dual Merkle baseline: source tree hash and chunk set hash.
-10. Implement manifest diff for added, removed, changed, unchanged sources and
+9. Preserve paragraph, sentence, citation, dictionary-entry, sense, and
+   attestation boundary metadata where detected or provided by fixtures.
+10. Implement dual Merkle baseline: source tree hash and chunk set hash.
+11. Implement manifest diff for added, removed, changed, unchanged sources and
    changed chunks.
-11. Implement minimal IndexSnapshot commit model with parser/chunker/embed/morph
-   version fields and status values.
-12. Add golden tests for stable chunks, stable token spans, stable manifest
-   hashes, and snapshot IDs; run go test ./... and update progress notes.
+12. Implement minimal IndexSnapshot commit model with parser/chunker/embed/morph
+   and lexicon-resource version fields; add golden tests for stable chunks,
+   token spans, boundaries, manifest hashes, and snapshot IDs; run go test ./...
+   and update progress notes.
 
 Acceptance criteria:
 - Re-running indexing over unchanged files produces stable hashes.
@@ -254,6 +274,8 @@ Acceptance criteria:
   test-covered.
 - Token spans remain stable enough for snippets, highlighting, citations, and
   morphology traces.
+- Boundary metadata can later support dictionary-entry, sense, and attestation
+  chunking without changing the core model.
 ```
 
 Status: pending
@@ -282,12 +304,15 @@ Plan and then implement:
 8. Implement candidate deduplication by chunk_id/source/span/checksum.
 9. Preserve score explanation fields, snapshot_id, analyzer versions, and
    query-expansion reasons.
-10. Add fake sparse, fake vector, and fake language adapter clients for
-   deterministic unit tests.
-11. Add golden tests for exact phrase, keyword, lemma-vs-wordform,
-   ambiguous-wordform, typo-negative, query-expansion false positive, and
-   citation-like lookup if fixtures exist.
-12. Add retrieval trace events for query, expansions, candidates, snapshot, and
+10. Define retrieval filters for sense_id, concept_id, attestation_id, register,
+   dialect_region, time_period, lexicon_source, and source_authority.
+11. Add fake sparse, fake vector, fake language adapter, and fake lexicon
+   resource clients for deterministic unit tests.
+12. Add golden tests for exact phrase, keyword, lemma-vs-wordform,
+   ambiguous-wordform, sense disambiguation, concept label, attestation
+   date/region/register, typo-negative, query-expansion false positive, and
+   citation-like lookup if fixtures exist; add retrieval trace events for query,
+   expansions, sense/concept mappings, attestations, candidates, snapshot, and
    selected results; run go test ./... and update progress completion notes.
 
 Acceptance criteria:
@@ -300,6 +325,8 @@ Acceptance criteria:
 - Exact retrieval remains deterministic and source-backed.
 - Sparse and vector backends remain replaceable through interfaces.
 - Query expansions are explainable and can be rejected without changing source
+  truth.
+- Sense/concept/attestation filters are explainable and do not replace source
   truth.
 ```
 
@@ -320,19 +347,23 @@ Plan and then implement:
 3. Implement ContextPackBuilder with token/character budget estimates.
 4. Include evidence, source refs, rank signals, rejected candidates, and next
    step instructions.
-5. Add ContextPack checksum and replay metadata.
-6. Implement baseline Verifier that checks each factual evidence item has a
+5. Distinguish original source text, lexical analysis, sense claim, concept
+   mapping, attestation evidence, and model inference in evidence items.
+6. Add ContextPack checksum and replay metadata.
+7. Implement baseline Verifier that checks each factual evidence item has a
    valid source reference and checksum.
-7. Add tests for budget trimming without losing required citations.
-8. Add tests for rejected unsupported evidence.
-9. Add tests for replaying a context pack from stored IDs.
-10. Emit trace events for context pack creation and verification.
-11. Run go test ./...
-12. Update progress completion notes.
+8. Add tests for budget trimming without losing required citations or
+   attestations.
+9. Add tests for rejected unsupported evidence and unsupported sense/concept
+   mappings.
+10. Add tests for replaying a context pack from stored IDs.
+11. Emit trace events for context pack creation and verification.
+12. Run go test ./... and update progress completion notes.
 
 Acceptance criteria:
 - ContextPack is inspectable and replayable.
 - Unsupported factual evidence is rejected or flagged.
+- Unsupported sense, concept, or attestation claims are rejected or flagged.
 - Budgeting behavior is deterministic under tests.
 ```
 
@@ -497,13 +528,16 @@ Plan and then implement:
 2. Create schema for projects, sources, artifacts, chunks, index_snapshots,
    manifest_nodes, chunk_aliases, embeddings/vector rows, context packs, agent
    runs, tool calls, evaluations, trace events, token occurrences, morphology
-   analyses, and query expansions.
+   analyses, query expansions, senses, concepts, attestations, variants,
+   multiword expressions, registers, dialect regions, time periods, and lexicon
+   sources.
 3. Add migration files under an internal or migrations folder.
 4. Implement PostgreSQL store adapter behind existing interfaces.
 5. Preserve transaction boundaries for indexing and agent run updates.
 6. Add indexes for project_id, source_id, chunk_id, snapshot_id, context_ref,
    run_id, language, lexeme_id, analyzer_version, dictionary_version, and
-   timestamps where needed.
+   timestamps where needed; add filters for sense_id, concept_id, region,
+   register, time_period, lexicon_source, and source_authority where needed.
 7. Add integration tests gated by environment variable.
 8. Add CLI option to use PostgreSQL metadata store.
 9. Verify rollback/reset workflow for local development.
@@ -516,6 +550,8 @@ Acceptance criteria:
 - Store interface remains implementation-neutral.
 - Linguistic metadata survives process restart without requiring language
   adapter dependencies in the storage adapter.
+- Lexicographic metadata survives process restart without requiring
+  dictionary/thesaurus/corpus adapter dependencies in the storage adapter.
 - Tests can run without PostgreSQL unless integration mode is enabled.
 ```
 
@@ -540,13 +576,16 @@ Plan and then implement/fix only what is needed:
    queries.
 6. Run at least one multilingual fixture query that proves token spans,
    language code, lemma/wordform metadata, and query-expansion trace shape.
-7. Generate a ContextPack for a roadmap-related query.
-8. Run fake-model agent flow using the ContextPack.
-9. Run verifier and inspect trace output.
-10. Capture command outputs, JSON fixtures, or summaries in .project/proof/ if
+7. Run at least one lexicon fixture query that proves original text,
+   sense/concept metadata, attestation span, register/region/time metadata, and
+   source authority are preserved.
+8. Generate a ContextPack for a roadmap-related query.
+9. Run fake-model agent flow using the ContextPack.
+10. Run verifier and inspect trace output.
+11. Capture command outputs, JSON fixtures, or summaries in .project/proof/ if
    appropriate so Lab can replay the UX without hitting live services.
-11. Fix only blocking bugs discovered by the proof.
-12. Record known gaps and next decisions in progress.md, then report whether the
+12. Fix only blocking bugs discovered by the proof. Record known gaps and next
+   decisions in progress.md, then report whether the
    hypothesis is validated, partially validated, or failed.
 
 Acceptance criteria:
@@ -556,6 +595,8 @@ Acceptance criteria:
   `context-sparse` adapters.
 - The proof identifies what must change before adding `context-lang-*` language
   adapters.
+- The proof identifies what must change before adding TEI/SKOS/dictionary,
+  thesaurus, historical, regional, or slang lexicon adapters.
 - The proof produces enough artifacts to debug failure or demonstrate success.
 - The proof exports enough neutral JSON for Lab to render project corpus, search,
   ContextPack, FocusProfile, AgentRun, and trace views.

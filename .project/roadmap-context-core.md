@@ -42,6 +42,8 @@ be designed for, but not prematurely implemented.
 - Deterministic source parsing, chunking, enrichment, and manifest generation.
 - Language-neutral lexical and morphology contracts for tokens, lemmas, lexemes,
   wordforms, feature bundles, and analyzer versions.
+- Language-neutral lexicographic contracts for senses, concepts, attestations,
+  variants, registers, regions, time periods, and lexicon sources.
 - Hybrid retrieval over dense vectors, sparse/keyword indexes, exact matching,
   metadata filters, recency, graph edges, and tool outputs.
 - Focus policies that constrain retrieval scope, evidence budgets, source
@@ -68,6 +70,8 @@ be designed for, but not prematurely implemented.
   crawler, database, or web framework.
 - Language-specific dictionaries, grammar rules, lexicons, morphology engines,
   or query-expansion heuristics inside the neutral core.
+- Dictionary, thesaurus, historical lexicon, slang, regional, or community
+  vocabulary content as built-in core data.
 
 ## Current Repository Findings
 
@@ -166,6 +170,47 @@ Initial language adapters should be planned outside the core for Russian,
 English, German, Spanish, French, Hindi, and broader Indic language families.
 Each adapter must preserve source offsets, analyzer versions, dictionary
 versions, ambiguity candidates, and query-expansion provenance.
+
+### Lexicographic Context Layer
+
+Lexeme and morphology answer "which form." Context also needs to answer "which
+meaning, where, when, in which register, and according to which evidence." This
+is essential for dictionaries, historical corpora, regional vocabularies, slang,
+scientific terminology, legal terms, and community-specific lexicons.
+
+```text
+TokenOccurrence
+  -> WordForm
+  -> Lemma
+  -> Lexeme
+  -> Sense
+  -> Concept
+  -> Attestation
+  -> SourceSpan
+  -> ContextPackEvidence
+```
+
+Neutral contracts should distinguish:
+
+- `Sense`: a specific meaning of a lexeme.
+- `Concept`: a language-independent or domain concept connected to labels and
+  senses.
+- `Attestation`: a witnessed use in a source with quote, span, date, region,
+  register, source authority, and confidence.
+- `Variant`: orthographic, historical, regional, slang, spelling, or script
+  variant.
+- `MultiwordExpression`: lexical unit spanning multiple tokens or syntactic
+  words.
+- `Register`: usage layer such as formal, scientific, legal, slang, archaic, or
+  dialectal.
+- `DialectRegion` and `TimePeriod`: contextual filters for regional and
+  diachronic retrieval.
+- `LexiconSource`: dictionary, corpus, thesaurus, glossary, authority list, or
+  community vocabulary source.
+
+TEI-style dictionary entries and SKOS/ISO 25964-style thesauri are future
+interoperability targets. The core should model their neutral concepts and
+provenance, not embed any specific dictionary content or controlled vocabulary.
 
 ### Neural Layer
 
@@ -419,6 +464,14 @@ internal/
     noop/                   # deterministic no-op adapter for tests
     simple/                 # small fixture adapter for PoC contract tests
 
+  lexicon/
+    sense.go                # word-sense contract independent from dictionaries
+    concept.go              # concept/label/thesaurus-style contract
+    attestation.go          # witnessed usage with source span and authority
+    variant.go              # orthographic, historical, regional variants
+    register.go             # register, dialect/region, time-period metadata
+    resource.go             # dictionary/corpus/thesaurus source metadata
+
   storage/
     tx.go                   # transaction boundary abstractions
     memory/                 # deterministic tests
@@ -598,6 +651,128 @@ Required fields:
 - `adapter_id`
 - `adapter_version`
 
+### Sense
+
+Represents one meaning of a lexeme. It must not be collapsed into the lemma.
+
+Required fields:
+
+- `id`
+- `project_id`
+- `lexeme_id`
+- `language`
+- `definition`
+- `concept_id`
+- `register`
+- `region`
+- `time_period`
+- `source_id`
+- `confidence`
+- `metadata`
+
+### Concept
+
+Represents a language-independent or domain-specific concept that may have many
+labels, senses, translations, variants, or thesaurus relations.
+
+Required fields:
+
+- `id`
+- `project_id`
+- `preferred_label`
+- `labels`
+- `source_id`
+- `concept_scheme`
+- `broader_concepts`
+- `narrower_concepts`
+- `related_concepts`
+- `exact_matches`
+- `close_matches`
+- `metadata`
+
+### Attestation
+
+Represents witnessed usage of a token, wordform, lexeme, sense, or concept in a
+source. Attestations are the evidence layer for historical dictionaries,
+regional lexicons, slang, and scientific/legal terminology.
+
+Required fields:
+
+- `id`
+- `project_id`
+- `source_id`
+- `chunk_id`
+- `span_start`
+- `span_end`
+- `quote`
+- `language`
+- `lexeme_id`
+- `sense_id`
+- `concept_id`
+- `attested_at`
+- `region`
+- `register`
+- `source_authority`
+- `confidence`
+- `metadata`
+
+### Variant
+
+Represents a non-canonical form that is meaningful for retrieval, history,
+regional usage, spelling, transliteration, script, slang, or orthographic
+policy.
+
+Required fields:
+
+- `id`
+- `project_id`
+- `canonical_ref`
+- `variant`
+- `variant_type`: `orthographic`, `historical`, `regional`, `slang`,
+  `spelling`, `script`, `transliteration`
+- `language`
+- `script`
+- `region`
+- `time_period`
+- `source_id`
+- `confidence`
+
+### MultiwordExpression
+
+Represents a lexical unit that spans multiple tokens or syntactic words.
+
+Required fields:
+
+- `id`
+- `project_id`
+- `surface`
+- `normalized`
+- `language`
+- `token_ids`
+- `span_start`
+- `span_end`
+- `lexeme_id`
+- `sense_id`
+- `expression_type`
+- `analyzer_version`
+- `confidence`
+
+### Register, DialectRegion, TimePeriod, And LexiconSource
+
+These records describe contextual constraints for lexical evidence:
+
+- `Register`: formal, scientific, legal, slang, archaic, dialectal, colloquial,
+  technical, or domain-specific usage layer.
+- `DialectRegion`: geographic, cultural, community, or ethnolinguistic usage
+  boundary.
+- `TimePeriod`: date range, era, edition period, or historical orthography
+  policy.
+- `LexiconSource`: dictionary, corpus, thesaurus, glossary, authority list,
+  regional vocabulary, community vocabulary, or historical source collection.
+
+They should be modeled as metadata-rich references rather than hardcoded enums
+when the vocabulary is product-, region-, or corpus-specific.
+
 ### ContextPack
 
 Represents selected evidence for a model, tool, or subagent step.
@@ -727,6 +902,9 @@ Baseline chunkers:
 - Markdown: heading/section-aware chunks preserving heading ancestry.
 - Scientific/legal text: citation-aware chunks preserving paragraph IDs,
   footnotes, references, quoted spans, and edition/version metadata.
+- Lexicographic resources: entry/sense/attestation-aware chunks preserving
+  headwords, definitions, usage examples, source citations, register, region,
+  and time-period metadata.
 - Logs: event-window chunks grouped by time, service, request ID, and severity.
 - Tool output: command/tool sections with stdout/stderr/status separation.
 
@@ -819,6 +997,8 @@ Outputs:
 - Exact phrase searches.
 - Lemma/wordform searches.
 - Morphology-expanded searches.
+- Sense and concept searches.
+- Attestation, register, region, and time-period filtered searches.
 - Entity/citation lookups.
 - Graph traversals.
 - Recent activity retrieval.
@@ -864,6 +1044,8 @@ Required behaviors:
 - Avoid duplicate evidence.
 - Preserve original surface text even when retrieval matched a lemma, generated
   wordform, compound part, accent-folded form, or fuzzy variant.
+- Distinguish original source text, lexical analysis, sense claim, concept
+  mapping, and attestation evidence.
 - Include short evidence summaries only after preserving source references.
 - Separate facts, instructions, policies, and tool outputs.
 - Include verification requirements.
@@ -888,6 +1070,8 @@ Implement or adapt in phases:
 - Morphology generation adapter interface for controlled wordform expansion.
 - Explainable query expansion with `lemma`, `wordform`, `compound`, `accent`,
   `fuzzy`, and `transliteration` reasons.
+- Sense, concept, variant, register, region, time-period, and attestation
+  references as optional retrieval constraints.
 - Damerau-Levenshtein for typo-tolerant matching.
 - Jaro-Winkler for prefix-sensitive fuzzy matching.
 - N-gram fingerprints for candidate narrowing.
@@ -907,6 +1091,31 @@ Language-specific behavior must be implemented outside the core:
   and compound verbs.
 - Indic family: script-specific normalization, transliteration boundaries,
   segmentation, and adapter-specific dictionary resources.
+
+### Lexicographic And Corpus Layer
+
+The lexicographic layer is evidence management, not just NLP preprocessing.
+
+Design for:
+
+- dictionary entries and senses;
+- concept schemes and controlled vocabularies;
+- thesaurus relations and mappings;
+- historical spelling and orthographic variants;
+- region, dialect, community, and ethnogroup labels;
+- slang and register-specific vocabularies;
+- attestations with source quotes, spans, dates, and authority metadata;
+- TEI dictionary import/export as a future adapter path;
+- SKOS/ISO 25964 interoperability for thesauri and controlled vocabularies.
+
+Rules:
+
+- Do not collapse senses into lemmas.
+- Do not collapse concepts into labels.
+- Do not replace original source text with normalized text.
+- Do not treat an unattested generated wordform as evidence.
+- Every lexicographic claim used in a `ContextPack` must be traceable to a
+  source span, authority source, or explicitly marked inference.
 
 ### Neural Layer
 
@@ -1141,12 +1350,14 @@ Deliverables:
   - Metadata store choice.
   - Artifact store choice.
   - Multilingual linguistic contracts and language adapter boundary.
+  - Sense, concept, attestation, and lexicon-resource boundary.
   - First supported source types.
   - First supported model providers.
 - Package layout skeleton under `internal`.
 - Core domain models for project, source, artifact, chunk, context pack,
   agent run, tool call, evaluation, token occurrences, lexeme references,
-  wordforms, and morphology analyses.
+  wordforms, morphology analyses, senses, concepts, attestations, variants, and
+  lexicon sources.
 - Interface-only boundaries for models, storage, retrieval, indexing, tools,
   language adapters, and tracing.
 
@@ -1166,6 +1377,8 @@ Scope:
 - Plain text and Markdown parsing.
 - Paragraph and Markdown section chunking.
 - Neutral token-span capture and simple/fake language analyzer contracts.
+- Neutral sense/concept/attestation fixtures that preserve source spans and do
+  not require a real dictionary import.
 - Local artifact store.
 - In-memory metadata store.
 - PostgreSQL/pgvector dense vector adapter behind `VectorStore`.
@@ -1202,6 +1415,8 @@ Exit criteria:
 - Factual output includes source spans.
 - Lexical/morphology metadata is versioned and traceable without requiring a
   full Russian, German, Spanish, French, Hindi, or Indic adapter in core.
+- Sense, concept, and attestation metadata can be represented in proof JSON
+  without importing dictionary or thesaurus adapters.
 - A downstream lab shell can render proof artifacts without importing Context
   internals.
 
@@ -1224,6 +1439,8 @@ Scope:
 - Web capture adapter with strict crawl limits.
 - Eval harness with golden retrieval datasets.
 - Language adapter contract-test harness with fixture analyzers.
+- Lexicon resource contract-test harness with fixture dictionaries,
+  attestations, and concept schemes.
 - Context inspector output format for browser UI consumers.
 - Thin HTTP/gRPC service contract or SDK-client contract suitable for Lab/BFF
   integration, after CLI contracts stabilize.
@@ -1233,6 +1450,7 @@ Exit criteria:
 - Multiple projects can coexist safely.
 - Indexing and retrieval are deterministic under test fixtures.
 - Language adapter outputs are deterministic under contract fixtures.
+- Sense/concept/attestation outputs are deterministic under contract fixtures.
 - A downstream product can register tools without modifying core code.
 - Model provider can be swapped through config.
 - The system can explain why a context pack was built.
@@ -1314,6 +1532,9 @@ Scope:
 - Compatibility tests for third-party adapters.
 - Compatibility tests for language adapters across `LanguageCode`,
   `MorphFeatureSet`, `TokenSpan`, and query-expansion contracts.
+- Compatibility tests for lexicon resources across `Sense`, `Concept`,
+  `Attestation`, `Variant`, `Register`, `DialectRegion`, `TimePeriod`, and
+  source-span contracts.
 
 Exit criteria:
 
@@ -1333,6 +1554,7 @@ Required from Phase 1:
 - MorphFeatureSet validation without language-specific enums in core.
 - MorphAnalysis ambiguity and selection invariants.
 - QueryExpansion reason and confidence validation.
+- Sense, Concept, Attestation, Variant, and LexiconSource validation.
 - Manifest hash stability.
 - Merkle diff behavior.
 - Candidate deduplication.
@@ -1363,6 +1585,9 @@ Create small corpora with expected answers:
 - Morphological variant query.
 - Lemma-vs-wordform query.
 - Ambiguous wordform query.
+- Sense disambiguation query.
+- Concept label query.
+- Attestation date/region/register query.
 - Query-expansion false-positive query.
 - Fuzzy typo query.
 - Citation lookup.
@@ -1378,6 +1603,9 @@ Metrics:
 - Lemma recall@k.
 - Inflection coverage.
 - Morph expansion precision.
+- Sense precision.
+- Concept mapping precision.
+- Attestation span accuracy.
 - False morph expansion rate.
 - Unsupported-claim rate.
 - Context token waste.
@@ -1405,6 +1633,8 @@ Add after baseline:
 - Token/span round-trip invariants.
 - MorphFeatureSet serialization invariants.
 - QueryExpansion does not cross project/source/trust boundaries.
+- Sense/concept/attestation filters do not cross project/source/trust
+  boundaries.
 - Path normalization.
 - Manifest diff invariants.
 - Tool schema validation fuzzing.
@@ -1447,6 +1677,8 @@ Every run should produce an append-only trace:
 - Retriever calls.
 - Language adapter calls and versions when used.
 - Query expansions and rejected expansion candidates.
+- Sense/concept mappings and rejected mapping candidates.
+- Attestation filters and selected usage evidence.
 - Candidate counts and scores.
 - Context pack checksum.
 - Model calls and provider versions.
@@ -1463,6 +1695,7 @@ The engine should emit data suitable for these views:
 - Source manifest diff.
 - Retrieval trace.
 - Language/morphology trace.
+- Lexicon/sense/attestation trace.
 - Context pack inspector.
 - Tool call timeline.
 - Agent run timeline.
@@ -1513,6 +1746,7 @@ Checklist:
 - Does it preserve exact/citation retrieval?
 - Are score contributions explainable?
 - Are lexical/morphology expansions explainable?
+- Are sense/concept/attestation mappings explainable?
 - Are analyzer, dictionary, and feature-schema versions recorded?
 - Are rejected candidates available for debugging when needed?
 - Are source filters enforced before model calls?
@@ -1552,6 +1786,10 @@ Checklist:
 - Ambiguous morphology remains explicit instead of being silently collapsed.
 - Language-specific rules stay in adapters, not core domain models.
 - Token spans remain stable for snippets, citations, and highlighting.
+- Senses are not collapsed into lemmas.
+- Concepts are not collapsed into labels.
+- Attestations include source span, quote, authority, region/register/time
+  metadata where available.
 - Summaries distinguish evidence from inference.
 - Uncertainty is represented instead of hidden.
 
@@ -1609,6 +1847,23 @@ tests, then language-specific `context-lang-*` repositories with contract tests.
 The core must not encode Russian, German, Spanish, French, Hindi, or Indic
 grammar as first-class domain enums.
 
+### Lexicon Resources And Attestations
+
+Options:
+
+- Neutral in-core contracts only, with importers as future adapters.
+- TEI dictionary import/export adapter for structured dictionaries and
+  historical lexicons.
+- SKOS/ISO 25964-compatible adapter for thesauri and controlled vocabularies.
+- Corpus attestation adapter for witnessed usage in source collections.
+- Community/slang/regional lexicon adapters with explicit authority and license
+  metadata.
+
+Recommended path: neutral `Sense`, `Concept`, `Attestation`, `Variant`,
+`Register`, `DialectRegion`, `TimePeriod`, and `LexiconSource` contracts first.
+Implement real TEI/SKOS/dictionary importers only after the PoC proves source
+span, trace, and `ContextPack` compatibility.
+
 ### Language Adapter Repositories
 
 Planned external repositories:
@@ -1663,6 +1918,10 @@ ADRs as of 2026-06-17). Phase mapping:
   reaches domain model work for token spans, lexeme references, wordforms,
   morphology feature sets, analyzer/generator interfaces, query expansion, and
   language adapter repositories.
+- **Lexicographic context contracts:** add a follow-up ADR before implementation
+  reaches domain model work for `Sense`, `Concept`, `Attestation`, `Variant`,
+  `MultiwordExpression`, `Register`, `DialectRegion`, `TimePeriod`, and
+  `LexiconSource`.
 - **2026-06 planning correction:** the first live PoC uses PostgreSQL/pgvector as
   the initial `VectorStore` adapter and PostgreSQL full-text or fake sparse
   search for lexical tests. QDrant, Turbopuffer, and `context-sparse` remain
@@ -1685,8 +1944,10 @@ Draft research notes stay in `.project/.draft/` and are non-normative.
 3. Implement domain models and interfaces only, including `IndexSnapshot`,
    `ManifestNode`, `ContextRef`, `PathAlias`, `VectorNamespace`,
    `SparseIndexRef`, `PolicySnapshot`, `LanguageCode`, `ScriptCode`,
-   `TokenOccurrence`, `MorphFeatureSet`, `MorphAnalysis`, and `QueryExpansion`
-   from the ADR set.
+   `TokenOccurrence`, `MorphFeatureSet`, `MorphAnalysis`, `QueryExpansion`,
+   `Sense`, `Concept`, `Attestation`, `Variant`, `MultiwordExpression`,
+   `Register`, `DialectRegion`, `TimePeriod`, and `LexiconSource` from the ADR
+   set.
 4. Add deterministic unit tests for manifest, chunking, context pack, and tool
    schema behavior.
 5. Implement local artifact store and in-memory metadata store.
@@ -1699,4 +1960,4 @@ Draft research notes stay in `.project/.draft/` and are non-normative.
    measured later adapters behind the same interfaces.
 9. Add a fake model provider and fake tool executor for agent-run tests.
 10. Build the first golden retrieval dataset, including lexical/morphology
-    fixture cases, before adding more algorithms.
+    and sense/concept/attestation fixture cases, before adding more algorithms.

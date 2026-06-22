@@ -288,6 +288,50 @@ snippets, citations, chunking, query expansion, and context-pack evidence.
 - Re-indexing with a new adapter or dictionary version produces a new
   `IndexSnapshot` instead of mutating past evidence.
 
+## Layer 05B: Lexicon Resource And Attestation Management
+
+### Why This Matters
+
+Lexemes and morphology are not enough for real context management. Dictionaries,
+historical corpora, regional vocabularies, slang, scientific terminology, legal
+terms, and community lexicons need evidence about meaning, source, region,
+period, register, and authority. The same wordform can point to different
+senses, concepts, and usage traditions.
+
+### Future Capabilities
+
+- Neutral contracts for `Sense`, `Concept`, `Attestation`, `Variant`,
+  `MultiwordExpression`, `Register`, `DialectRegion`, `TimePeriod`, and
+  `LexiconSource`.
+- TEI dictionary import/export research path for entries, senses, examples,
+  citations, etymology, and historical dictionaries.
+- SKOS/ISO 25964 compatibility path for thesauri, controlled vocabularies,
+  concept schemes, labels, and mapping relations.
+- Historical dictionary support with spelling variants, edition/version
+  metadata, and diachronic search.
+- Regional, dialect, community, slang, and ethnogroup lexicon support.
+- Source-authority scoring for dictionary, corpus, thesaurus, glossary, and
+  community vocabulary resources.
+- Attestation storage with original quote, source span, date, region, register,
+  confidence, and source authority.
+- Sense disambiguation and concept graph integration.
+- Licensing and resource governance for dictionaries, corpora, thesauri,
+  glossaries, and community resources.
+- Import provenance so generated lexicon records can always be traced to a
+  source file, citation, API response, or manual curation event.
+
+### Acceptance Gate
+
+- Original source text is never replaced by normalized or canonical text.
+- Senses are not collapsed into lemmas.
+- Concepts are not collapsed into labels.
+- Every attestation has a source span, quote, and source authority metadata.
+- Historical, regional, register, and source-authority filters are traceable in
+  retrieval and `ContextPack` evidence.
+- TEI/SKOS/dictionary adapters can be added without changing core domain models.
+- Dictionary and corpus licenses are recorded before resources are used in
+  indexing, retrieval, or training data generation.
+
 ## Layer 06: Relevance Feedback And Learning Loop
 
 ### Why This Matters
@@ -653,17 +697,18 @@ Recommended order after the current proof loop:
 5. Focus control and memory tiers.
 6. Query language and snippet/highlighting engine.
 7. Multilingual linguistic adapter lifecycle.
-8. Relevance feedback events.
-9. Distributed job control.
-10. Tool sandbox and side-effect model.
-11. Operational SLOs and capacity tests.
-12. Claim/contradiction graph for scientific/legal corpora.
-13. Crawler governance.
-14. Privacy/encryption/retention.
-15. Multi-tenant/team governance.
-16. Binary/multi-modal adapters.
-17. Stable SDK and ecosystem contracts.
-18. Lab-driven UX/DX/DSL workbench hardening.
+8. Lexicon resource and attestation management.
+9. Relevance feedback events.
+10. Distributed job control.
+11. Tool sandbox and side-effect model.
+12. Operational SLOs and capacity tests.
+13. Claim/contradiction graph for scientific/legal corpora.
+14. Crawler governance.
+15. Privacy/encryption/retention.
+16. Multi-tenant/team governance.
+17. Binary/multi-modal adapters.
+18. Stable SDK and ecosystem contracts.
+19. Lab-driven UX/DX/DSL workbench hardening.
 
 ## What Must Not Move Into The First PoC
 
@@ -681,6 +726,8 @@ Recommended order after the current proof loop:
   engines inside Context core.
 - Language-specific dictionaries, grammar rules, and broad lexicons inside the
   neutral core.
+- TEI/SKOS importers, historical dictionaries, regional vocabularies, slang
+  lexicons, or community lexicon resources inside the first PoC.
 - Messaging catalogs, calendar/Gantt products, CRM workflows, dashboards, or
   methodology runtimes inside the neutral core.
 - Distributed worker orchestration.
