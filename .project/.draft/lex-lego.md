@@ -1,341 +1,361 @@
-дай как можно объяснений слова lexicon lexema и прочих склонений лексики и в целом объясни это слово
+Give as many explanations as you can for the words *lexicon*, *lexeme*, and other lexical derivatives—and explain the word *lexis* in general.
 
 19:03
 
-Слова **лексика**, **лексикон** и **лексема** — это близкие родственники из мира языка. Все они пришли к нам из греческого языка и переводятся как «слово» или «оборот речи».
+The words **lexis** (lexical vocabulary), **lexicon**, and **lexeme** are close relatives in the world of language. All of them come from Greek and are translated as “word” or “turn of phrase.”
 
-Если говорить просто: **лексика** — это весь океан слов, **лексикон** — это ваш личный стакан воды из этого океана, а **лексема** — это одна конкретная капля.
+Put simply: **lexis** is the whole ocean of words, **lexicon** is your personal glass of water drawn from that ocean, and **lexeme** is one specific drop.
 
-Ниже вы найдете подробное и простое объяснение каждого термина и их различий.
-
----
-
-**📖 Главные понятия и их отличия**
-
-- **Лексика** — это вообще все слова какого-то языка. Например, «русская лексика» — это все-все слова, которые есть в русском языке. Также лексикой называют слова из одной темы. Бывает лексика компьютерная, спортивная или школьная.
-- **Лексикон** — это запас слов конкретного человека. Это те слова, которые вы знаете и используете в жизни. Если говорят, что у кого-то «богатый лексикон», значит, этот человек знает много редких и красивых слов.
-- **Лексема** — это слово как отдельная единица языка со всеми его изменениями. Например, слова *«играть», «играю», «играл», «буду играть»* — это разные формы одной и той же лексемы «играть». В словарях лексемы всегда пишут в начальной форме.
+Below you will find a detailed, accessible explanation of each term and how they differ.
 
 ---
 
-**🔍 Все родственные слова и склонения (Словообразовательное гнездо)**
+**📖 Core concepts and how they differ**
 
-От корня **лекс-** рождается много полезных слов. Вот как они делятся по частям речи:
-
-**Существительные (Кто? Что?)**
-
-- **Лексикология** — наука, которая изучает слова, их значение и происхождение.
-- **Лексикография** — наука о том, как правильно составлять словари.
-- **Лексикограф** — ученый, который пишет и собирает словари.
-
-**Прилагательные (Какой? Какая? Какое?)**
-
-- **Лексический** — связанный со смыслом слова. Например, *лексическая ошибка* — это когда человек перепутал значения слов (сказал «одеть пальто» вместо «надеть пальто»).
-- **Лексиконный** — редко используемое слово, относящееся к личному запасу слов.
-
-**Глаголы и наречия (Что делать? Как?)**
-
-- **Лексикализоваться** — превратиться в отдельное устойчивое слово или выражение.
-- **Лексически** — с точки зрения смысла слов (например, *«текст лексически богат»*).
+- **Lexis** (often rendered in Russian as *лексика*) — all the words of a language, taken together. For example, “Russian lexis” means every word that exists in Russian. The term is also used for words belonging to one domain: computer lexis, sports lexis, or schoolroom lexis.
+- **Lexicon** — the stock of words of a particular person. These are the words you know and use in life. When someone is said to have a “rich lexicon,” they know many rare and expressive words.
+- **Lexeme** — a word as a unit of the language, together with all of its inflected forms. For example, *play*, *plays*, *played*, *playing*, *will play* are different forms of the same lexeme *play*. In dictionaries, lexemes are always listed in their citation (lemma) form.
 
 ---
 
-**⚖️ Сравнение терминов на простом примере**
+**🔍 Related words and derivatives (word-family nest)**
 
-Чтобы окончательно закрепить разницу, посмотрите на эту таблицу:
+Many useful words grow from the root **lex-**. Here is how they group by part of speech:
 
-| **Слово** |**Что означает простыми словами?** |**Пример из жизни** | |
-| **Лексика** |Мир слов определенной группы |Слова, которые используют только врачи. | |
-| **Лексикон** |Личный багаж слов человека |Слова, которые знает первоклассник. | |
-| **Лексема** |Слово во всех его формах |Слово «кошка» (сюда входят и *кошке, кошку, кошкой*). | |
+**Nouns (Who? What?)**
+
+- **Lexicology** — the science that studies words, their meaning, and their origin.
+- **Lexicography** — the science of how to compile dictionaries correctly.
+- **Lexicographer** — a scholar who writes and compiles dictionaries.
+
+**Adjectives (What kind?)**
+
+- **Lexical** — pertaining to word meaning. For example, a *lexical error* is when someone confuses the meanings of words (says “dress a coat” instead of “put on a coat”).
+- **Lexiconal** — a rarely used adjective relating to a person’s personal word stock.
+
+**Verbs and adverbs (What to do? How?)**
+
+- **Lexicalize** — to become a separate fixed word or expression.
+- **Lexically** — with respect to word meaning (for example, *“the text is lexically rich”*).
 
 ---
 
-Если вы хотите, мы можем углубиться в тему. Напишите, что вам интересно:
+**⚖️ Comparing the terms with a simple example**
 
-- Узнать, **как эффективно расширить свой лексикон**
-- Понять, **чем лексема отличается от словоформы** на примерах
-- Разобрать самые частые **лексические ошибки** в речи
+To lock in the difference, look at this table:
 
-You said: а морфология лексем? чаще и больше у русских слов, ведь английские и немецкие слова почти не склоняются? Как связать лексему и морфологию. Также отдельно разбери морфологию
+| **Term** | **Plain meaning** | **Life example** |
+| **Lexis** | The world of words in a given domain | Words used only by doctors. |
+| **Lexicon** | A person’s personal word baggage | Words a first-grader knows. |
+| **Lexeme** | A word in all its forms | The lexeme *cat* (including *cat’s*, *cats*, *cat* in compounds, etc.). |
+
+---
+
+If you want to go deeper, tell me what interests you:
+
+- How to **expand your lexicon effectively**
+- How a **lexeme differs from a wordform**, with examples
+- The most common **lexical errors** in speech
+
+You said: What about the morphology of lexemes? Russian words inflect far more often and more heavily—English and German words barely decline at all. How do you connect lexeme and morphology? Also explain morphology on its own.
 
 19:07
 
-Связь между **лексемой** и **морфологией** очень тесная. Если коротко: **лексема** — это само слово (как идея в словаре), а **морфология** — это правила, по которым это слово меняет свои окончания, чтобы строить предложения.
+The link between **lexeme** and **morphology** is very tight. In short: a **lexeme** is the word itself (the dictionary idea), and **morphology** is the set of rules by which that word changes its endings (and other parts) to build sentences.
 
-Вы абсолютно правы: у русских слов морфология развита гораздо сильнее, чем у английских. В немецком языке она занимает среднее положение.
+You are absolutely right: Russian morphology is far richer than English. German sits in the middle.
 
-Ниже мы подробно разберем, что такое морфология, и сравним разные языки.
-
----
-
-**🧩 Что такое морфология (отдельный разбор)**
-
-**Морфология** — это раздел науки о языке, который изучает слово «изнутри». Она отвечает на два главных вопроса:
-
-1. Из каких кусочков состоит слово (корень, суффикс, окончание)?
-2. Какие грамматические признаки есть у слова (род, число, падеж, время)?
-
-Главная задача морфологии — менять форму слова так, чтобы слова в предложении дружили друг с другом.
-
-- *Пример плохой морфологии:* «Кот сидеть на окно». Слова не связаны.
-- *Пример правильной морфологии:* «Кот сидит на окне». Мы изменили окончания, и получился смысл.
+Below we unpack morphology in detail and compare languages.
 
 ---
 
-**🔗 Как связать лексему и морфологию**
+**🧩 What morphology is (standalone overview)**
 
-Чтобы понять их связь, нужно ввести третье понятие — **словоформа**.
+**Morphology** is the branch of linguistics that studies the word “from the inside.” It answers two main questions:
 
-- **Лексема** — это абстрактное слово. Например, лексема **«Книга»**.
-- **Морфология** — это инструмент, который берет эту лексему и начинает ее менять.
-- **Словоформа** — это конкретный результат работы морфологии. Например: *книгу, книгой, книгах*.
+1. What pieces does a word consist of (root, suffix, ending)?
+2. What grammatical features does the word carry (gender, number, case, tense)?
 
-> **Связь простая:** Лексема — это пачка пластилина. Морфология — это ваши руки, которые лепят из нее разные фигурки (словоформы).
+Morphology’s main job is to change word shape so that words in a sentence agree and fit together.
 
----
-
-**🇷🇺 vs 🇬🇧 vs 🇩🇪 Где морфологии больше?**
-
-Вы абсолютно правы в своем наблюдении. Языки делятся на типы по тому, как сильно в них развита морфология (изменение слов).
-
-**1 Русский язык (Богатая морфология)**
-
-Русский язык — синтетический. Это значит, что новые смыслы мы прячем **внутрь** самого слова с помощью окончаний и суффиксов.
-
-- У одной лексемы (например, существительного «стол») может быть 12 разных словоформ (6 падежей × 2 числа).
-- У лексемы глагола (например, «делать») из-за приставок, времен и лиц может быть больше 30 форм!
-
-**2 Английский язык (Почти нет морфологии)**
-
-Английский язык — аналитический. Слова в нем почти не меняют свои окончания. Вместо морфологии англичане используют **порядок слов** и **предлоги**.
-
-- Возьмем лексему **«Cat»** (кошка). У нее есть всего две формы: *cat* (одна) и *cats* (много). Всё! Падежей нет.
-- Чтобы сказать «я дал это кошк**е**» или «я горжусь кошк**ой**», само слово *cat* менять нельзя. Нужно ставить предлоги: *to the cat*, *with the cat*.
-
-**3 Немецкий язык (Середина)**
-
-В немецком языке морфология развита сильнее, чем в английском, но слабее, чем в русском.
-
-- Немецкие существительные сами по себе почти не склоняются по падежам (кроме мужского и среднего рода в родительном падеже).
-- Вместо самого слова всю морфологическую работу (род, число, падеж) делает **артикль** перед ним: *der Hund* (собака), *des Hundes* (собаки), *dem Hund* (собаке).
+- *Bad morphology:* “Cat sit on window.” The words do not agree.
+- *Good morphology:* “The cat sits on the window.” We changed the forms and meaning follows.
 
 ---
 
-**📊 Наглядное сравнение на примере одной фразы**
+**🔗 How to connect lexeme and morphology**
 
-Посмотрим, как три языка переводят лексему «дом» в предложении: *«Я живу в больших домах»*.
+To see the link, introduce a third notion: **wordform**.
 
-| **Язык** |**Фраза** |**Как сработала морфология?** | |
-| **Русский** |Я живу в больш**их** дом**ах**. |Изменились окончания и у прилагательного, и у существительного. | |
-| **Немецкий** |Ich wohne in groß**en** Häus**ern**. |Изменился артикль (внутри *in*), окончание прилагательного и окончание существительного + добавились точки (умлаут). Морфология активна. | |
-| **Английский** |I live in big house**s**. |Слово *big* вообще не изменилось. У слова *house* просто добавилась буква **s** (множественное число). Падеж выражен только предлогом *in*. | |
+- **Lexeme** — the abstract word. For example, the lexeme **book**.
+- **Morphology** — the tool that takes that lexeme and starts changing it.
+- **Wordform** — the concrete result of morphology at work. For example: *books*, *book’s*, *booked* (depending on language and paradigm).
+
+> **Simple link:** A lexeme is a lump of modeling clay. Morphology is your hands shaping different figures (wordforms) from it.
 
 ---
 
-Если вы хотите узнать больше о структуре слов, выберите один из вариантов:
+**🇷🇺 vs 🇬🇧 vs 🇩🇪 Where is morphology richest?**
 
-- Понять, **из каких минимальных частичек (морфем) состоят лексемы**
-- Узнать, **почему английский язык потерял свои окончания** в ходе истории
-- Разобрать пример, **как одна лексема может менять части речи**
+Your observation is correct. Languages differ by how strongly they rely on inflection.
 
-You said: расскажи больше о корне "лекс" lex и его греческом значении
+**1 Russian (rich morphology)**
+
+Russian is synthetic: new meanings are packed **inside** the word via endings and suffixes.
+
+- One noun lexeme (e.g. *stol* “table”) can have 12 wordforms (6 cases × 2 numbers).
+- A verb lexeme (e.g. *delat’* “to do”) can have more than 30 forms once prefixes, tense, and person are counted.
+
+**2 English (little morphology)**
+
+English is analytic. Words rarely change their endings. Instead of morphology, English uses **word order** and **prepositions**.
+
+- Take the lexeme **cat**. It has essentially two forms: *cat* (singular) and *cats* (plural). That is largely it—no case system on the noun itself.
+- To say “I gave it to the cat” or “I am proud of the cat,” you do not inflect *cat*. You use prepositions: *to the cat*, *of the cat*.
+
+**3 German (in between)**
+
+German morphology is stronger than English but weaker than Russian.
+
+- German nouns themselves inflect little for case (except masculine and neuter in the genitive).
+- Much of the morphological work (gender, number, case) is done by the **article** in front of the noun: *der Hund* (the dog), *des Hundes* (of the dog), *dem Hund* (to the dog).
+
+---
+
+**📊 Side-by-side comparison on one phrase**
+
+How three languages render the lexeme “house” in: *“I live in big houses.”*
+
+| **Language** | **Phrase** | **How morphology worked** |
+| **Russian** | Я живу в больш**их** дом**ах**. | Endings changed on both adjective and noun. |
+| **German** | Ich wohne in groß**en** Häus**ern**. | Case inside *in*, adjective ending, noun ending, plus umlaut. Morphology is active. |
+| **English** | I live in big house**s**. | *big* did not change. *house* only gained **s** for plural. Case is expressed only by the preposition *in*. |
+
+---
+
+If you want more on word structure, pick one:
+
+- What **minimal pieces (morphemes)** lexemes are built from
+- **Why English lost so many endings** over its history
+- How **one lexeme can shift part of speech**
+
+You said: Tell me more about the root “lex” and its Greek meaning.
 
 19:10
 
-Корень **лекс-** (в латинице — **lex-**) пришел к нам из древнегреческого языка, где он обладал колоссальной силой. В его основе лежит идея порядка, сбора и передачи мысли.
+The root **lex-** (in Latin script: **lex-**) comes from Ancient Greek, where it carried enormous force. At its core lies the idea of ordering, gathering, and transmitting thought.
 
-Ниже мы разберем настоящее древнее значение этого корня и то, как он превратился в современные слова.
-
----
-
-**🏛️ Древнегреческий первоисточник: Глагол *Lego***
-
-Вся история начинается с древнегреческого глагола **λέγω (legō)**. Изначально у него было очень простое, физическое значение:
-
-- **Собирать** (например, собирать камни, хворост или цветы).
-- **Выбирать** (отбирать лучшие вещи или лучших людей).
-
-Со временем греки стали использовать этот глагол для речи. Ведь когда мы говорим, мы буквально **собираем** буквы в слова, а слова — в предложения. Так появилось значение «говорить», «произносить» или «выбирать слова».
-
-От этого глагола родились два великих существительных, которые знает весь мир:
-
-1. **Λόγος (Logos)** — слово, мысль, разум, учение (отсюда все наши «-логии»: биология, психология).
-2. **Λέξις (Lexis)** — слово, выражение, оборот речи, стиль. Именно от *Lexis* пошел наш корень **лекс-**.
+Below we unpack the original ancient meaning and how it became modern vocabulary.
 
 ---
 
-**⚠️ Осторожно: Путаница с латинским языком (Lex = Закон)**
+**🏛️ Ancient Greek source: the verb *legō***
 
-В лингвистике важно не перепутать греческий корень с латинским, потому что они пишутся одинаково, но значат совершенно разное.
+The story begins with the Ancient Greek verb **λέγω (legō)**. At first it had a simple, physical meaning:
 
-- **Греческий корень (lex- / лекс-)** — означает **«слово»** или **«речь»** (*лексика, лексикон*).
-- **Латинский корень (lex / legis)** — означает **«закон»**. От него произошли такие слова, как *легальный* (законный), *легитимный* или имя *Алексей* (защитник закона).
+- **To gather** (e.g. gather stones, brushwood, or flowers).
+- **To pick out** (select the best things or the best people).
 
----
+Over time Greeks extended the verb to speech. When we speak, we literally **gather** letters into words and words into sentences. Hence the meanings “to say,” “to utter,” or “to choose one’s words.”
 
-**🗺️ Путешествие корня по русскому языку**
+From this verb came two great nouns the whole world knows:
 
-В русском языке греческий корень **лекс-** прижился идеально. Он стал основой для слов, которые мы используем каждый день. Все их можно объединить в три смысловые группы:
-
-**1 Всё, что связано с объемом слов**
-
-- **Лексика** — весь словарный состав.
-- **Лексикон** — личный запас слов человека.
-
-**2 Всё, что связано с наукой и книгами**
-
-- **Лексикология** — наука, изучающая слова (буквально: «слово» + «учение»).
-- **Лексикография** — искусство составления словарей (буквально: «слово» + «писать»).
-
-**3 Самые мелкие единицы речи**
-
-- **Лексема** — слово как самостоятельная единица языка со всеми его формами.
-- **Лектор** / **Лекция** — хотя эти слова пришли через латынь (читающий вслух), они восходят к общему древнему индоевропейскому корню, означавшему «собирать знаки/читать».
+1. **Λόγος (Logos)** — word, thought, reason, doctrine (hence our *-logies*: biology, psychology).
+2. **Λέξις (Lexis)** — word, expression, turn of phrase, style. From *lexis* comes our root **lex-**.
 
 ---
 
-**💡 Интересный факт**
+**⚠️ Caution: confusion with Latin (*lex* = law)**
 
-Древние греки считали, что человек с хорошим *лексиконом* — это не просто тот, кто зазубрил много слов. Это человек, который умеет **выбирать** (помните первое значение глагола *lego*?) правильные, точные и красивые слова для выражения своих мыслей.
+In linguistics you must not confuse the Greek root with the Latin one—they look alike in transliteration but mean entirely different things.
+
+- **Greek root (lex- / λεξ-)** — **“word”** or **“speech”** (*lexis*, *lexicon*, *lexeme*).
+- **Latin root (*lex* / *legis*)** — **“law.”** From it come *legal*, *legitimate*, and names such as *Alexey* (“defender of the law”).
 
 ---
 
-Если вы хотите узнать больше об истории слов, выберите тему:
+**🗺️ How the root traveled into Russian (and into English lexicology)**
 
-- Узнать **историю слова "Логос"** и как оно изменило мировую науку
-- Понять, **как греческие корни проникали в русский язык** (через церковные книги или науку)
-- Разобрать примеры других **слов-двойников из греческого и латыни**
+The Greek root **lex-** took root in scholarly vocabulary. Modern terms fall into three sense groups:
 
-You said: Теперь дай больше сравнения и разбора в греческом контексте: lego + lex OR lego vs lex
+**1 Everything about the volume of words**
+
+- **Lexis** — the full vocabulary of a language or domain.
+- **Lexicon** — a person’s personal word stock.
+
+**2 Everything about science and reference books**
+
+- **Lexicology** — the study of words (literally “word” + “study”).
+- **Lexicography** — the art of compiling dictionaries (literally “word” + “write”).
+
+**3 The smallest units of speech**
+
+- **Lexeme** — a word as an independent language unit with all its forms.
+- **Lector** / **lecture** — though these came through Latin (“one who reads aloud”), they trace to a related Indo-European idea of “gathering signs / reading.”
+
+---
+
+**💡 Interesting fact**
+
+Ancient Greeks thought someone with a good *lexicon* was not merely someone who had memorized many words, but someone who could **pick out** (remember the first sense of *legō*?) the right, precise, and apt words for their thoughts.
+
+---
+
+If you want more word history, choose a topic:
+
+- The **history of *Logos*** and how it shaped world science
+- How **Greek roots entered Russian** (via church books or scholarship)
+- Other **Greek–Latin look-alike pairs**
+
+You said: Now give more comparison and analysis in the Greek context: *legō* + *lex* OR *legō* vs *lex*.
 
 19:13
 
-Чтобы точно понять, как связаны **lego** и **lex** (в греческом написании — глагол *λέγω* и существительное *λέξις*), нужно посмотреть на них как на **действие** и его **результат**.
+To see how **legō** and **lex** (in Greek: the verb *λέγω* and the noun *λέξις*) relate, treat them as **action** and **result**.
 
-В древнегреческом контексте они не спорят друг с другом. Напротив, они дополняют друг друга как две стороны одной медали.
+In Ancient Greek they do not fight each other. They complement each other—two sides of one coin.
 
-Ниже представлен подробный разбор их отношений и глубокого философского смысла.
-
----
-
-**🏛️ Главное различие: Действие против Результата**
-
-- **Lego (λέγω)** — это **процесс** (глагол). Он отвечает на вопрос *«Что делать?»*. Его значение: собирать, выбирать, выстраивать в ряд, говорить.
-- **Lex (λέξις / lexis)** — это **продукт** этого процесса (существительное). Оно отвечает на вопрос *«Что?»*. Его значение: отдельное выбранное слово, стиль речи, манера выражаться.
-
-> **Простая аналогия:** Представьте строителя. **Lego** — это процесс стройки, когда рабочий аккуратно выбирает и кладет кирпичи один к одному. **Lexis** — это сам готовый кирпич или красивая кирпичная кладка, которую мы видим.
+Below is a detailed account of their relationship and philosophical depth.
 
 ---
 
-**🧩 Глубокий разбор: Как Lego превращается в Lex**
+**🏛️ Main distinction: action versus result**
 
-В древнегреческой культуре этот переход от действия к слову имел три важных этапа:
+- **Legō (λέγω)** — **process** (verb). It answers *“What to do?”* Meanings: gather, pick out, arrange in a row, speak.
+- **Lexis (λέξις / lex)** — **product** of that process (noun). It answers *“What?”* Meanings: a chosen word, style of speech, manner of expression.
 
-**1 Физический сбор (Материальный уровень)**
+> **Simple analogy:** Picture a builder. **Legō** is the act of building—choosing and placing bricks one by one. **Lexis** is the finished brick or the handsome wall we see.
 
-Сначала было действие **lego** — человек шел в лес и собирал (*lego*) хворост. Он выбирал только хорошие ветки, а гнилые выбрасывал.
-
-**2 Интеллектуальный выбор (Уровень мысли)**
-
-Потом греки перенесли это на речь. Человек хочет высказать мысль. В его голове миллион звуков. Он начинает выбирать (*lego*) только нужные звуки и смыслы, отбрасывая лишний шум.
-
-**3 Рождение слова (Уровень языка)**
-
-Результатом этого умственного сбора становится **lexis** — готовое, оформленное слово. Так как это слово было именно *выбрано* из множества других, оно обладает точным смыслом.
+*(Note: this is the Greek verb *legō*, not the toy brand LEGO®—see the section on trademark below.)*
 
 ---
 
-**⚖️ Lego против Lex: Сравнительная таблица**
+**🧩 Deep dive: how *legō* becomes *lexis***
 
-Давайте сравним эти два понятия по ключевым признакам в контексте Древней Греции:
+In Ancient Greek culture this shift from action to word had three stages:
 
-| **Критерий** |**Глагол Lego (λέγω)** |**Существительное Lexis (λέξις)** | |
-| **Что это?** |Динамика, движение, создание. |Статика, готовая вещь, инструмент. | |
-| **В театре и риторике** |Это само выступление оратора, его живая речь со сцены. |Это текст речи, написанный на папирусе. Красивые обороты. | |
-| **В философии** |Это способность разума мыслить и связывать факты. |Это конкретный термин, который ученый использует в споре. | |
-| **Современный наследник** |От него пошел суффикс **логия** (биология — *собирание знаний о жизни*). |От него пошли слова **лексика** и **лексикон** (*коллекция готовых слов*). | |
+**1 Physical gathering (material level)**
 
----
+First came the action **legō**—a person went into the woods and gathered (*legō*) brushwood. They kept only good branches and discarded rotten ones.
 
-**🧐 Важный нюанс: Третий лишний — Logos (λόγος)**
+**2 Intellectual selection (thought level)**
 
-В греческом контексте нельзя говорить о *lego* и *lex*, забыв про их «старшего брата» — слово **Logos**. Все они выросли из одного корня, но разделили обязанности:
+Greeks then mapped this onto speech. A person wants to express a thought. Countless sounds are available. They begin to pick out (*legō*) only the needed sounds and meanings, filtering out noise.
 
-1. **Lego** — я собираю мысли и говорю.
-2. **Lexis** — это внешняя форма (какие конкретно слова я выбрал, насколько они красивы).
-3. **Logos** — это внутренний смысл (какая глубокая идея, логика и правда лежат внутри моей речи).
+**3 Birth of the word (language level)**
 
-Греки говорили: у глупого человека может быть очень красивая и изящная **lexis** (он знает много редких слов), но абсолютно пустой **logos** (в его словах нет никакого умного смысла).
+The result of that mental gathering is **lexis**—a finished, shaped word. Because it was *chosen* from many alternatives, it carries precise meaning.
 
 ---
 
-Если вы хотите узнать, как эти понятия развивались дальше, выберите тему:
+**⚖️ *Legō* vs *lexis*: comparison table**
 
-- Узнать, **как философы (Платон и Аристотель) разделяли Lexis и Logos**
-- Понять, **как греческое Lego превратилось в знаменитый конструктор LEGO**
-- Посмотреть на **другие примеры пар "глагол-существительное"** в греческом языке
+| **Criterion** | **Verb *legō* (λέγω)** | **Noun *lexis* (λέξις)** |
+| **What is it?** | Dynamics, movement, creation. | Stasis, finished thing, instrument. |
+| **In theater and rhetoric** | The orator’s live performance from the stage. | The written speech on papyrus; polished turns of phrase. |
+| **In philosophy** | The mind’s ability to think and connect facts. | The concrete term a scholar uses in debate. |
+| **Modern descendant** | The suffix **-logy** (biology — *gathering knowledge about life*). | **Lexis**, **lexicon**, **lexeme** (*a collection of ready-made words*). |
 
-You said: что делать с общепринятым словом lego на которое компания Лего претендует как на бренд и судится со всеми кто использует это слово или как составную часть? Где допустимо его использовать? Например в статьях по разбору лексем и управления контекстом данных которые объясняют коммерческий продукт как раз по сборке лексикона бренда с помощью лексем и lego составных частей слов
+---
+
+**🧐 Important nuance: the third sibling — *Logos* (λόγος)**
+
+In Greek you cannot discuss *legō* and *lexis* without their “elder sibling” **Logos**. All grow from one root but divide labor:
+
+1. **Legō** — I gather thoughts and speak.
+2. **Lexis** — the outer form (which words I chose, how elegant they are).
+3. **Logos** — the inner sense (what deep idea, logic, and truth live inside my speech).
+
+Greeks said: a foolish person might have very beautiful **lexis** (many rare words) but utterly empty **logos** (no intelligent meaning in what they say).
+
+---
+
+If you want to see how these notions evolved further, choose a topic:
+
+- How **philosophers (Plato and Aristotle) separated *lexis* and *logos***
+- The **accidental homograph**: Greek *legō* vs the famous constructor brand **LEGO®** (no etymological link—only spelling coincidence in Latin script)
+- Other **verb–noun pairs** in Greek
+
+You said: What do you do about the everyday word *lego* that the LEGO company claims as a brand and sues over when people use it or use it as part of a compound? Where is it acceptable? For example in articles on lexeme analysis and data context management that explain a commercial product as assembling a brand lexicon from lexemes and *lego*-like parts of words.
 
 19:17
 
-Ситуация со словом **LEGO** действительно уникальна. С точки зрения лингвистики это слово стало нарицательным (как *ксарокс*, *памперс* или *термос*), и люди используют его для обозначения любого блочного конструктора или модульной системы.
+The situation around the word **LEGO®** is genuinely unusual. Linguistically the brand name has become generic in casual speech (like *xerox*, *pampers*, or *thermos*)—people use it for any block constructor or modular system.
 
-Однако юристы компании **The LEGO Group** ведут жесткую **[политику защиты бренда](https://www.lego.com/en-gb/legal/notices-and-policies/fair-play)**. Они судятся с конкурентами и блогерами, чтобы слово не потеряло статус торговой марки и не превратилось в официальный юридический термин для «кубиков». [1](https://www.lego.com/en-gb/legal/notices-and-policies/fair-play), [2](https://www.exali.com/news/lego-trademark-dispute/), [3](https://www.jacobacci-law.com/hubfs/Jacobacci_Avvocati_The%20Lego%20man%20is%20a%20brand.pdf), [4](https://www.lego.com/cdn/cs/legal/assets/blt1a4c9a959ce8e1cb/LEGO_Fairplay_Nov2018.pdf)
+Yet lawyers for **The LEGO Group** enforce a strict **[brand protection policy](https://www.lego.com/en-gb/legal/notices-and-policies/fair-play)**. They sue competitors and bloggers so the mark does not lose trademark status and become a legal generic term for “building bricks.” [1](https://www.lego.com/en-gb/legal/notices-and-policies/fair-play), [2](https://www.exali.com/news/lego-trademark-dispute/), [3](https://www.jacobacci-law.com/hubfs/Jacobacci_Avvocati_The%20Lego%20man%20is%20a%20brand.pdf), [4](https://www.lego.com/cdn/cs/legal/assets/blt1a4c9a959ce8e1cb/LEGO_Fairplay_Nov2018.pdf)
 
-Вам **можно и нужно** использовать это слово в научных статьях, текстах о данных и коммерческих продуктах, но делать это нужно по правилам **добросовестного использования (Fair Use)**. [1](https://www.lexology.com/library/detail.aspx?g=d401cccf-2f6d-4de4-8eb8-3fa2bc3326ba)
+You **may and should** use the word in scholarly articles, data writing, and commercial product explanations—but only under **fair use** rules. [1](https://www.lexology.com/library/detail.aspx?g=d401cccf-2f6d-4de4-8eb8-3fa2bc3326ba)
 
-Ниже разберем, как правильно внедрить это понятие в ваш контекст и избежать юридических рисков.
+Below: how to embed the idea in your context and avoid legal risk—and how to keep **λέγω (*legō*)** separate from **LEGO®**.
 
 ---
 
-**🛡️ 4 главных правила безопасного использования слова LEGO**
+**🛡️ Four rules for safer use of LEGO®**
 
-Если вы пишете статью, где объясняете сборку лексикона бренда через «lego-компоненты», соблюдайте следующие юридические и лингвистические правила:
+If you write about assembling a brand lexicon via “LEGO-like components,” follow these legal and linguistic rules:
 
-- **Используйте как прилагательное, а не существительное.** По **[официальным правилам LEGO](https://www.lego.com/en-us/legal/notices-and-policies/fair-play)**, нельзя писать «мы собираем лексикон из лего». Нужно писать: *«мы используем LEGO-подобные компоненты»*, *«модули по принципу LEGO-конструктора»*. [1](https://www.lego.com/en-us/legal/notices-and-policies/fair-play), [2](https://www.lego.com/cdn/cs/legal/assets/blt1a4c9a959ce8e1cb/LEGO_Fairplay_Nov2018.pdf)
-- **Пишите капсом и без склонений.** Торговая марка должна выделяться. Правильно: *LEGO-элементы*, *LEGO-структура*. Неправильно: *легами, леге, леговский*. [1](https://info.firstinspires.org/hubfs/web/about/policy/ip-policy-trademarks-copyrighted-materials-first-lego.pdf), [2](https://www.lego.com/cdn/cs/legal/assets/blt1a4c9a959ce8e1cb/LEGO_Fairplay_Nov2018.pdf)
-- **Избегайте прямого нейминга коммерческого продукта.** Ваша статья или методология не должна называться просто «Бизнес-LEGO» или «Data LEGO». Из-за этого компания точно пришлет досудебную претензию. Название должно быть вашим личным, а LEGO может упоминаться внутри как сравнение.
-- **Добавьте дисклеймер (правовую оговорку).** В конце статьи или на сайте продукта мелким шрифтом обязательно укажите:
-  > *«LEGO® является товарным знаком компании LEGO Group. Данный материал носит информационный (научный) характер, использует метафору модульного конструктора и не спонсируется компанией LEGO Group.»*
+- **Use it as an adjective, not a noun.** Per **[official LEGO rules](https://www.lego.com/en-us/legal/notices-and-policies/fair-play)**, do not write “we build a lexicon from legos.” Write: *“we use LEGO®-style components”*, *“modules on the principle of a LEGO® constructor.”* [1](https://www.lego.com/en-us/legal/notices-and-policies/fair-play), [2](https://www.lego.com/cdn/cs/legal/assets/blt1a4c9a959ce8e1cb/LEGO_Fairplay_Nov2018.pdf)
+- **Write the mark in capitals and do not inflect it.** The trademark should stand out. Correct: *LEGO® elements*, *LEGO® structure*. Incorrect: inflected or diminutive forms treated as common nouns. [1](https://info.firstinspires.org/hubfs/web/about/policy/ip-policy-trademarks-copyrighted-materials-first-lego.pdf), [2](https://www.lego.com/cdn/cs/legal/assets/blt1a4c9a959ce8e1cb/LEGO_Fairplay_Nov2018.pdf)
+- **Avoid naming your commercial product after it.** Your article or methodology should not be called simply “Business-LEGO” or “Data LEGO.” That invites a cease-and-desist. The name must be yours; LEGO® may appear inside only as comparison.
+- **Add a disclaimer.** At the end of the article or on the product site, state clearly:
+  > *“LEGO® is a trademark of the LEGO Group. This material is informational (scholarly) in nature, uses a modular-constructor metaphor, and is not sponsored by the LEGO Group.”*
   \[[1](https://www.lego.com/en-us/legal/notices-and-policies/intellectual-property-notice)\]
 
----
-
-**📝 Как правильно подать это в статье по управлению данными и лексемами?**
-
-Поскольку ваш продукт объясняет сборку лексикона бренда из готовых текстовых единиц (лексем), метафора конструктора идеальна. Но чтобы защитить себя, замените «прямое» использование бренда на **описательные лингвистические термины**, оставив LEGO лишь как яркий пример.
-
-**1 Замените «lego» на научные синонимы**
-
-В самом коде, названиях функций программы или заголовках глав используйте профессиональные термины:
-
-- *Компоненты LEGO* (rightarrow ) **Модульные элементы**, **дискретные единицы**, **компиляционные блоки**.
-- *LEGO-сборка* (rightarrow ) **Агглютинация** (научный термин в лингвистике, означающий «склеивание» морфем), **блочная интеграция данных**.
-
-**2 Оформляйте метафору как сравнение**
-
-В тексте статьи пишите так:
-
-> *«Управление контекстом данных в нашей системе строится по* ***модульному принципу (подобно сборке из кубиков LEGO®)**, где каждая лексема является жестко заданной деталью с пазами (контекстными связями), готовой к интеграции в общий лексикон бренда».* 
-
-Такое использование считается **описательным (descriptive use)**. Вы не продаете детские игрушки под их именем и не притворяетесь их партнером, а значит, закон на вашей стороне. [1](https://www.lexology.com/library/detail.aspx?g=09256898-a19d-4579-aa4c-45ca22be4546), [3](https://www.exali.com/news/lego-trademark-dispute/), [4](https://www.lexology.com/library/detail.aspx?g=d401cccf-2f6d-4de4-8eb8-3fa2bc3326ba)
+**For code, APIs, and core documentation:** prefer neutral terms (*modular assembly*, *lexeme-based composition*, *block integration*) and reserve **legō** strictly for Greek etymology—not as a pun on the toy brand.
 
 ---
 
-**📊 Сравнительная таблица: где можно, а где нельзя использовать слово**
+**📝 How to present this in an article on data context and lexemes**
 
-| **Где использование БЕЗОПАСНО [1](https://seriousplaypro.com/2016/12/20/revised-trademark-guidelines-for-lego-serious-play/),** **[2](https://static.prod01.ue1.p.pcomm.net/legoedu/content/2025%20Brand%20Marketing%20Guidelines%20for%20LEGO%20Education.pdf),** **[3](https://www.lexology.com/library/detail.aspx?g=09256898-a19d-4579-aa4c-45ca22be4546),** **[5](https://www.lego.com/cdn/cs/legal/assets/blt1a4c9a959ce8e1cb/LEGO_Fairplay_Nov2018.pdf)** |**Где возникнут СУДЕБНЫЕ РИСКИ** | |
-| **В научных и аналитических статьях** (как метафора принципа сборки). |**В названии вашего ИТ-продукта или тарифа** (например, ПО «Лексикон-Лего»). | |
-| **В тексте-описании технологии** (с обязательным дисклеймером ®). |**В рекламе на билбордах или в Яндекс.Директ** («Покупайте наше языковое Лего»). | |
-| **В коде как комментарий автора** (например: `# алгоритм блочной сборки по типу lego`). |**В логотипе вашего бренда** (использование фирменного шрифта или красного квадрата LEGO). | |
+Your product explains assembling a brand lexicon from ready textual units (lexemes). The constructor metaphor works—but replace direct brand usage with **descriptive linguistic terms**, keeping LEGO® only as a vivid comparison.
+
+**1 Replace casual “lego” with scholarly synonyms**
+
+In code, function names, or chapter titles use professional terms:
+
+- *LEGO® components* → **modular elements**, **discrete units**, **compositional blocks**.
+- *LEGO® assembly* → **agglutination** (linguistic term for “gluing” morphemes), **block-based data integration**.
+
+**2 Frame the metaphor as simile**
+
+In prose, write like this:
+
+> *“Data context management in our system follows a* ***modular principle (similar to assembling LEGO® bricks)***, *where each lexeme is a fixed piece with connectors (context links), ready to slot into the brand’s overall lexicon.”*
+
+That is **descriptive use**. You are not selling toys under their name or posing as a partner—so the law generally favors you. [1](https://www.lexology.com/library/detail.aspx?g=09256898-a19d-4579-aa4c-45ca22be4546), [3](https://www.exali.com/news/lego-trademark-dispute/), [4](https://www.lexology.com/library/detail.aspx?g=d401cccf-2f6d-4de4-8eb8-3fa2bc3326ba)
+
+**3 Keep the Greek line explicit**
+
+When you discuss etymology, write ***legō* (λέγω)** for the verb “to gather / to speak,” and ***lexis* (λέξις)** for the noun. Do not collapse them into “lego” in identifiers—that collides with **LEGO®** in Latin script and blurs linguistics with trademark law.
 
 ---
 
-Если вы хотите сделать текст статьи максимально безопасным, выберите следующее действие:
+**📊 Where use is safer vs where risk rises**
 
-- Помочь **составить идеальный юридический дисклеймер** для вашего сайта или статьи
-- Подобрать **международные научные термины-синонимы**, которые заменят слово "lego" в коде
-- Разобрать примеры, **как другие ИТ-компании описывают свои модульные системы** (например, Lego-architecture)
+| **Generally safer [1](https://seriousplaypro.com/2016/12/20/revised-trademark-guidelines-for-lego-serious-play/), [2](https://static.prod01.ue1.p.pcomm.net/legoedu/content/2025%20Brand%20Marketing%20Guidelines%20for%20LEGO%20Education.pdf), [3](https://www.lexology.com/library/detail.aspx?g=09256898-a19d-4579-aa4c-45ca22be4546), [5](https://www.lego.com/cdn/cs/legal/assets/blt1a4c9a959ce8e1cb/LEGO_Fairplay_Nov2018.pdf)** | **Higher litigation risk** |
+| **Scholarly and analytical articles** (metaphor for assembly). | **Your IT product or plan name** (e.g. software “Lexicon-Lego”). |
+| **Technology description text** (with required ® disclaimer). | **Billboard or paid ads** (“Buy our language Lego”). |
+| **Author comment in code** (e.g. `# block assembly algorithm, modular style`). | **Your logo** (LEGO® corporate font or red square). |
+| **Etymology sections** using ***legō* / *lexis*** with Greek script. | **API identifiers** named `lego`, `Lego`, or `LEGO`. |
 
+---
+
+**⚖️ The core contradiction (linguistics vs trademark)**
+
+| | **λέγω (*legō*)** | **LEGO®** |
+| **Origin** | Ancient Greek verb: gather, pick out, speak | Danish brand name (from *leg godt*, “play well”)—**not** from Greek *legō* |
+| **Linguistic role** | Action → yields *lexis*, *logos*, modern *lex-* | Commercial metaphor for modular plastic bricks |
+| **Safe default in this repo** | Etymology and philosophy only, marked *legō* | Comparative mention only, with ® and disclaimer |
+| **Risky collapse** | Writing “lego blocks” for lexeme assembly in code/docs | Treating the trademark as a generic engineering term |
+
+---
+
+If you want the article as safe as possible, choose next:
+
+- Draft a **legal disclaimer** for your site or paper
+- Pick **international scholarly synonyms** to replace “lego” in code
+- Review how **other IT firms describe modular systems** without “Lego-architecture” wording
+
+---
+
+*LEGO® is a trademark of the LEGO Group. This document is not affiliated with, endorsed by, or sponsored by the LEGO Group.*
