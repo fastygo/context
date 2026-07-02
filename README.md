@@ -1,13 +1,18 @@
-# context
+# Context Runtime
 
 Universal Go core for project-scoped context management, retrieval, indexing,
-lexical evidence, and agent orchestration.
+lexical evidence, and agent orchestration. Context Runtime — project-scoped corpus engine that assembles evidence-backed context packs.
 
-`github.com/fastygo/context` is not a chat application, a generic RAG wrapper,
+`fastygo/context` is not a chat application, a generic RAG wrapper,
 or a product companion. It is a reusable context operating layer for systems
 that need to turn user intent, files, documents, logs, tool outputs, rules,
 lexicons, and external sources into precise, inspectable, auditable context for
 automated work.
+
+The repository is in an early planning-and-implementation stage: architecture
+decisions are recorded, and the first proof-of-concept code path is defined in
+`.project/progress.md`. Target capabilities below describe the intended design,
+not a finished runtime.
 
 ## Why
 
@@ -34,9 +39,9 @@ source-backed context packs, typed tools, replaceable adapters, and
 agent/subagent orchestration without baking product identity, language-specific
 grammar, dictionary content, or scenario-specific products into the core.
 
-## What It Provides
+## What It Targets
 
-The module is intended to provide foundations for:
+The module is designed to provide foundations for:
 
 - project-scoped source and artifact memory;
 - deterministic indexing with manifests and incremental updates;
@@ -56,6 +61,37 @@ The module is intended to provide foundations for:
 - adapter boundaries for LLMs, embeddings, rerankers, vector stores, metadata
   stores, artifact stores, language analyzers, lexicon resources, crawlers, and
   product integrations.
+
+## Current Focus
+
+Nearest work follows `.project/progress.md` plan chunks:
+
+| Phase | Status | Goal |
+| --- | --- | --- |
+| **0 — Architecture baseline** | ADRs accepted (Chunk 01) | Lock package, storage, index, trace, and adapter boundaries before broad code |
+| **1 — Proof of concept** | Chunks 02–12 pending | Prove ingest → retrieve → `ContextPack` → fake model/tool step → verifier → replayable trace |
+
+Immediate next step: **Chunk 02** — internal package skeleton, neutral domain
+models, and interface-only ports with `go test ./...` and no external services.
+
+Before or during Chunk 02, add follow-up ADRs for multilingual linguistic
+contracts and lexicographic context contracts so domain types such as
+`TokenOccurrence`, `MorphAnalysis`, `Sense`, and `Attestation` stay in core
+without importing `context-lang-*` or dictionary adapters.
+
+PoC storage progression (from accepted ADRs):
+
+- **Artifacts:** local filesystem first; object storage later.
+- **Metadata:** in-memory first; PostgreSQL when the live stack is introduced.
+- **Dense vectors:** `VectorStore` port first; PostgreSQL + pgvector as the first
+  live backend behind that port.
+- **Sparse search:** fake or PostgreSQL full-text baseline first; dedicated sparse
+  services such as `context-sparse` only when measurements justify them.
+- **Models and language:** fake deterministic providers and simple/no-op linguistic
+  fixtures first; real providers and `context-lang-*` adapters after the CLI proof.
+
+Downstream UX shells such as `Lab` may consume CLI JSON and proof artifacts.
+They must not become imports or dependencies of the core module.
 
 ## Design Principles
 
@@ -103,10 +139,12 @@ TaskIntent
   -> EvaluationTrace
 ```
 
-The central object is `ContextPack`: the selected, ranked, budget-aware,
-source-backed context handed to a model, tool, verifier, or subagent. It should
-be versioned and replayable so bad retrieval, bad generation, or bad tool
-decisions can be debugged later.
+The central handoff object is `ContextPack`: selected, ranked, budget-aware,
+source-backed context for a model, tool, verifier, or subagent. Every step should
+remain traceable to a task, policy snapshot, retrieval plan, accepted and
+rejected evidence, source spans, checksums, permissions, and evaluation
+signals. `ContextPack` and `AgentRun` records must be versioned and replayable
+so bad retrieval, generation, or tool decisions can be debugged later.
 
 ## Core Concepts
 
@@ -114,7 +152,14 @@ decisions can be debugged later.
 - `Source`: a file, document, URL, log stream, database snapshot, spec, chat
   history, or tool output.
 - `Artifact`: stored source material or generated intermediate output.
+- `IndexSnapshot`: an immutable index commit with parser, chunker, embedding,
+  morphology, and lexicon-resource version fields.
+- `ManifestNode`: a Merkle-style manifest node for incremental source-tree sync.
 - `Chunk`: an indexed source span with metadata and provenance.
+- `ContextRef`, `PathAlias`: stable references for model-visible source paths
+  without leaking host filesystem layout.
+- `VectorNamespace`, `SparseIndexRef`: project- and snapshot-scoped index handles
+  behind replaceable vector and sparse backends.
 - `TokenOccurrence`: original token text with stable source offsets.
 - `Lexeme`, `Lemma`, `WordForm`: language-neutral references for lexical forms.
 - `MorphAnalysis`: one possible morphology analysis; ambiguity stays explicit.
@@ -130,9 +175,14 @@ decisions can be debugged later.
   words.
 - `LexiconSource`: dictionary, corpus, thesaurus, glossary, authority list, or
   community vocabulary source.
+- `PolicySnapshot`: frozen permission, risk, and approval policy for one run.
 - `FocusProfile`: the task-specific lens that defines scope, freshness,
   exactness, citation strictness, budgets, allowed tools, and irrelevant areas.
+- `RetrievalPlan`: chosen retriever paths, filters, and budgets for a task.
+- `EvidenceItem`: one source-backed candidate with rank signals and rejection
+  reasons.
 - `ContextPack`: selected evidence and instructions for a model/tool/agent step.
+- `ModelCall`: one model invocation with inputs, outputs, and provider version.
 - `AgentRun`: a foreground, background, scheduled, or event-triggered execution
   trace.
 - `ToolCall`: a typed invocation with input, output, status, permissions, and
@@ -188,7 +238,7 @@ evidence."
 
 ## Indexing Pipeline
 
-The indexing pipeline is source-agnostic:
+The indexing pipeline is source-agnostic and snapshot-oriented:
 
 ```text
 source adapter
@@ -198,24 +248,33 @@ source adapter
   -> tokenizer
   -> language adapter
   -> enricher
-  -> manifest
-  -> dense vector index
-  -> sparse/exact index
+  -> dual Merkle manifest (source tree + chunk set)
+  -> IndexSnapshot commit
+  -> dense vector index (VectorStore)
+  -> sparse/exact index (SparseIndexRef)
   -> graph index
   -> metadata store
 ```
 
-Different source types need different chunking strategies. Source code,
-technical documentation, scientific text, legal text, dictionary entries, usage
-citations, chat history, logs, web captures, and tool output should not be split
-with the same rules.
+Incremental sync compares manifests and checksums so unchanged sources and chunks
+are not reprocessed. Different source types need different chunking strategies.
+Source code, technical documentation, scientific text, legal text, dictionary
+entries, usage citations, chat history, logs, web captures, and tool output
+should not be split with the same rules.
+
+First PoC scope: local file and artifact adapters, plain text and Markdown
+parsing, paragraph- and section-aware chunking, neutral token-span capture, and
+simple or no-op language hooks—not production morphology or dictionary imports.
 
 ## Retrieval Pipeline
 
-Retrieval is a planning problem, not one vector query:
+Retrieval is a planning problem, not one vector query. Every retriever call should
+carry `project_id`, `snapshot_id`, analyzer or embedding versions, and
+explainable match reasons:
 
 ```text
 task intent
+  -> policy snapshot
   -> focus profile
   -> retrieval plan
   -> parallel retriever calls
@@ -226,7 +285,7 @@ task intent
   -> context pack
 ```
 
-Supported retrieval paths should include:
+Supported retrieval paths include:
 
 - dense vector search;
 - sparse/BM25-style search;
@@ -273,6 +332,8 @@ The canonical planning documents live in `.project/`:
 
 - `.project/roadmap-context-core.md`: architectural baseline and phased roadmap.
 - `.project/progress.md`: copy-paste plan chunks from baseline to PoC.
+- `.project/decisions/`: accepted ADRs for package, storage, index, trace, and
+  adapter boundaries.
 - `.project/future-layer.md`: deferred production-grade layers and review gates.
 - `.project/plugins/language-adapters.md`: roadmap for `context-lang-*`
   language adapters.
@@ -282,11 +343,12 @@ The canonical planning documents live in `.project/`:
 The project skill lives in `.cursor/skills/context-core-steward/` and should be
 used when planning, implementing, reviewing, or debugging this repository. It
 keeps work aligned with DDD, Clean Architecture, SOLID, DRY, TDD, traceability,
-brand-neutral API boundaries, and the current roadmap.
+brand-neutral API boundaries, and the active plan chunk in `progress.md`.
 
-## Suggested Package Direction
+## Planned Package Direction
 
-The public API should stay small until boundaries are stable.
+The public API should stay small until boundaries are stable. Layout below is
+the target skeleton for Chunk 02 onward, not an existing tree.
 
 ```text
 cmd/
@@ -319,26 +381,45 @@ when another module needs a stable import surface.
 
 ## First Proof Target
 
-The current hypothesis-validation path is:
+The hypothesis-validation path is split into two stages in `progress.md`:
+
+**Stage A — no external services (Chunks 02–08)**
+
+```text
+domain models and store ports
+  -> local artifact store + in-memory metadata
+  -> deterministic indexing with Merkle manifest and IndexSnapshot
+  -> exact/sparse/vector retrieval through ports and fakes
+  -> context pack builder and verifier
+  -> fake model/tool agent run
+  -> context-dev CLI with machine-readable JSON
+```
+
+**Stage B — live local stack (Chunks 09–12)**
 
 ```text
 local project corpus
   -> deterministic indexing
-  -> PostgreSQL + pgvector-backed metadata/vector search path
-  -> real CLI ingestion and retrieval
-  -> context pack creation
-  -> fake model/tool agent run
-  -> source-backed verification trace
+  -> PostgreSQL metadata + pgvector-backed VectorStore
+  -> PostgreSQL full-text or fake sparse baseline
+  -> CLI ingest, search, context pack, and agent-run trace
+  -> source-backed verification and replay/debug output
 ```
 
-The first proof is not a polished product. It is a working CLI loop that shows
-the architecture can ingest project sources, retrieve relevant evidence, build a
-context pack, execute a typed model/tool step, verify source-backed claims, and
-replay the trace. It should prove neutral contracts with simple/fake language
-and lexicon fixtures before adding production language or dictionary adapters.
+The first proof is not a polished product or chat UI. It is a working CLI loop
+that shows the architecture can index project sources incrementally, retrieve
+relevant evidence through hybrid paths, build an inspectable `ContextPack`,
+execute a typed model/tool step with policy enforced outside the model, verify
+source-backed claims, and replay the trace. It must prove neutral linguistic and
+lexicographic contracts with simple or fake fixtures before adding production
+`context-lang-*` adapters or TEI/SKOS/dictionary importers.
+
+Expected first demo corpus: repository docs such as `README.md` and
+`.project/*.md`, with proof artifacts suitable for downstream UX replay.
 
 ## Non-Goals For The First Version
 
+- Chat UI, browser shell, or downstream `Lab` code inside the core module.
 - Generic autonomous control of arbitrary systems.
 - Unlimited web crawling.
 - Plugin marketplace.
@@ -346,7 +427,8 @@ and lexicon fixtures before adding production language or dictionary adapters.
 - Multi-tenant billing.
 - Complex UI framework ownership.
 - Hard dependency on one model provider.
-- Hard dependency on one vector database.
+- Hard dependency on one vector database; QDrant and Turbopuffer remain optional
+  later adapters behind `VectorStore`.
 - Language-specific dictionaries, grammar rules, or morphology engines in core.
 - TEI/SKOS importers, historical dictionaries, regional vocabularies, slang
   lexicons, or community lexicon resources in the first PoC.
@@ -373,7 +455,15 @@ and lexicon fixtures before adding production language or dictionary adapters.
 
 ## Status
 
-Early design-stage module. Public APIs are expected to change until the core
-runtime and proof-of-concept workflows stabilize.
+| Item | State |
+| --- | --- |
+| Planning baseline | Accepted (`roadmap-context-core.md`) |
+| Architecture decisions | 14 ADRs under `.project/decisions/` (Chunk 01 complete) |
+| Go implementation | Not started; Chunk 02 is next |
+| Public API | None exported yet; `pkg/contextkit` deferred until proven |
+| Dependencies | `go.mod` intentionally minimal |
+
+Public APIs are expected to change until the PoC CLI loop and core runtime
+stabilize.
 
 **License:** [MIT](LICENSE)
