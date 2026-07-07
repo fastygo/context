@@ -1940,24 +1940,30 @@ Draft research notes stay in `.project/.draft/` and are non-normative.
 
 1. ~~Add architecture decision records under `.project/decisions/`.~~ **Done** — see
    [decisions/README.md](decisions/README.md).
-2. Create the internal package skeleton without external dependencies.
-3. Implement domain models and interfaces only, including `IndexSnapshot`,
+2. Close the foundation gate before runtime code: multilingual and
+   lexicographic contracts, PoC backend order, deterministic identity/span
+   hashing, phase-1 retrieval scoring, `ContextPack` budget behavior, and
+   snapshot commit failure semantics. Do not implement graph traversal,
+   production KV caches, QDrant/Turbopuffer, `context-sparse`, crawlers, or
+   distributed workers at this gate.
+3. Create the internal package skeleton without external dependencies.
+4. Implement domain models and interfaces only, including `IndexSnapshot`,
    `ManifestNode`, `ContextRef`, `PathAlias`, `VectorNamespace`,
    `SparseIndexRef`, `PolicySnapshot`, `LanguageCode`, `ScriptCode`,
    `TokenOccurrence`, `MorphFeatureSet`, `MorphAnalysis`, `QueryExpansion`,
    `Sense`, `Concept`, `Attestation`, `Variant`, `MultiwordExpression`,
    `Register`, `DialectRegion`, `TimePeriod`, and `LexiconSource` from the ADR
    set.
-4. Add deterministic unit tests for manifest, chunking, context pack, and tool
+5. Add deterministic unit tests for manifest, chunking, context pack, and tool
    schema behavior.
-5. Implement local artifact store and in-memory metadata store.
-6. Implement one source adapter, one parser, one chunker, dual Merkle manifest,
+6. Implement local artifact store and in-memory metadata store.
+7. Implement one source adapter, one parser, one chunker, dual Merkle manifest,
    and `IndexSnapshot` commit model.
-7. Implement retrieval interfaces, exact lookup, fake sparse client, and hybrid
+8. Implement retrieval interfaces, exact lookup, fake sparse client, and hybrid
    candidate merge without requiring live services in unit tests.
-8. Add PostgreSQL/pgvector as the first live `VectorStore` adapter after local
+9. Add PostgreSQL/pgvector as the first live `VectorStore` adapter after local
    service contracts exist; keep QDrant, Turbopuffer, and `context-sparse` as
    measured later adapters behind the same interfaces.
-9. Add a fake model provider and fake tool executor for agent-run tests.
-10. Build the first golden retrieval dataset, including lexical/morphology
+10. Add a fake model provider and fake tool executor for agent-run tests.
+11. Build the first golden retrieval dataset, including lexical/morphology
     and sense/concept/attestation fixture cases, before adding more algorithms.

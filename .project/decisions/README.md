@@ -18,6 +18,42 @@ until a superseding ADR is published. ADR-0004/0008/0009/0010 describe target
 ports and long-term shape; they do not mandate QDrant or Tantivy for the first
 live proof.
 
+## Foundation decision gate
+
+Before runtime code begins, add or supersede only decisions that affect domain
+types, adapter ports, trace records, deterministic hashes, retrieval scoring, or
+`ContextPack` replay. This keeps the foundation stable without pulling future
+infrastructure into the first PoC.
+
+Foundation decisions still needed:
+
+- **Multilingual linguistic contracts:** token spans, lexeme/lemma/wordform
+  references, morphology features, ambiguity, query-expansion reasons, analyzer
+  versions, and `context-lang-*` adapter lifecycle.
+- **Lexicographic context contracts:** senses, concepts, attestations, variants,
+  multiword expressions, register/region/time metadata, source authority,
+  licensing metadata, and TEI/SKOS/resource-adapter boundaries.
+- **PoC backend order:** PostgreSQL + pgvector first for dense vectors,
+  PostgreSQL full-text or fake sparse first for lexical tests, later QDrant,
+  Turbopuffer, and `context-sparse` only behind the same ports.
+- **Deterministic identity and spans:** path keys, source/chunk checksum inputs,
+  byte/rune span convention, Unicode/newline normalization, and snapshot hash
+  rules.
+- **Phase-1 retrieval scoring:** merge/dedup, score normalization boundaries,
+  stable tie-breaking, score explanation fields, and deferred model-reranker
+  policy.
+- **ContextPack budget and evidence classes:** source text vs inference,
+  instruction/data separation, trust labels, citation locking, rejected
+  candidates, and deterministic trimming.
+- **Snapshot commit failure semantics:** minimal `building`, `ready`, `failed`,
+  and `superseded` behavior plus idempotent retry rules.
+
+Explicitly **not** foundation blockers: graph traversal engines, QDrant,
+Turbopuffer, `context-sparse`, bbolt, Badger, prompt-injection classifiers,
+fine-grained ACLs, crawlers, distributed workers, multimodal parsing, and
+production retention. Keep extension points where needed; implement those layers
+only when a later chunk or measurement requires them.
+
 ## Index
 
 | ADR | Title | Status |

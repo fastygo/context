@@ -156,21 +156,72 @@ Status: **completed** (2026-06-17)
   broad web crawling stay in `future-layer.md` until after the CLI proof works.
 - Background drafts remain non-normative under `.project/.draft/`.
 
+## Foundation Gate Before Runtime Code
+
+Before starting Chunk 02, close only the decisions that change core domain
+types, adapter ports, trace records, or deterministic tests. Do **not** add
+production infrastructure, graph engines, crawlers, distributed workers,
+advanced rerankers, or embedded KV caches at this gate.
+
+Required foundation decisions:
+
+1. **Multilingual linguistic contracts ADR.** Define language-neutral IDs,
+   token spans, lemmas, wordforms, morphology feature sets, analyzer/generator
+   interfaces, query-expansion reasons, ambiguity reporting, version fields, and
+   the `context-lang-*` adapter boundary.
+2. **Lexicographic context contracts ADR.** Define `Sense`, `Concept`,
+   `Attestation`, `Variant`, `MultiwordExpression`, `Register`,
+   `DialectRegion`, `TimePeriod`, `LexiconSource`, source authority, licensing
+   metadata, and the TEI/SKOS/resource-adapter boundary.
+3. **PoC backend order ADR.** Supersede QDrant/Tantivy-first wording for the
+   live proof: PostgreSQL + pgvector is the first live `VectorStore`, PostgreSQL
+   full-text or fake sparse is the first sparse baseline, and QDrant,
+   Turbopuffer, `context-sparse`, bbolt, and Badger remain later adapters unless
+   a chunk shows measured need.
+4. **Deterministic identity and span spec.** Record canonical path keys,
+   newline/BOM/Unicode normalization policy, byte vs rune span convention,
+   checksum inputs, `chunk_hash`, `source_merkle_root`, and `chunk_set_hash`
+   rules before writing chunker or manifest code.
+5. **Phase-1 retrieval scoring spec.** Record the first deterministic
+   merge/dedup policy, per-retriever score explanation shape, score
+   normalization boundaries, stable tie-breaking, and why model-based reranking
+   is deferred.
+6. **ContextPack budget and evidence class spec.** Record required evidence
+   classes, trust labels, instruction/data separation, citation locking, rejected
+   candidate recording, and deterministic trimming behavior.
+7. **Snapshot commit failure semantics.** Record minimal states and idempotency
+   rules for `building`, `ready`, `failed`, and `superseded` snapshots so partial
+   dense/sparse writes do not become active evidence.
+
+Foundation deferrals:
+
+- Graph traversal can stay a future retrieval path until exact/sparse/dense
+  retrieval and `ContextPack` replay work.
+- Embedded KV adapters are cache optimizations only; do not add bbolt or Badger
+  before in-memory/local contracts are proven.
+- Prompt-injection classifiers, fine-grained ACLs, distributed jobs, broad web
+  capture, multimodal parsing, and production retention policies remain in
+  `future-layer.md`. Keep only the data fields needed to label source trust and
+  preserve provenance.
+
 ## Plan Chunk 02: Internal Package Skeleton And Domain Models
 
 Copy-paste prompt:
 
 ```text
 Work in @Context only. Read README.md, .project/roadmap-context-core.md,
-.project/progress.md, and .project/decisions/*.md. Plan a minimal internal
-package skeleton for the context core and implement only domain models plus
-interfaces needed for tests. Do not add external services yet.
+.project/progress.md, .project/decisions/*.md, and the Foundation Gate above.
+First close any missing foundation ADR/spec items that would change domain
+types or adapter ports. Then plan a minimal internal package skeleton for the
+context core and implement only domain models plus interfaces needed for tests.
+Do not add external services yet.
 
 Plan and then implement:
 1. Create internal package folders for corpus, artifacts, indexing, retrieval,
    tools, agentruntime, models, policy, tracing, storage, and evals.
 2. Define core domain structs: Project, Source, Artifact, Chunk, SourceRef,
-   EvidenceItem, FocusProfile, ContextPack, AgentRun, ToolCall, Evaluation.
+   EvidenceItem, FocusProfile, RetrievalPlan, ContextPack, AgentRun, ToolCall,
+   Evaluation.
 3. Define indexing/sync structs from ADRs: IndexSnapshot, ManifestNode,
    ChunkAlias, ContextRef, PathAlias, VectorNamespace, SparseIndexRef,
    PolicySnapshot, ModelCall.
@@ -190,7 +241,12 @@ Plan and then implement:
 11. Define tool registry schema types and trace event type/recorder interface,
    including fields for analyzer, dictionary, feature-schema,
    query-expansion, sense/concept mapping, and attestation versions.
-12. Add unit tests for basic invariants and zero-value rejection; run go test
+12. Define foundation enums/value types for source trust labels, evidence class,
+   instruction-vs-data separation, retriever score explanations, snapshot
+   states, and deterministic ID/checksum/span conventions.
+13. Define only graph-related IDs or extension points needed by existing
+   retrieval contracts; do not implement graph traversal or graph storage.
+14. Add unit tests for basic invariants and zero-value rejection; run go test
    ./... and update .project/progress.md completion notes.
 
 Acceptance criteria:
@@ -200,6 +256,10 @@ Acceptance criteria:
 - Lexicographic contracts compile without importing dictionary/thesaurus/corpus
   adapters.
 - No implementation package imports downstream products.
+- No package imports PostgreSQL, pgvector, QDrant, Turbopuffer, bbolt, Badger,
+  Tantivy, TEI, SKOS, or provider SDKs.
+- Foundation specs exist for identity/span hashing, phase-1 retrieval scoring,
+  ContextPack budgeting, and snapshot commit failure semantics.
 ```
 
 Status: pending

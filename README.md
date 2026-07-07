@@ -74,10 +74,11 @@ Nearest work follows `.project/progress.md` plan chunks:
 Immediate next step: **Chunk 02** — internal package skeleton, neutral domain
 models, and interface-only ports with `go test ./...` and no external services.
 
-Before or during Chunk 02, add follow-up ADRs for multilingual linguistic
-contracts and lexicographic context contracts so domain types such as
-`TokenOccurrence`, `MorphAnalysis`, `Sense`, and `Attestation` stay in core
-without importing `context-lang-*` or dictionary adapters.
+Before Chunk 02 runtime code, close only the foundation decisions that would
+change core domain types or deterministic tests: multilingual linguistic
+contracts, lexicographic context contracts, PoC backend order, identity/span
+hashing, phase-1 retrieval scoring, `ContextPack` budget behavior, and snapshot
+commit failure semantics.
 
 PoC storage progression (from accepted ADRs):
 
