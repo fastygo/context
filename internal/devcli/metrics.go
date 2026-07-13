@@ -1,6 +1,7 @@
 package devcli
 
 import (
+	"context"
 	"strconv"
 	"time"
 
@@ -73,6 +74,12 @@ func Metrics(dataDir string) (MetricsResult, error) {
 	if limits, err := config.LoadQuotaLimitsFromEnv(); err == nil {
 		q := quota.Evaluate(limits, usageFromState(st))
 		m.Quota = &q
+	}
+	if rep, err := Ready(context.Background()); err == nil {
+		m.Readiness = &rep
+		if !rep.Ready {
+			m.OK = false
+		}
 	}
 	return m, nil
 }

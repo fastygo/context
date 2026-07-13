@@ -108,6 +108,17 @@ func (c *Client) Health(ctx context.Context) (HealthResponse, error) {
 	return out, err
 }
 
+// Ready calls GET /v1/ready.
+func (c *Client) Ready(ctx context.Context, projectID string) (ReadyResult, error) {
+	q := url.Values{}
+	if projectID != "" {
+		q.Set("project_id", projectID)
+	}
+	var out ReadyResult
+	err := c.do(ctx, http.MethodGet, "/v1/ready", q, nil, &out)
+	return out, err
+}
+
 // Status calls GET /v1/status.
 func (c *Client) Status(ctx context.Context, projectID string) (StatusResponse, error) {
 	q := url.Values{}

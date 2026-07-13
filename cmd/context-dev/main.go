@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -44,6 +45,8 @@ func main() {
 		err = cmdMetrics(args)
 	case "quota":
 		err = cmdQuota(args)
+	case "ready":
+		err = cmdReady(args)
 	case "eval-history":
 		err = cmdEvalHistory(args)
 	case "repair":
@@ -82,6 +85,7 @@ Usage:
   context-dev eval [--out <.project/proof/eval/report.json>] [--history <jsonl>] [--data <dir>]
   context-dev metrics --data <dir>
   context-dev quota --data <dir>
+  context-dev ready
   context-dev eval-history [--data <dir>] [--history <jsonl>] [--limit N]
   context-dev repair --data <dir> --project <id> [--mode rebuild|retry-failed] [--target all|dense|sparse]
   context-dev inspect --data <dir> --project <id> (--query <text> | --pack <id>) [--focus <id>]
@@ -94,6 +98,7 @@ eval runs offline golden retrieval suite (exact/sparse/dense/hybrid + multilingu
 With --data, eval also appends a summary to <data>/ops/eval_history.jsonl (or --history).
 metrics / eval-history expose workspace counters and append-only eval regression history.
 quota shows soft project limits (CONTEXT_QUOTA_MAX_*) with allow|ask|deny outside the model.
+ready probes backend readiness (metadata/sparse/vector/embedder/artifact/completer).
 repair rebuilds index payloads for the active ready snapshot, or retries last_failed under a new snapshot_id (ADR-0021).
 inspect explains search/pack decisions for Lab (budget, selected/rejected, scores) without host paths.
 Modes dense and hybrid-dense require PostgreSQL/pgvector (see .project/local-server.md).
@@ -102,6 +107,7 @@ Set CONTEXT_DENSE_REBUILD=1 to force search-time vector rebuild (default: prefer
 Set CONTEXT_EMBEDDER_KIND=local_hash for offline L2/SHA embedder (dim 32, local-hash-v1).
 Set CONTEXT_COMPLETER_KIND=localecho|http for non-fake agent-run Completer (default fake).
 Set CONTEXT_QUOTA_MAX_CHUNKS|PACKS|RUNS for soft project quotas (0/unset = unlimited; deny at hard limit).
+Set CONTEXT_FAIL_METADATA|VECTOR|SPARSE|EMBEDDER|ARTIFACT|COMPLETER=1 to inject Unavailable (Chunk 29).
 Set CONTEXT_SPARSE_KIND=postgres_fts for live Postgres FTS sparse/hybrid search.
 Focus profiles persist to state.json and MetadataStore (postgres when configured).
 meta-check verifies durable metadata (schema_id, lineage, temporal, documents).
@@ -327,6 +333,15 @@ func cmdQuota(args []string) error {
 		return err
 	}
 	res, err := devcli.QuotaStatus(f["data"])
+	if err != nil {
+		return err
+	}
+	return devcli.PrintJSON(res)
+}
+
+func cmdReady(args []string) error {
+	_ = args
+	res, err := devcli.Ready(context.Background())
 	if err != nil {
 		return err
 	}

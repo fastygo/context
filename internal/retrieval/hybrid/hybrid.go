@@ -5,6 +5,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/fastygo/context/internal/apperr"
 	"github.com/fastygo/context/internal/foundation"
 	"github.com/fastygo/context/internal/ids"
 	"github.com/fastygo/context/internal/linguistic"
@@ -143,16 +144,16 @@ func (e Engine) retrieveOne(ctx context.Context, retrieverID string, plan retrie
 		return e.Exact.Retrieve(ctx, plan, query)
 	case "sparse":
 		if e.Sparse == nil {
-			return nil, nil
+			return nil, apperr.New(apperr.Unavailable, "sparse retriever unavailable")
 		}
 		return e.Sparse.Retrieve(ctx, plan, query)
 	case "dense":
 		if e.Dense == nil {
-			return nil, nil
+			return nil, apperr.New(apperr.Unavailable, "dense retriever unavailable")
 		}
 		return e.Dense.Retrieve(ctx, plan, query)
 	default:
-		return nil, nil
+		return nil, apperr.New(apperr.Validation, "unknown retriever "+retrieverID)
 	}
 }
 

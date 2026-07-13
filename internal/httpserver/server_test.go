@@ -335,3 +335,38 @@ func TestQuotaEndpointAndDeny(t *testing.T) {
 		t.Fatalf("want 403 on second pack: %d %s", rr.Code, rr.Body.String())
 	}
 }
+
+func TestReadyEndpoint(t *testing.T) {
+	dataDir := setupWorkspace(t)
+	srv, err := httpserver.New(httpserver.Config{DataDir: dataDir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	h := srv.Handler()
+
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/v1/ready", nil))
+	if rr.Code != http.StatusOK {
+		t.Fatalf("ready: %d %s", rr.Code, rr.Body.String())
+	}
+
+	t.Setenv("CONTEXT_FAIL_METADATA", "1")
+	rr = httptest.NewRecorder()
+	h.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/v1/ready", nil))
+	if rr.Code != http.StatusServiceUnavailable {
+		t.Fatalf("want 503: %d %s", rr.Code, rr.Body.String())
+	}
+
+	rr = httptest.NewRecorder()
+	h.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/health", nil))
+	if rr.Code != http.StatusOK {
+		t.Fatalf("health liveness: %d", rr.Code)
+	}
+	var health map[string]any
+	if err := json.Unmarshal(rr.Body.Bytes(), &health); err != nil {
+		t.Fatal(err)
+	}
+	if health["ready"] != false {
+		t.Fatalf("health ready: %#v", health)
+	}
+}

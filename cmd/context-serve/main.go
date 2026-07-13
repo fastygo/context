@@ -96,6 +96,7 @@ Env:
 Endpoints:
   GET  /health
   GET  /v1/status?project_id=
+  GET  /v1/ready?project_id=
   POST /v1/search          {"project_id","query","mode?","focus_id?"}
   POST /v1/context-pack    {"project_id","query","focus_id?"}
   POST /v1/agent-run       {"project_id","query","focus_id?"}

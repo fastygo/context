@@ -338,6 +338,22 @@ curl -s 'http://127.0.0.1:8080/v1/quota?project_id=local'
 
 `GET /v1/metrics` also embeds a `quota` object when limits are configured.
 
+## Failure / degraded (Chunk 29)
+
+Typed `unavailable` / explicit `degraded` — never silent empty success when a
+requested backend is down.
+
+```bash
+# Inject failures offline
+CONTEXT_FAIL_VECTOR=1 CONTEXT_ENABLE_DENSE=1 \
+  go run ./cmd/context-dev search --data ... --project ... --query '...' --mode hybrid
+# → degraded:true (exact/sparse still hit); --mode dense → error unavailable
+
+go run ./cmd/context-dev ready
+curl -s http://127.0.0.1:8080/v1/ready
+curl -s http://127.0.0.1:8080/health   # liveness + backends summary
+```
+
 ## Metadata store (Chunk 11)
 
 Migrations live in `internal/storage/postgres/migrations/` and apply on

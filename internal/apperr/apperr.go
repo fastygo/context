@@ -15,6 +15,7 @@ const (
 	Validation   Code = "validation"
 	Permission   Code = "permission"
 	Unavailable  Code = "unavailable"
+	Degraded     Code = "degraded"
 	Internal     Code = "internal"
 )
 

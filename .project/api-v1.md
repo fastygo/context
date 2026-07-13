@@ -9,9 +9,10 @@ Transport: HTTP+JSON (`cmd/context-serve`) and Go client (`pkg/contextkit`).
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| GET | `/health` | Liveness + `api_version` |
+| GET | `/health` | Liveness + `api_version` + readiness summary |
 | GET | `/v1/status` | Workspace ingest status (no host paths) |
-| GET | `/v1/metrics` | Counts + last eval + `quota` + `has_last_failed` |
+| GET | `/v1/ready` | Backend readiness (`200` ready / `503` unavailable) |
+| GET | `/v1/metrics` | Counts + last eval + `quota` + `readiness` + `has_last_failed` |
 | GET | `/v1/quota` | Soft project quota status (`allow`/`ask`/`deny`) |
 | POST | `/v1/search` | Retrieval candidates |
 | POST | `/v1/context-pack` | Build ContextPack |
@@ -34,6 +35,14 @@ Env (0/unset = unlimited): `CONTEXT_QUOTA_MAX_CHUNKS`, `CONTEXT_QUOTA_MAX_PACKS`
 - Soft threshold → decision `ask` (advisory; writes still allowed).
 - Hard limit (`used >= max`) → decision `deny`; ingest / context-pack / agent-run
   return permission error (HTTP 403). No billing.
+
+## Failure / degraded (Chunk 29)
+
+- Missing dense/sparse retriever on a requested strategy → `unavailable` (not empty hits).
+- Hybrid + `CONTEXT_ENABLE_DENSE` when vector fails → `200` with `degraded` + reasons
+  (exact/sparse still run). Modes `dense` / `hybrid-dense` fail hard.
+- Failure injection: `CONTEXT_FAIL_METADATA|VECTOR|SPARSE|EMBEDDER|ARTIFACT|COMPLETER=1`.
+- `/health` stays live (`ok:true`) and embeds readiness; `/v1/ready` is `503` when not ready.
 
 ## Compatibility
 

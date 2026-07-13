@@ -11,6 +11,7 @@ import (
 	"github.com/fastygo/context/internal/models/httpjson"
 	"github.com/fastygo/context/internal/models/localecho"
 	"github.com/fastygo/context/internal/models/localhash"
+	"github.com/fastygo/context/internal/ops/failinject"
 )
 
 // CompleterOptions tunes fake Completer tool hints used by agent-run PoC.
@@ -22,6 +23,9 @@ type CompleterOptions struct {
 // OpenEmbedder selects an Embedder from storage/embedder config.
 // Returns the adapter and the embedding_version pin it will emit.
 func OpenEmbedder(cfg config.StorageConfig) (models.Embedder, string, error) {
+	if err := failinject.Check(failinject.Embedder); err != nil {
+		return nil, "", err
+	}
 	dim := cfg.Vector.Dimension
 	if dim <= 0 {
 		dim = config.DefaultEmbeddingDimension
@@ -71,6 +75,9 @@ func OpenEmbedder(cfg config.StorageConfig) (models.Embedder, string, error) {
 
 // OpenCompleter selects a Completer from config. Fake may receive tool hints.
 func OpenCompleter(cfg config.StorageConfig, opts CompleterOptions) (models.Completer, string, error) {
+	if err := failinject.Check(failinject.Completer); err != nil {
+		return nil, "", err
+	}
 	kind := cfg.Completer.Kind
 	if kind == "" {
 		kind = config.CompleterKindFake

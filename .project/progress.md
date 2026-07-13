@@ -71,9 +71,10 @@ ADRs 0001–0023; do not re-implement.
 | 12 | E2E proof — hypothesis **validated** (`.project/proof/`) |
 | 13 | Durable CLI metadata opt-in (`CONTEXT_METADATA_KIND=postgres`) |
 
-Open gaps for Lab-ready Core (Chunk **29**): failure/degraded semantics.
-Chunks 25–28 shipped (API v1, inspector, Completer/Embedder, soft quotas).
-Auth and OpenAPI codegen remain deferred.
+Open gaps for Lab-ready Core: none in the 25–29 track. Chunks 25–29 shipped
+(API v1, inspector, Completer/Embedder, soft quotas, failure/degraded).
+Auth and OpenAPI codegen remain deferred. Next optional Phase 3: redaction /
+background runs (after Chunk 29 per roadmap).
 
 ## UX / DX / DSL Consumer Track
 
@@ -91,7 +92,7 @@ Auth and OpenAPI codegen remain deferred.
 | Context inspector | **Chunk 26 done** | Render inspector JSON | No raw DB |
 | Non-fake model/embed | **Chunk 27 done** | Swap Completer/Embedder via config | Adapter, not Lab |
 | Quota soft-limits | **Chunk 28 done** | Show deny/ask on over-quota | ADR-0025 follow-up |
-| Failure/degraded | **Chunk 29** | Explicit unavailable errors | No silent empty |
+| Failure/degraded | **Chunk 29 done** | Explicit unavailable errors | No silent empty |
 | DSL workbench | After Chunk 29 | Edit FocusProfile / plans / policies | Neutral DTOs only |
 | Redaction / background runs | After Chunk 29 | Later Phase 3 | future-layer |
 
@@ -651,7 +652,17 @@ expose backend readiness. Roadmap Failure Injection subset. Offline fakes +
 gated live tests. Out of scope: dashboards, QDrant.
 ```
 
-Status: pending
+Status: **completed** (2026-07-13)
+
+### Completion notes
+
+- `apperr.Degraded`; hybrid returns `unavailable` when dense/sparse strategy
+  lacks a retriever (no empty success).
+- Hybrid + dense env: vector failure → `degraded` + exact/sparse continue;
+  `dense`/`hybrid-dense` fail hard.
+- `ops/failinject` via `CONTEXT_FAIL_*`; `ops/readiness` probe for backends.
+- CLI `ready`; HTTP `/health` embeds readiness; `GET /v1/ready` → 200/503;
+  `metrics.readiness`.
 
 ## Completion Notes
 

@@ -12,6 +12,7 @@ import (
 	"github.com/fastygo/context/internal/indexing"
 	"github.com/fastygo/context/internal/models"
 	"github.com/fastygo/context/internal/models/factory"
+	"github.com/fastygo/context/internal/ops/failinject"
 	"github.com/fastygo/context/internal/retrieval"
 	"github.com/fastygo/context/internal/retrieval/dense"
 	"github.com/fastygo/context/internal/retrieval/dense/postgresvector"
@@ -25,14 +26,16 @@ import (
 
 // SearchResult is CLI JSON for search.
 type SearchResult struct {
-	ProjectID     ids.ProjectID         `json:"project_id"`
-	SnapshotID    ids.SnapshotID        `json:"snapshot_id"`
-	Query         string                `json:"query"`
-	Mode          string                `json:"mode"`
-	Candidates    []retrieval.Candidate `json:"candidates"`
-	Backend       string                `json:"dense_backend,omitempty"`
-	SparseBackend string                `json:"sparse_backend,omitempty"`
-	FocusID       ids.FocusID           `json:"focus_id,omitempty"`
+	ProjectID       ids.ProjectID         `json:"project_id"`
+	SnapshotID      ids.SnapshotID        `json:"snapshot_id"`
+	Query           string                `json:"query"`
+	Mode            string                `json:"mode"`
+	Candidates      []retrieval.Candidate `json:"candidates"`
+	Backend         string                `json:"dense_backend,omitempty"`
+	SparseBackend   string                `json:"sparse_backend,omitempty"`
+	FocusID         ids.FocusID           `json:"focus_id,omitempty"`
+	Degraded        bool                  `json:"degraded,omitempty"`
+	DegradedReasons []string              `json:"degraded_reasons,omitempty"`
 }
 
 func loadIndex(st State) (*index.Memory, ids.SnapshotID, error) {
@@ -116,26 +119,41 @@ func Search(dataDir, projectID, query, mode, focusID string) (SearchResult, erro
 	}
 	backend := ""
 	sparseBackend := sparseH.BackendID
+	var degradedReasons []string
 
 	wantDense := mode == "dense" || mode == "hybrid-dense" || (mode == "hybrid" && denseEnabledByEnv())
 	if wantDense {
 		store, ns, emb, err := openDenseStore(ctx)
 		if err != nil {
-			return SearchResult{}, err
-		}
-		defer store.Close()
-		// Prefer vectors written at ingest. Rebuild/backfill only when forced or
-		// when the active snapshot was not dense-committed (legacy workspaces).
-		needUpsert := denseRebuildByEnv() || !st.Snapshot.DenseEnabled
-		if needUpsert {
-			if err := ensureDenseIndex(ctx, store, ns, emb, idx, st.Project.ID, snap); err != nil {
+			// Hard modes must fail; hybrid with ENABLE_DENSE continues degraded.
+			if mode == "dense" || mode == "hybrid-dense" {
 				return SearchResult{}, err
 			}
+			degradedReasons = append(degradedReasons, "dense: "+err.Error())
+		} else {
+			defer store.Close()
+			// Prefer vectors written at ingest. Rebuild/backfill only when forced or
+			// when the active snapshot was not dense-committed (legacy workspaces).
+			needUpsert := denseRebuildByEnv() || !st.Snapshot.DenseEnabled
+			if needUpsert {
+				if err := ensureDenseIndex(ctx, store, ns, emb, idx, st.Project.ID, snap); err != nil {
+					if mode == "dense" || mode == "hybrid-dense" {
+						return SearchResult{}, err
+					}
+					degradedReasons = append(degradedReasons, "dense upsert: "+err.Error())
+				} else {
+					eng.Dense = dense.Retriever{
+						Store: store, Embedder: emb, Index: idx, Namespace: ns,
+					}
+					backend = store.Capabilities().BackendID
+				}
+			} else {
+				eng.Dense = dense.Retriever{
+					Store: store, Embedder: emb, Index: idx, Namespace: ns,
+				}
+				backend = store.Capabilities().BackendID
+			}
 		}
-		eng.Dense = dense.Retriever{
-			Store: store, Embedder: emb, Index: idx, Namespace: ns,
-		}
-		backend = store.Capabilities().BackendID
 	}
 
 	switch mode {
@@ -169,14 +187,16 @@ func Search(dataDir, projectID, query, mode, focusID string) (SearchResult, erro
 	}
 	cands := merge.DedupAndMerge(res.Candidates)
 	return SearchResult{
-		ProjectID:     st.Project.ID,
-		SnapshotID:    snap,
-		Query:         query,
-		Mode:          mode,
-		Candidates:    cands,
-		Backend:       backend,
-		SparseBackend: sparseBackend,
-		FocusID:       plan.FocusID,
+		ProjectID:       st.Project.ID,
+		SnapshotID:      snap,
+		Query:           query,
+		Mode:            mode,
+		Candidates:      cands,
+		Backend:         backend,
+		SparseBackend:   sparseBackend,
+		FocusID:         plan.FocusID,
+		Degraded:        len(degradedReasons) > 0,
+		DegradedReasons: degradedReasons,
 	}, nil
 }
 
@@ -191,6 +211,9 @@ func denseRebuildByEnv() bool {
 }
 
 func openDenseStore(ctx context.Context) (*postgresvector.Store, indexing.VectorNamespace, models.Embedder, error) {
+	if err := failinject.Check(failinject.Vector); err != nil {
+		return nil, indexing.VectorNamespace{}, nil, err
+	}
 	cfg, err := config.LoadStorageConfigFromEnv()
 	if err != nil {
 		return nil, indexing.VectorNamespace{}, nil, err

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/fastygo/context/internal/config"
+	"github.com/fastygo/context/internal/ops/failinject"
 	"github.com/fastygo/context/internal/storage"
 	"github.com/fastygo/context/internal/storage/postgres"
 )
@@ -19,6 +20,9 @@ type MetadataHandle struct {
 // OpenMetadata opens memory or postgres metadata from process env config.
 // Callers must invoke Close when finished.
 func OpenMetadata(ctx context.Context) (MetadataHandle, error) {
+	if err := failinject.Check(failinject.Metadata); err != nil {
+		return MetadataHandle{}, err
+	}
 	cfg, err := config.LoadStorageConfigFromEnv()
 	if err != nil {
 		return MetadataHandle{}, err

@@ -80,6 +80,7 @@ func (s *Server) authorized(r *http.Request) bool {
 
 func (s *Server) routes() {
 	s.mux.HandleFunc("GET /v1/status", s.handleStatus)
+	s.mux.HandleFunc("GET /v1/ready", s.handleReady)
 	s.mux.HandleFunc("POST /v1/search", s.handleSearch)
 	s.mux.HandleFunc("POST /v1/context-pack", s.handlePack)
 	s.mux.HandleFunc("POST /v1/agent-run", s.handleAgent)
@@ -96,13 +97,44 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("POST /v1/ingest", s.handleIngest)
 }
 
-func (s *Server) handleHealth(w http.ResponseWriter, _ *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{
+func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
+	body := map[string]any{
 		"ok":          true,
 		"service":     "context-serve",
 		"api_version": APIVersion,
 		"time":        time.Now().UTC().Format(time.RFC3339),
-	})
+	}
+	if rep, err := devcli.Ready(r.Context()); err == nil {
+		body["ready"] = rep.Ready
+		body["degraded"] = rep.Degraded
+		body["backends"] = rep.Backends
+	}
+	writeJSON(w, http.StatusOK, body)
+}
+
+func (s *Server) handleReady(w http.ResponseWriter, r *http.Request) {
+	projectQ := r.URL.Query().Get("project_id")
+	if projectQ != "" {
+		st, err := (devcli.Workspace{DataDir: s.cfg.DataDir}).Load()
+		if err != nil {
+			writeAppErr(w, err)
+			return
+		}
+		if err := isolation.RequireProjectMatch(st.Project.ID, ids.ProjectID(projectQ)); err != nil {
+			writeAppErr(w, err)
+			return
+		}
+	}
+	rep, err := devcli.Ready(r.Context())
+	if err != nil {
+		writeAppErr(w, err)
+		return
+	}
+	status := http.StatusOK
+	if !rep.Ready {
+		status = http.StatusServiceUnavailable
+	}
+	writeJSON(w, status, rep)
 }
 
 // StatusResponse is workspace ingest status without host filesystem paths.
@@ -485,7 +517,7 @@ func writeAppErr(w http.ResponseWriter, err error) {
 		status = http.StatusForbidden
 	case apperr.Is(err, apperr.Conflict):
 		status = http.StatusConflict
-	case apperr.Is(err, apperr.Unavailable):
+	case apperr.Is(err, apperr.Unavailable), apperr.Is(err, apperr.Degraded):
 		status = http.StatusServiceUnavailable
 	}
 	writeErr(w, status, err)

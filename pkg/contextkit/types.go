@@ -18,10 +18,21 @@ func (e APIError) Error() string {
 
 // HealthResponse is GET /health.
 type HealthResponse struct {
-	OK         bool   `json:"ok"`
-	Service    string `json:"service"`
-	APIVersion string `json:"api_version,omitempty"`
-	Time       string `json:"time,omitempty"`
+	OK         bool            `json:"ok"`
+	Service    string          `json:"service"`
+	APIVersion string          `json:"api_version,omitempty"`
+	Time       string          `json:"time,omitempty"`
+	Ready      bool            `json:"ready,omitempty"`
+	Degraded   bool            `json:"degraded,omitempty"`
+	Backends   json.RawMessage `json:"backends,omitempty"`
+}
+
+// ReadyResult is GET /v1/ready.
+type ReadyResult struct {
+	OK       bool            `json:"ok"`
+	Ready    bool            `json:"ready"`
+	Degraded bool            `json:"degraded"`
+	Backends json.RawMessage `json:"backends"`
 }
 
 // StatusResponse is GET /v1/status (no host filesystem paths).
@@ -63,9 +74,11 @@ type SearchResult struct {
 	Query         string      `json:"query"`
 	Mode          string      `json:"mode"`
 	Candidates    []Candidate `json:"candidates"`
-	DenseBackend  string      `json:"dense_backend,omitempty"`
-	SparseBackend string      `json:"sparse_backend,omitempty"`
-	FocusID       string      `json:"focus_id,omitempty"`
+	DenseBackend    string      `json:"dense_backend,omitempty"`
+	SparseBackend   string      `json:"sparse_backend,omitempty"`
+	FocusID         string      `json:"focus_id,omitempty"`
+	Degraded        bool        `json:"degraded,omitempty"`
+	DegradedReasons []string    `json:"degraded_reasons,omitempty"`
 }
 
 // PackRequest is POST /v1/context-pack and POST /v1/agent-run.
@@ -176,6 +189,7 @@ type MetricsResult struct {
 	HasLastFailed      bool            `json:"has_last_failed,omitempty"`
 	LastFailedReason   string          `json:"last_failed_reason,omitempty"`
 	Quota              json.RawMessage `json:"quota,omitempty"`
+	Readiness          json.RawMessage `json:"readiness,omitempty"`
 }
 
 // QuotaResult is GET /v1/quota response.

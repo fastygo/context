@@ -6,6 +6,7 @@ import (
 	"github.com/fastygo/context/internal/apperr"
 	"github.com/fastygo/context/internal/config"
 	"github.com/fastygo/context/internal/ids"
+	"github.com/fastygo/context/internal/ops/failinject"
 	"github.com/fastygo/context/internal/retrieval"
 	"github.com/fastygo/context/internal/retrieval/fake"
 	"github.com/fastygo/context/internal/retrieval/index"
@@ -25,6 +26,9 @@ type SparseHandle struct {
 // OpenSparse opens fake (default) or Postgres FTS from env config.
 // Callers must invoke Closer when finished.
 func OpenSparse(ctx context.Context, idx *index.Memory) (SparseHandle, error) {
+	if err := failinject.Check(failinject.Sparse); err != nil {
+		return SparseHandle{}, err
+	}
 	cfg, err := config.LoadStorageConfigFromEnv()
 	if err != nil {
 		return SparseHandle{}, err
