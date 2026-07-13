@@ -47,11 +47,13 @@ func usage() {
 Usage:
   context-dev init-project --root <dir> --data <dir> [--project <id>]
   context-dev ingest --data <dir> --project <id> [--path <dir-or-file>]
-  context-dev search --data <dir> --project <id> --query <text> [--mode exact|sparse|hybrid]
+  context-dev search --data <dir> --project <id> --query <text> [--mode exact|sparse|hybrid|dense|hybrid-dense]
   context-dev context-pack --data <dir> --project <id> --query <text>
   context-dev agent-run --data <dir> --project <id> --query <text>
   context-dev trace --data <dir> --project <id> --run <id>
 
+Modes dense and hybrid-dense require PostgreSQL/pgvector (see .project/local-server.md).
+Set CONTEXT_ENABLE_DENSE=1 to include dense in hybrid when Postgres is up.
 Outputs stable JSON on stdout for Lab/fixture consumption.
 `)
 }

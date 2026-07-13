@@ -6,16 +6,18 @@ import (
 
 	"github.com/fastygo/context/internal/foundation"
 	"github.com/fastygo/context/internal/ids"
+	"github.com/fastygo/context/internal/indexing"
 	"github.com/fastygo/context/internal/lexicon"
 	lexfake "github.com/fastygo/context/internal/lexicon/fake"
 	"github.com/fastygo/context/internal/linguistic"
 	"github.com/fastygo/context/internal/linguistic/simple"
+	modelfake "github.com/fastygo/context/internal/models/fake"
 	"github.com/fastygo/context/internal/retrieval"
+	"github.com/fastygo/context/internal/retrieval/dense"
 	"github.com/fastygo/context/internal/retrieval/exact"
 	"github.com/fastygo/context/internal/retrieval/fake"
 	"github.com/fastygo/context/internal/retrieval/hybrid"
 	"github.com/fastygo/context/internal/retrieval/index"
-	"github.com/fastygo/context/internal/indexing"
 )
 
 func corpus() *index.Memory {
@@ -266,5 +268,56 @@ func TestRetrievalTraceEvents(t *testing.T) {
 	}
 	if !types["retrieval_query"] || !types["query_expansion"] || !types["retrieval_candidates"] {
 		t.Fatalf("trace types=%v", types)
+	}
+}
+
+func TestHybridDenseWithFakeStore(t *testing.T) {
+	t.Parallel()
+	idx := corpus()
+	store := fake.NewVectorStore()
+	ns := indexing.VectorNamespace{
+		Name: "ns", ProjectID: "p1", SnapshotID: "snap1", EmbeddingVersion: "fake-hash-v1",
+	}
+	for _, rec := range idx.List("p1", "snap1") {
+		_ = store.Upsert(context.Background(), ns, []retrieval.VectorPoint{{
+			ChunkID: rec.ChunkID, ProjectID: rec.ProjectID, SnapshotID: rec.SnapshotID,
+			EmbeddingVersion: "fake-hash-v1", ChunkerVersion: "para-v1", MorphVersion: "simple-v1",
+			Language: "en", Span: rec.Span, Vector: fake.HashEmbed(rec.Text, 8),
+		}})
+	}
+	eng := hybrid.Engine{
+		Exact: exact.Retriever{Index: idx},
+		Dense: dense.Retriever{
+			Store: store, Embedder: modelfake.Embedder{Dim: 8}, Index: idx, Namespace: ns,
+		},
+		Expander: simple.Expander{WordformMap: map[string][]string{"run": {"runners"}}},
+	}
+	plan := retrieval.RetrievalPlan{
+		ID: "plan1", ProjectID: "p1", SnapshotID: "snap1", TopNRawPool: 10,
+		Strategies: []retrieval.RetrieverStrategy{
+			{RetrieverID: "exact"},
+			{RetrieverID: "dense"},
+		},
+	}
+	res, err := eng.Search(context.Background(), plan, "q-dense", "run")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(res.Candidates) == 0 {
+		t.Fatal("expected hybrid dense candidates")
+	}
+	var sawDense bool
+	for _, c := range res.Candidates {
+		for _, contrib := range c.Contributions {
+			if contrib.RetrieverID == "dense" {
+				sawDense = true
+				if contrib.EmbedVersion == "" {
+					t.Fatalf("missing embed version on %#v", contrib)
+				}
+			}
+		}
+	}
+	if !sawDense {
+		t.Fatalf("expected dense contribution in %#v", res.Candidates)
 	}
 }

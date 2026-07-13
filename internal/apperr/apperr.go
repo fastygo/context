@@ -10,10 +10,12 @@ import (
 type Code string
 
 const (
-	NotFound   Code = "not_found"
-	Conflict   Code = "conflict"
-	Validation Code = "validation"
-	Permission Code = "permission"
+	NotFound     Code = "not_found"
+	Conflict     Code = "conflict"
+	Validation   Code = "validation"
+	Permission   Code = "permission"
+	Unavailable  Code = "unavailable"
+	Internal     Code = "internal"
 )
 
 // Error is a typed application error.

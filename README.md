@@ -69,13 +69,15 @@ Nearest work follows `.project/progress.md` plan chunks:
 | Phase | Status | Goal |
 | --- | --- | --- |
 | **0 — Architecture baseline** | Chunk 01 + Foundation Gate done | Lock package, storage, index, trace, linguistic, and scoring boundaries |
-| **1 — Proof of concept** | Chunks 02–08A + 09 done; 10–12 pending | Prove ingest → retrieve → `ContextPack` → fake model/tool step → verifier → replayable trace |
+| **1 — Proof of concept** | Chunks 02–08A + 09–10 done; 11–12 pending | Prove ingest → retrieve → `ContextPack` → fake model/tool step → verifier → replayable trace |
 
-Immediate next step: **Chunk 10** — PostgreSQL/pgvector `VectorStore` adapter.
+Immediate next step: **Chunk 11** — PostgreSQL metadata adapter.
 
 Local stack: `./scripts/dev.sh up` then `./scripts/dev.sh health`
-(or `make dev-up` / `make dev-health`). See
-[`.project/local-server.md`](.project/local-server.md).
+(or `make dev-up` / `make dev-health`). Dense CLI modes: `--mode dense` /
+`--mode hybrid-dense` (requires Postgres). See
+[`.project/local-server.md`](.project/local-server.md) and
+[`.project/adapters-backlog.md`](.project/adapters-backlog.md).
 
 PoC storage progression (from accepted ADRs):
 

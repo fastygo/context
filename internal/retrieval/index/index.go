@@ -32,6 +32,8 @@ type ChunkRecord struct {
 	LexiconSourceID  ids.LexiconSourceID
 	SourceAuthority  string
 	TemporalMetadata *corpus.TemporalMetadata
+	Language         string // BCP 47; empty means unknown
+	AnalyzerVersion  string // language adapter / analyzer pin for explainability
 }
 
 // Memory is a project/snapshot scoped chunk index.
@@ -93,6 +95,9 @@ func MatchesFilters(c ChunkRecord, f retrieval.RetrievalFilters) bool {
 		return false
 	}
 	if f.SourceAuthority != "" && c.SourceAuthority != f.SourceAuthority {
+		return false
+	}
+	if f.Language != "" && c.Language != f.Language {
 		return false
 	}
 	if !f.MatchesTemporal(c.TemporalMetadata) {

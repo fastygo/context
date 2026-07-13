@@ -77,6 +77,26 @@ Load with `config.LoadStorageConfigFromEnv()` or start from
 - Never commit `.env` (already gitignored).
 - Default local password `context` is for disposable compose data only.
 
+## Dense search (Chunk 10)
+
+With the stack up:
+
+```bash
+export CONTEXT_PG_DSN='postgres://context:context@127.0.0.1:5432/context?sslmode=disable'
+go run ./cmd/context-dev search --data <dir> --project <id> --query '...' --mode dense
+# or: --mode hybrid-dense
+# or: CONTEXT_ENABLE_DENSE=1 ... --mode hybrid
+```
+
+Integration tests:
+
+```bash
+CONTEXT_PG_DSN='postgres://context:context@127.0.0.1:5432/context?sslmode=disable' \
+  go test ./internal/retrieval/dense/postgresvector/ -count=1
+```
+
+Without `CONTEXT_PG_DSN`, those tests skip and `go test ./...` stays green.
+
 ## Non-goals (this chunk)
 
 - No `VectorStore` / `MetadataStore` Postgres adapters (Chunks 10–11).

@@ -169,7 +169,15 @@ func (s *VectorStore) Search(ctx context.Context, ns indexing.VectorNamespace, v
 		if p.EmbeddingVersion != ns.EmbeddingVersion {
 			continue
 		}
-		hits = append(hits, retrieval.VectorHit{ChunkID: p.ChunkID, Score: cosine(vector, p.Vector)})
+		hits = append(hits, retrieval.VectorHit{
+			ChunkID:          p.ChunkID,
+			Score:            cosine(vector, p.Vector),
+			EmbeddingVersion: p.EmbeddingVersion,
+			ChunkerVersion:   p.ChunkerVersion,
+			MorphVersion:     p.MorphVersion,
+			ContextRef:       p.ContextRef,
+			SnapshotID:       p.SnapshotID,
+		})
 	}
 	if limit > 0 && len(hits) > limit {
 		// naive top-N by score

@@ -12,8 +12,10 @@ import (
 )
 
 const (
-	ProviderID   = "fake"
-	ModelVersion = "fake-v1"
+	ProviderID          = "fake"
+	ModelVersion        = "fake-v1"
+	EmbeddingVersion    = "fake-hash-v1"
+	DefaultEmbedDim     = 8
 )
 
 // Completer returns deterministic text and optional tool hints from the pack.
@@ -57,4 +59,35 @@ func (c Completer) Complete(ctx context.Context, req models.CompletionRequest) (
 	return models.CompletionResult{Text: text, ModelCall: call, ToolHints: hints}, nil
 }
 
-var _ models.Completer = Completer{}
+// Embedder is a deterministic HashEmbed-based embedding adapter.
+type Embedder struct {
+	Dim int
+}
+
+func (e Embedder) Embed(ctx context.Context, texts []string) ([][]float32, string, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, "", err
+	}
+	dim := e.Dim
+	if dim <= 0 {
+		dim = DefaultEmbedDim
+	}
+	out := make([][]float32, len(texts))
+	for i, text := range texts {
+		out[i] = hashEmbed(text, dim)
+	}
+	return out, EmbeddingVersion, nil
+}
+
+func hashEmbed(text string, dim int) []float32 {
+	out := make([]float32, dim)
+	for i, r := range text {
+		out[i%dim] += float32(int(r)%31) / 31
+	}
+	return out
+}
+
+var (
+	_ models.Completer = Completer{}
+	_ models.Embedder  = Embedder{}
+)

@@ -727,7 +727,25 @@ Acceptance criteria:
 - Integration tests do not fail when services are absent.
 ```
 
-Status: pending
+Status: **completed** (2026-07-13)
+
+### Completion notes
+
+- Extended `VectorPoint` / `VectorHit` with `chunker_version`, `morph_version`,
+  `context_ref`, `language`, and echoed snapshot/embedding provenance on hits.
+- Added `retrieval.BackendCapabilities` + `CapabilityReporter`; pgvector reports
+  project/snapshot filters server-side and temporal/metadata filters as
+  client-side only.
+- Implemented `internal/retrieval/dense` Retriever and
+  `internal/retrieval/dense/postgresvector` live `VectorStore` (table
+  `context_dense_vectors`, dim from config, cosine default).
+- Fake `models/fake.Embedder` (`fake-hash-v1`, dim 8); hybrid Engine accepts
+  Dense; language filter + analyzer/embed versions proven in dense unit tests.
+- CLI modes: `dense`, `hybrid-dense`; optional `CONTEXT_ENABLE_DENSE=1` for
+  hybrid. Adapter backlog: [adapters-backlog.md](adapters-backlog.md).
+- Verified: `go test ./...` offline (integration skipped without
+  `CONTEXT_PG_DSN`); with DSN, postgresvector integration + CLI
+  `--mode dense` returned `dense_backend=postgres_pgvector`.
 
 ## Plan Chunk 11: PostgreSQL Metadata Adapter
 

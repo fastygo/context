@@ -239,15 +239,45 @@ type VectorPoint struct {
 	ProjectID        ids.ProjectID
 	SnapshotID       ids.SnapshotID
 	EmbeddingVersion string
+	ChunkerVersion   string
+	MorphVersion     string
 	ContextRef       ids.ContextRefID
 	Span             foundation.ByteSpan
+	Language         string
 	Vector           []float32
 }
 
-// VectorHit is a dense search result.
+// VectorHit is a dense search result with provenance echoed from the store.
 type VectorHit struct {
-	ChunkID ids.ChunkID
-	Score   float64
+	ChunkID          ids.ChunkID
+	Score            float64
+	EmbeddingVersion string
+	ChunkerVersion   string
+	MorphVersion     string
+	ContextRef       ids.ContextRefID
+	SnapshotID       ids.SnapshotID
+}
+
+// BackendCapabilities declares what a dense/sparse backend can enforce
+// server-side so planners can keep client-side filters where needed.
+type BackendCapabilities struct {
+	BackendID                string   `json:"backend_id"`
+	Kind                     string   `json:"kind"`
+	SupportsProjectFilter    bool     `json:"supports_project_filter"`
+	SupportsSnapshotFilter   bool     `json:"supports_snapshot_filter"`
+	SupportsTemporalFilter   bool     `json:"supports_temporal_filter"`
+	SupportsMetadataFilter   bool     `json:"supports_metadata_filter"`
+	SupportsPayloadNamespace bool     `json:"supports_payload_namespace"`
+	MaxDimension             int      `json:"max_dimension,omitempty"`
+	Dimension                int      `json:"dimension,omitempty"`
+	Metrics                  []string `json:"metrics,omitempty"`
+	NamespaceModel           string   `json:"namespace_model,omitempty"`
+	ManagedService           bool     `json:"managed_service"`
+}
+
+// CapabilityReporter is implemented by live vector/sparse adapters.
+type CapabilityReporter interface {
+	Capabilities() BackendCapabilities
 }
 
 // SparseSearchClient is the sparse/FTS port.

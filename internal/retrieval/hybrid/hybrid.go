@@ -14,10 +14,11 @@ import (
 	"github.com/fastygo/context/internal/tracing"
 )
 
-// Engine coordinates exact/sparse (and optional expansion) retrieval.
+// Engine coordinates exact/sparse/dense (and optional expansion) retrieval.
 type Engine struct {
 	Exact     exact.Retriever
 	Sparse    retrieval.Retriever
+	Dense     retrieval.Retriever
 	Expander  linguistic.QueryExpander
 	Recorder  tracing.Recorder
 	RejectExp map[string]bool // expanded terms that must be ignored (false-positive control)
@@ -145,6 +146,11 @@ func (e Engine) retrieveOne(ctx context.Context, retrieverID string, plan retrie
 			return nil, nil
 		}
 		return e.Sparse.Retrieve(ctx, plan, query)
+	case "dense":
+		if e.Dense == nil {
+			return nil, nil
+		}
+		return e.Dense.Retrieve(ctx, plan, query)
 	default:
 		return nil, nil
 	}
