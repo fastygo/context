@@ -77,6 +77,31 @@ Load with `config.LoadStorageConfigFromEnv()` or start from
 - Never commit `.env` (already gitignored).
 - Default local password `context` is for disposable compose data only.
 
+## Durable CLI metadata (Chunk 13)
+
+Opt-in durable writes for ingest / agent-run / trace:
+
+```bash
+export CONTEXT_PG_DSN='postgres://context:context@127.0.0.1:5432/context?sslmode=disable'
+export CONTEXT_METADATA_KIND=postgres
+
+go run ./cmd/context-dev init-project --root <corpus> --data <data> --project demo
+go run ./cmd/context-dev ingest --data <data> --project demo
+# project/sources/chunks/snapshot also survive in Postgres; state.json remains a cache
+
+go run ./cmd/context-dev agent-run --data <data> --project demo --query '...'
+go run ./cmd/context-dev trace --data <data> --project demo --run <id>
+# trace reads ListTrace from Postgres when CONTEXT_METADATA_KIND=postgres
+```
+
+Without `CONTEXT_METADATA_KIND=postgres`, CLI stays offline (`state.json` + memory).
+
+Integration:
+
+```bash
+CONTEXT_PG_DSN=... go test ./internal/devcli/ -run Durable -count=1
+```
+
 ## Dense search (Chunk 10)
 
 With the stack up:

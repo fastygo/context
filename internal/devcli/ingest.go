@@ -49,7 +49,7 @@ func Ingest(dataDir, projectID, path string) (State, error) {
 	for _, leaf := range res.Leaves {
 		raws := res.RawChunks[leaf.PathKey]
 		version := chunkerVersionFor(leaf.RelativePath)
-		sourceID := ids.SourceID(leaf.PathKey[:16])
+		sourceID := sourceIDFromPathKey(leaf.PathKey)
 		artID := ids.ArtifactID("src_" + sanitizeID(string(sourceID)))
 		if _, err := arts.Put(context.Background(), st.Project.ID, artID, "application/octet-stream", []byte(leaf.RelativePath), nil); err != nil {
 			_ = err
@@ -80,6 +80,18 @@ func Ingest(dataDir, projectID, path string) (State, error) {
 	if err := ws.Save(st); err != nil {
 		return State{}, err
 	}
+
+	ctx := context.Background()
+	handle, err := OpenMetadata(ctx)
+	if err != nil {
+		return State{}, err
+	}
+	defer handle.Close()
+	if handle.UsesPostgres() {
+		if err := PersistIngest(ctx, handle.Store, st.Project, res.Snapshot, res.Leaves, chunks); err != nil {
+			return State{}, apperr.Wrap(apperr.Internal, "persist ingest metadata", err)
+		}
+	}
 	return st, nil
 }
 
@@ -90,6 +102,13 @@ func chunkerVersionFor(rel string) string {
 	default:
 		return "paragraph-v1"
 	}
+}
+
+func sourceIDFromPathKey(pathKey string) ids.SourceID {
+	if len(pathKey) >= 16 {
+		return ids.SourceID(pathKey[:16])
+	}
+	return ids.SourceID(pathKey)
 }
 
 func sanitizeID(s string) string {

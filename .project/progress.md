@@ -881,6 +881,45 @@ Status: **completed** (2026-07-13) — hypothesis **validated** (with recorded g
   (state.json ingest default, fake sparse, fake-hash embeddings, simple-lang /
   DocumentStore lexicon path before dedicated adapters).
 
+## Plan Chunk 13: Durable CLI Postgres Metadata
+
+Copy-paste prompt:
+
+```text
+Work in @Context only. Close the Chunk 12 gap where CLI ingest/agent/trace only
+use state.json / memory.MetadataStore while Postgres MetadataStore already exists.
+Opt-in via CONTEXT_METADATA_KIND=postgres; offline default unchanged.
+
+Plan and then implement:
+1. Add openMetadata helper from config.LoadStorageConfigFromEnv /
+   postgres.OpenFromConfig.
+2. After successful ingest, when kind=postgres: PutProject, PutSource, PutChunk,
+   PutSnapshot, SetActiveSnapshot (tx), optional PutArtifactMeta; fail on error.
+3. Keep state.json as local cache for search.
+4. Wire AgentRun to openMetadata instead of hard-coded memory; PutPack/PutRun/
+   traces via store.
+5. Trace CLI: prefer ListTrace from postgres when configured, else state.json.
+6. Gated integration tests with CONTEXT_PG_DSN; unit tests offline.
+7. Update local-server.md and progress completion notes.
+
+Acceptance criteria:
+- CONTEXT_METADATA_KIND=postgres makes ingest/agent durable across process restart.
+- Without the env, CLI behavior and go test ./... stay offline-green.
+- Domain ports unchanged; no QDrant/FTS/lang adapters in this chunk.
+```
+
+Status: **completed** (2026-07-13)
+
+### Completion notes
+
+- `OpenMetadata` / `PersistIngest` wire CLI to Postgres when
+  `CONTEXT_METADATA_KIND=postgres`; state.json remains search cache.
+- Ingest persists project, sources, artifact meta, chunks, snapshot + active
+  pointer (tx). AgentRun uses opened MetadataStore (PutPack/run/trace);
+  `trace` prefers `ListTrace` from Postgres.
+- Verified: `go test ./...` offline; `CONTEXT_PG_DSN=... go test ./internal/devcli/
+  -run Durable` restart survival for chunks/snapshot/trace.
+
 ## Completion Notes
 
 Use this section after each chunk. Keep notes short and factual.

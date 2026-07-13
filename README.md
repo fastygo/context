@@ -70,15 +70,18 @@ Nearest work follows `.project/progress.md` plan chunks:
 | --- | --- | --- |
 | **0 — Architecture baseline** | Chunk 01 + Foundation Gate done | Lock package, storage, index, trace, linguistic, and scoring boundaries |
 | **1 — Proof of concept** | Chunks 02–12 done | Prove ingest → retrieve → `ContextPack` → fake model/tool step → verifier → replayable trace |
+| **2 — Durable CLI** | Chunk 13 done | Opt-in Postgres MetadataStore for ingest/agent/trace |
 
-Immediate next step: post-PoC adapters / product wiring as needed (see
-`.project/proof/SUMMARY.md` gaps). Re-run proof with
-`./scripts/proof-e2e.sh` when the local Postgres stack is up.
+Immediate next step: remaining proof gaps (Postgres FTS / version pins /
+lang-lex adapters) as measured need. Durable CLI:
+
+`CONTEXT_METADATA_KIND=postgres` + `CONTEXT_PG_DSN=...`
 
 Local stack: `./scripts/dev.sh up` then `./scripts/dev.sh health`.
 Dense CLI modes: `--mode dense` / `--mode hybrid-dense`.
 Metadata smoke: `context-dev meta-check --backend postgres`.
 E2E proof artifacts: [`.project/proof/`](.project/proof/).
+See [`.project/local-server.md`](.project/local-server.md).
 
 PoC storage progression (from accepted ADRs):
 

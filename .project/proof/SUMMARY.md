@@ -23,14 +23,16 @@
 
 ## Gaps
 
-- CLI ingest still persists workspace state.json; postgres metadata is proven via meta path / proof helpers, not yet the default ingest backend.
+- ~~CLI ingest still persists workspace state.json only~~ **Closed in Chunk 13:**
+  opt-in `CONTEXT_METADATA_KIND=postgres` persists ingest/agent/trace; state.json
+  remains an offline cache.
 - Sparse path remains fake term-overlap; Postgres FTS and context-sparse are not required for this proof.
 - Dense embeddings use fake-hash-v1 dim=8; live embedding providers are deferred.
 - Multilingual/lexicon proofs use in-memory fixtures with simple-lang adapters; context-lang-* and TEI/SKOS lexicon adapters are not wired.
 
 ## Next decisions
 
-- Decide when ingest/agent-run should default MetadataStore to postgres (CONTEXT_METADATA_KIND=postgres).
+- ~~Decide when ingest/agent-run should default MetadataStore to postgres~~ **Decided (Chunk 13):** opt-in via `CONTEXT_METADATA_KIND=postgres` (not default).
 - Before QDrant/Turbopuffer: keep BackendCapabilities contract tests against pgvector + candidate.
 - Before context-sparse: measure Postgres FTS / fake sparse lexical limits on a larger corpus.
 - Before context-lang-*: pin analyzer_version/dictionary_version on chunk rows during ingest.

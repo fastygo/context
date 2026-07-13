@@ -11,7 +11,6 @@ import (
 	"github.com/fastygo/context/internal/ids"
 	modelfake "github.com/fastygo/context/internal/models/fake"
 	"github.com/fastygo/context/internal/policy"
-	"github.com/fastygo/context/internal/storage/memory"
 	toolfake "github.com/fastygo/context/internal/tools/fake"
 	toolmem "github.com/fastygo/context/internal/tools/memory"
 	"github.com/fastygo/context/internal/tracing"
@@ -19,17 +18,19 @@ import (
 
 // AgentRunResult is CLI JSON for agent-run.
 type AgentRunResult struct {
-	Run      agentruntime.AgentRun `json:"run"`
-	PackID   ids.PackID            `json:"pack_id"`
-	ModelText string               `json:"model_text"`
-	ToolCall any                   `json:"tool_call,omitempty"`
-	VerifyOK bool                  `json:"verify_ok"`
+	Run       agentruntime.AgentRun `json:"run"`
+	PackID    ids.PackID            `json:"pack_id"`
+	ModelText string                `json:"model_text"`
+	ToolCall  any                   `json:"tool_call,omitempty"`
+	VerifyOK  bool                  `json:"verify_ok"`
+	MetaKind  string                `json:"meta_kind,omitempty"`
 }
 
 // TraceResult is CLI JSON for trace.
 type TraceResult struct {
-	Run    agentruntime.AgentRun `json:"run"`
-	Events []tracing.Event       `json:"events"`
+	Run      agentruntime.AgentRun `json:"run"`
+	Events   []tracing.Event       `json:"events"`
+	MetaKind string                `json:"meta_kind,omitempty"`
 }
 
 // AgentRun builds a pack and executes a fake agent loop.
@@ -44,11 +45,21 @@ func AgentRun(dataDir, projectID, query string) (AgentRunResult, error) {
 		return AgentRunResult{}, err
 	}
 
-	meta := memory.New()
 	ctx := context.Background()
+	handle, err := OpenMetadata(ctx)
+	if err != nil {
+		return AgentRunResult{}, err
+	}
+	defer handle.Close()
+	meta := handle.Store
+
 	if err := meta.PutProject(ctx, st.Project); err != nil {
 		return AgentRunResult{}, err
 	}
+	if err := meta.PutPack(ctx, packRes.Pack); err != nil {
+		return AgentRunResult{}, err
+	}
+
 	arts, err := localfs.New(ws.ArtifactsDir())
 	if err != nil {
 		return AgentRunResult{}, err
@@ -97,6 +108,7 @@ func AgentRun(dataDir, projectID, query string) (AgentRunResult, error) {
 		st.ToolCalls = append(st.ToolCalls, *res.ToolCall)
 	}
 	st.Traces = append(st.Traces, res.Events...)
+	st.Packs = append(st.Packs, packRes.Pack)
 	if err := ws.Save(st); err != nil {
 		return AgentRunResult{}, err
 	}
@@ -106,6 +118,7 @@ func AgentRun(dataDir, projectID, query string) (AgentRunResult, error) {
 		PackID:    packRes.Pack.ID,
 		ModelText: res.Model.Text,
 		VerifyOK:  res.Verify.OK,
+		MetaKind:  string(handle.Kind),
 	}
 	if res.ToolCall != nil {
 		out.ToolCall = res.ToolCall
@@ -113,7 +126,8 @@ func AgentRun(dataDir, projectID, query string) (AgentRunResult, error) {
 	return out, nil
 }
 
-// Trace loads a run and its events from workspace state.
+// Trace loads a run and its events from postgres metadata when configured,
+// otherwise from workspace state.json.
 func Trace(dataDir, projectID, runID string) (TraceResult, error) {
 	ws := Workspace{DataDir: dataDir}
 	st, err := ws.Load()
@@ -123,6 +137,26 @@ func Trace(dataDir, projectID, runID string) (TraceResult, error) {
 	if projectID != "" && ids.ProjectID(projectID) != st.Project.ID {
 		return TraceResult{}, apperr.New(apperr.Validation, "project id mismatch")
 	}
+
+	ctx := context.Background()
+	handle, err := OpenMetadata(ctx)
+	if err != nil {
+		return TraceResult{}, err
+	}
+	defer handle.Close()
+
+	if handle.UsesPostgres() {
+		run, err := handle.Store.GetRun(ctx, st.Project.ID, ids.RunID(runID))
+		if err != nil {
+			return TraceResult{}, err
+		}
+		events, err := handle.Store.ListTrace(ctx, st.Project.ID, ids.RunID(runID))
+		if err != nil {
+			return TraceResult{}, err
+		}
+		return TraceResult{Run: run, Events: events, MetaKind: string(handle.Kind)}, nil
+	}
+
 	var run agentruntime.AgentRun
 	found := false
 	for _, r := range st.Runs {
@@ -141,5 +175,5 @@ func Trace(dataDir, projectID, runID string) (TraceResult, error) {
 			events = append(events, ev)
 		}
 	}
-	return TraceResult{Run: run, Events: events}, nil
+	return TraceResult{Run: run, Events: events, MetaKind: string(handle.Kind)}, nil
 }
