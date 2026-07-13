@@ -11,7 +11,7 @@ automated work.
 
 The repository is in an early planning-and-implementation stage: architecture
 decisions are recorded, and the first proof-of-concept code path is defined in
-`.project/progress.md`. Target capabilities below describe the intended design,
+`.project/README.md`. Target capabilities below describe the intended design,
 not a finished runtime.
 
 ## Why
@@ -64,20 +64,20 @@ The module is designed to provide foundations for:
 
 ## Current Focus
 
-Nearest work follows `.project/progress.md` plan chunks:
+**Lab gate passed.** Integrate via HTTP / `pkg/contextkit`.
 
-| Phase | Status | Goal |
-| --- | --- | --- |
-| **0 — Architecture baseline** | Chunk 01 + Foundation Gate done | Lock package, storage, index, trace, linguistic, and scoring boundaries |
-| **1 — Proof of concept** | Chunks 02–13 done | CLI loop + pgvector/Postgres + durable metadata opt-in; proof validated |
-| **2 — MVP toward service API** | Chunks **14–20** done | Thin HTTP service (ADR-0024) |
-| **3 — Reliable Beta** | Chunks **21–32** — **Lab gate passed** | Auth / OpenAPI deferred |
+| Doc | Purpose |
+| --- | --- |
+| [`docs/README.md`](docs/README.md) | Navigation for humans and LLMs |
+| [`docs/getting-started.md`](docs/getting-started.md) | First offline loop |
+| [`docs/cli.md`](docs/cli.md) | CLI reference |
+| [`docs/api/v1.md`](docs/api/v1.md) | HTTP + contextkit |
+| [`docs/lab-gate.md`](docs/lab-gate.md) | Lab/BFF contract freeze |
+| [`.project/`](.project/) | Planned roadmaps / plugins / drafts only |
+| [`.proofs/`](.proofs/) | Proof & eval JSON artifacts |
 
-Immediate next step: Lab/BFF may bind API v1 ([`.project/lab-gate.md`](.project/lab-gate.md)).
-Deferred: multi-tenant auth, OpenAPI codegen, lang adapters, fuzzy/trigram.
-
-Phase 2 MVP service boundary: thin HTTP+JSON (`cmd/context-serve`, ADR-0024).
-Phase 3 starts with `pkg/contextkit` (Chunk 21). See `.project/progress.md`.
+Deferred: multi-tenant auth, OpenAPI codegen, lang adapters, fuzzy/trigram
+(see [`.project/future-layer.md`](.project/future-layer.md)).
 
 Local stack: `./scripts/dev.sh up` then `./scripts/dev.sh health`.
 Durable CLI: `CONTEXT_METADATA_KIND=postgres` + `CONTEXT_PG_DSN=...`.
@@ -89,8 +89,8 @@ Completer: `CONTEXT_COMPLETER_KIND=fake|localecho|http`
 Dense on ingest: `CONTEXT_ENABLE_DENSE=1` (search uses committed vectors;
 `CONTEXT_DENSE_REBUILD=1` optional).
 Dense modes: `--mode dense` / `--mode hybrid-dense`.
-Proof artifacts: [`.project/proof/`](.project/proof/).
-See [`.project/local-server.md`](.project/local-server.md).
+Proof artifacts: [`.proofs/`](.proofs/).
+See [`docs/operations/local-server.md`](docs/operations/local-server.md).
 
 PoC storage progression (from accepted ADRs):
 
@@ -341,22 +341,16 @@ configuration.
 
 ## Architecture Guidance
 
-The canonical planning documents live in `.project/`:
-
-- `.project/roadmap-context-core.md`: architectural baseline and phased roadmap.
-- `.project/progress.md`: copy-paste plan chunks from baseline to PoC.
-- `.project/decisions/`: accepted ADRs for package, storage, index, trace, and
-  adapter boundaries.
-- `.project/future-layer.md`: deferred production-grade layers and review gates.
-- `.project/plugins/language-adapters.md`: roadmap for `context-lang-*`
-  language adapters.
-- `.project/plugins/lexicon-resources.md`: roadmap for dictionaries, thesauri,
-  attestations, historical lexicons, and controlled vocabulary resources.
+- **How to use the core:** [`docs/README.md`](docs/README.md)
+- **ADRs:** [`docs/decisions/`](docs/decisions/)
+- **Planning only:** [`.project/`](.project/) (roadmap, future-layer, adapters
+  backlog, plugins, drafts)
+- **Proof JSON:** [`.proofs/`](.proofs/)
 
 The project skill lives in `.cursor/skills/context-core-steward/` and should be
 used when planning, implementing, reviewing, or debugging this repository. It
 keeps work aligned with DDD, Clean Architecture, SOLID, DRY, TDD, traceability,
-brand-neutral API boundaries, and the active plan chunk in `progress.md`.
+and brand-neutral API boundaries.
 
 ## Planned Package Direction
 
@@ -474,7 +468,7 @@ Expected first demo corpus: repository docs such as `README.md` and
 | Item | State |
 | --- | --- |
 | Planning baseline | Accepted (`roadmap-context-core.md`) |
-| Architecture decisions | ADRs under `.project/decisions/` (through ADR-0024) |
+| Architecture decisions | ADRs under `docs/decisions/` (through ADR-0024) |
 | Go implementation | Phases 1–2 done (Chunks 01–20); Phase 3 starts Chunk 21 |
 | Public API | `pkg/contextkit` HTTP client (Chunk 21) |
 | Dependencies | Prefer stdlib + narrow adapters (`pgx` when Postgres gated) |

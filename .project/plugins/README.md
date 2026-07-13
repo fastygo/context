@@ -3,6 +3,8 @@
 Deferred adapter, resource, and methodology tracks that consume neutral Context
 Runtime contracts without becoming core dependencies.
 
+How-to for the shipped core: [`docs/README.md`](../docs/README.md).
+
 | Roadmap | Boundary |
 | --- | --- |
 | [language-adapters.md](language-adapters.md) | Language-specific tokenization, morphology, generation, and query expansion |

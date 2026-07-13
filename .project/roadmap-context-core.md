@@ -88,9 +88,10 @@ be designed for, but not prematurely implemented.
 - The project rule requires a brand-neutral core. Keep named companions and
   product-specific use cases outside the general API and documentation.
 - `go.mod` is intentionally minimal and currently has no dependencies.
-- `.project` is intentionally reduced to this roadmap, the progress tracker, and
-  the future-layer backlog. Future agents should treat these files as the
-  self-contained architectural source of truth.
+- `.project` is intentionally reduced to planned roadmaps, plugins, and drafts
+  (see `.project/README.md`). Shipped docs live in `docs/`; proofs in `.proofs/`.
+  Future agents should treat `.project/` as planning-only and `docs/` as the
+  how-to source of truth for integrating the shipped core.
 
 ## Self-Contained Conceptual Baseline
 
@@ -1525,7 +1526,7 @@ Goal: support external users with controlled reliability.
 public contract, ship API v1 freeze, Context inspector JSON, a non-fake
 Completer/provider Embedder config path, quota soft-limits, and explicit
 failure/degraded semantics. Redaction, background scheduling, and fuzzy/trigram
-remain later Phase 3 items. See `.project/progress.md`.
+remain later Phase 3 items. See `.project/README.md`.
 
 Scope:
 
@@ -1977,8 +1978,8 @@ URL capture and strict limits. Defer broad crawling.
 
 ## Architecture decisions
 
-Normative decisions live under [`.project/decisions/`](decisions/README.md) (22
-ADRs as of 2026-07-13). Phase mapping:
+Normative decisions live under [`docs/decisions/`](../docs/decisions/README.md)
+(through ADR-0027 as of 2026-07-13). Phase mapping:
 
 - **Domain and no-service baseline:** ADR-0001–0006 define internal-first
   packages, metadata/artifact/model/trace interfaces, deterministic fakes, and
@@ -2007,8 +2008,8 @@ Draft research notes stay in `.project/.draft/` and are non-normative.
 
 ## Immediate Next Steps
 
-1. ~~Add architecture decision records under `.project/decisions/`.~~ **Done** — see
-   [decisions/README.md](decisions/README.md).
+1. ~~Add architecture decision records under `docs/decisions/`.~~ **Done** — see
+   [docs/decisions/README.md](../docs/decisions/README.md).
 2. ~~Close the foundation gate before runtime code.~~ **Done** — ADR-0015–0021.
 3. ~~Create the internal package skeleton without external dependencies.~~ **Done** — Chunk 02.
 4. ~~Implement domain models and interfaces only...~~ **Done** — see `internal/`.

@@ -16,15 +16,17 @@ future engineers can understand, extend, and trust the code.
 When this skill applies:
 
 1. Read the relevant project guidance before planning or editing:
+   - `docs/README.md` (how-to + navigation)
    - `.project/roadmap-context-core.md`
-   - `.project/progress.md`
+   - `.project/README.md`
    - `.project/future-layer.md`
    - `.cursor/rules/brand-neutral-core.mdc`
-2. Identify the active plan chunk or ask which chunk should be used.
+2. Identify whether the work is shipped-docs, a planned roadmap item, or a new
+   ADR; do not re-open completed Lab-gate chunks without cause.
 3. State the bounded intent, affected packages, validation plan, and non-goals.
 4. Keep the implementation small enough to complete and verify in one pass.
-5. Update `.project/progress.md` only when verified work changes the project
-   state.
+5. Update `docs/` for user-visible behavior; add ADRs under `docs/decisions/`
+   for durable boundaries; keep `.project/` for planned-only material.
 
 ## Non-Negotiables
 
@@ -64,7 +66,9 @@ Use these principles as practical constraints, not slogans:
 
 Before implementation, answer:
 
-- Which plan chunk from `.project/progress.md` is active?
+- Is this shipped how-to (`docs/`) or planned-only (`.project/`)?
+- Which deferred item from `.project/future-layer.md` / adapters-backlog is in scope?
+- Does this need a new ADR under `docs/decisions/`?
 - Which roadmap section justifies this work?
 - Which future-layer concern must be designed for but not implemented now?
 - Which concrete scenario is being kept outside the core as an adapter or

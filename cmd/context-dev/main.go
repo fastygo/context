@@ -94,7 +94,7 @@ Usage:
   context-dev focus-put --data <dir> --project <id> --json <file-or-inline> [--id <focus_id>]
   context-dev focus-get --data <dir> --project <id> --focus <id>
   context-dev focus-list --data <dir> --project <id>
-  context-dev eval [--out <.project/proof/eval/report.json>] [--history <jsonl>] [--data <dir>]
+  context-dev eval [--out <.proofs/eval/report.json>] [--history <jsonl>] [--data <dir>]
   context-dev metrics --data <dir>
   context-dev quota --data <dir>
   context-dev ready
@@ -103,7 +103,7 @@ Usage:
   context-dev inspect --data <dir> --project <id> (--query <text> | --pack <id>) [--focus <id>]
   context-dev trace --data <dir> --project <id> --run <id>
   context-dev meta-check [--backend postgres]
-  context-dev proof-run [--root <repo>] [--out <.project/proof>]
+  context-dev proof-run [--root <repo>] [--out <.proofs>]
 
 Ingest skips paths via defaults + optional .contextignore at corpus root.
 eval runs offline golden retrieval suite (exact/sparse/dense/hybrid + multilingual/lexicon/pack).
@@ -113,7 +113,7 @@ quota shows soft project limits (CONTEXT_QUOTA_MAX_*) with allow|ask|deny outsid
 ready probes backend readiness (metadata/sparse/vector/embedder/artifact/completer).
 repair rebuilds index payloads for the active ready snapshot, or retries last_failed under a new snapshot_id (ADR-0021).
 inspect explains search/pack decisions for Lab (budget, selected/rejected, scores) without host paths.
-Modes dense and hybrid-dense require PostgreSQL/pgvector (see .project/local-server.md).
+Modes dense and hybrid-dense require PostgreSQL/pgvector (see docs/operations/local-server.md).
 Set CONTEXT_ENABLE_DENSE=1 to upsert dense vectors on ingest and include dense in hybrid search.
 Set CONTEXT_DENSE_REBUILD=1 to force search-time vector rebuild (default: prefer ingest commit).
 Set CONTEXT_EMBEDDER_KIND=local_hash for offline L2/SHA embedder (dim 32, local-hash-v1).
@@ -358,7 +358,7 @@ func cmdEval(args []string) error {
 	f := flagMap(args)
 	out := f["out"]
 	if out == "" {
-		out = ".project/proof/eval/report.json"
+		out = ".proofs/eval/report.json"
 	}
 	history := f["history"]
 	if history == "" && f["data"] != "" {

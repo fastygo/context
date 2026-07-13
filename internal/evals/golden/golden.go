@@ -33,7 +33,7 @@ const (
 	SuiteID    = "eval-golden-v1"
 )
 
-// CaseSpec is one golden expectation (also serialized under .project/proof/eval).
+// CaseSpec is one golden expectation (also serialized under .proofs/eval).
 type CaseSpec struct {
 	ID           string   `json:"id"`
 	Kind         string   `json:"kind"` // exact|sparse|dense|hybrid|multilingual|lexicon|pack_verify

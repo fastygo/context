@@ -53,7 +53,7 @@ type ProofStep struct {
 // under outDir for Lab replay without requiring live services later.
 func RunProof(repoRoot, outDir string) (ProofSummary, error) {
 	if outDir == "" {
-		outDir = filepath.Join(repoRoot, ".project", "proof")
+		outDir = filepath.Join(repoRoot, ".proofs")
 	}
 	dataDir := filepath.Join(outDir, "workspace")
 	corpusDir := filepath.Join(outDir, "corpus")

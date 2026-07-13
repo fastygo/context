@@ -4,12 +4,10 @@ Status: deferred architecture backlog
 Scope: production-grade capabilities that should be designed for, but not
 implemented before the hypothesis-validation CLI proof.
 
-This document extends `roadmap-context-core.md` and `progress.md`. The current
-implementation path should still focus on the proof loop:
-
-```text
-ingest -> retrieve -> context pack -> fake model/tool run -> verifier -> trace
-```
+This document extends [roadmap-context-core.md](roadmap-context-core.md).
+Lab-ready / CLI proof path is already shipped — see [`.project/README.md`](README.md)
+and [`docs/lab-gate.md`](../docs/lab-gate.md). Use this file for deferred
+production gates only.
 
 The layers below are intentionally deferred. They are the gates that turn a
 working context engine into a reliable private search system, distributed agent
@@ -648,7 +646,7 @@ tools, and adapters without forks.
 - Tool SDK.
 - Companion configuration format.
 - Lab-facing JSON/DTO compatibility tests using proof artifacts from
-  `.project/proof/`.
+  `.proofs/`.
 - Scenario plugin contracts for source adapters, graph projections, tool packs,
   rule packs, and methodology packs.
 - DSL schemas for FocusProfile, RetrievalPlan, ContextPackTemplate, ToolPolicy,

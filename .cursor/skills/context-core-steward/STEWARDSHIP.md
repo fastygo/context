@@ -213,10 +213,11 @@ Stop and redesign when you see:
 
 When a change affects architecture or workflow:
 
-- Update `.project/progress.md` after verification.
-- Add an ADR under `.project/decisions/` for durable choices.
+- Update `docs/` how-to when behavior is user-visible (CLI/API/scenarios).
+- Add an ADR under `docs/decisions/` for durable choices.
 - Keep `README.md` high-level; avoid turning it into a changelog.
-- Keep future-only concerns in `.project/future-layer.md`.
+- Keep future-only concerns in `.project/future-layer.md` / adapters-backlog.
+- Do not reintroduce a completed chunk dump into `.project/`.
 
 Documentation should tell the next engineer why the boundary exists, not repeat
 what the code already says.

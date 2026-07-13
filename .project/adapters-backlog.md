@@ -1,8 +1,9 @@
 # Adapter Backlog (Post–Chunk 10)
 
 Ports are stable in `internal/retrieval` and `internal/models`. Live adapters
-beyond PostgreSQL/pgvector wait for Chunk 12 proof or a measured blocker
-([ADR-0017](decisions/0017-poc-backend-order.md)).
+beyond PostgreSQL/pgvector wait for a measured blocker
+([ADR-0017](../docs/decisions/0017-poc-backend-order.md)).
+Start from [`.project/README.md`](README.md) before promoting a later adapter.
 
 | Port | First live | Later adapters | Notes |
 | --- | --- | --- | --- |

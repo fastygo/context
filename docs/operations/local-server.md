@@ -198,10 +198,10 @@ Offline by default (fake dense vectors):
 
 ```bash
 go test ./internal/evals/golden/ -count=1
-go run ./cmd/context-dev eval --out .project/proof/eval/report.json
+go run ./cmd/context-dev eval --out .proofs/eval/report.json
 ```
 
-Case catalog: `.project/proof/eval/golden.json`. Report is Lab-facing JSON
+Case catalog: `.proofs/eval/golden.json`. Report is Lab-facing JSON
 (`ok`, `cases[].passed`, scores/reasons) without importing `internal/`.
 
 ## Thin HTTP service (Chunk 20 / ADR-0024)
@@ -249,7 +249,7 @@ Compat smoke: `go test ./internal/httpserver/ -run ContextKitCompat -count=1`.
 Append-only JSONL under `<data>/ops/eval_history.jsonl` (path_key only in API):
 
 ```bash
-go run ./cmd/context-dev eval --data /path/to/data --out .project/proof/eval/report.json
+go run ./cmd/context-dev eval --data /path/to/data --out .proofs/eval/report.json
 go run ./cmd/context-dev metrics --data /path/to/data
 go run ./cmd/context-dev eval-history --data /path/to/data --limit 10
 

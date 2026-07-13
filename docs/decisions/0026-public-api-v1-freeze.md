@@ -45,7 +45,7 @@ auth remain deferred; labs still need a pinable `api_version`.
 ### Negative
 
 - Some early CLI-only fields may lag documentation until listed in
-  `.project/api-v1.md`.
+  [`docs/api/v1.md`](../api/v1.md).
 
 ### Follow-ups
 

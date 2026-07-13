@@ -7,4 +7,4 @@ cd "$ROOT"
 export CONTEXT_PG_DSN="${CONTEXT_PG_DSN:-postgres://context:context@127.0.0.1:5432/context?sslmode=disable}"
 
 ./scripts/dev.sh wait
-go run ./cmd/context-dev proof-run --root "$ROOT" --out "$ROOT/.project/proof"
+go run ./cmd/context-dev proof-run --root "$ROOT" --out "$ROOT/.proofs"

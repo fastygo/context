@@ -34,7 +34,7 @@ type Seed struct {
 	Chunk       index.ChunkRecord
 }
 
-// DefaultSeed returns fixtures aligned with .project/proof/04-lexicon.json IDs.
+// DefaultSeed returns fixtures aligned with .proofs/04-lexicon.json IDs.
 func DefaultSeed() Seed {
 	return Seed{
 		Sense: lexicon.Sense{

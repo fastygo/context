@@ -36,7 +36,7 @@
 - Language/lexicon: contract harnesses in `internal/linguistic/harness` and
   `internal/lexicon/harness` (Chunk 18); production adapters stay external.
 - Eval: offline golden suite `internal/evals/golden` + `context-dev eval`
-  (Chunk 19); report under `.project/proof/eval/`.
+  (Chunk 19); report under `.proofs/eval/`.
 - Service: thin HTTP+JSON `cmd/context-serve` / `internal/httpserver`
   (Chunk 20, ADR-0024); Lab/BFF call without importing `internal/`.
 - Client: `pkg/contextkit` HTTP client (Chunk 21); zero `internal/` imports.
@@ -44,14 +44,14 @@
   `ops/eval_history.jsonl` path_key under data dir.
 - Repair: rebuild / retry-failed (Chunk 23, ADR-0021); `last_failed` in state.
 - Isolation: ADR-0025 Tenant/Project boundary; leakage contract tests (Chunk 24).
-- API v1 freeze: ADR-0026 + `.project/api-v1.md` (Chunk 25).
+- API v1 freeze: ADR-0026 + `docs/api/v1.md` (Chunk 25).
 - Inspector: `inspect` / `POST /v1/inspect` Lab JSON (Chunk 26).
 - Models: `localecho` Completer + `http` Completer/Embedder (Chunk 27).
 - Soft quotas: allow/ask/deny via `CONTEXT_QUOTA_MAX_*` (Chunk 28).
 - Failure/degraded: typed unavailable, readiness, `CONTEXT_FAIL_*` (Chunk 29).
 - Redaction: model/Lab text via `CONTEXT_REDACT` (Chunk 30).
 - Background jobs: in-process AgentRun start/status/cancel (Chunk 31).
-- **Lab gate passed** (Chunk 32): [lab-gate.md](../lab-gate.md), ADR-0027.
+- **Lab gate passed** (Chunk 32): [docs/lab-gate.md](../docs/lab-gate.md), ADR-0027.
 - Multilingual/lexicon proofs use in-memory fixtures with simple-lang adapters; context-lang-* and TEI/SKOS lexicon adapters are not wired.
 
 ## Next decisions

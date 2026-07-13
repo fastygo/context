@@ -1,7 +1,7 @@
-# Lab Gate (Chunk 32)
+# Lab Gate
 
 Status: **passed** (2026-07-13)  
-Related: [api-v1.md](api-v1.md), [ADR-0026](decisions/0026-public-api-v1-freeze.md),
+Related: [API v1](api/v1.md), [ADR-0026](decisions/0026-public-api-v1-freeze.md),
 [ADR-0027](decisions/0027-lab-gate-freeze.md), [ADR-0024](decisions/0024-thin-http-service-boundary.md)
 
 This gate freezes the Core → Lab/BFF contract. Lab may bind to HTTP +
