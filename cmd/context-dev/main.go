@@ -37,6 +37,8 @@ func main() {
 		err = cmdFocusGet(args)
 	case "focus-list":
 		err = cmdFocusList(args)
+	case "eval":
+		err = cmdEval(args)
 	case "meta-check":
 		err = cmdMetaCheck(args)
 	case "proof-run":
@@ -66,11 +68,13 @@ Usage:
   context-dev focus-put --data <dir> --project <id> --json <file-or-inline> [--id <focus_id>]
   context-dev focus-get --data <dir> --project <id> --focus <id>
   context-dev focus-list --data <dir> --project <id>
+  context-dev eval [--out <.project/proof/eval/report.json>]
   context-dev trace --data <dir> --project <id> --run <id>
   context-dev meta-check [--backend postgres]
   context-dev proof-run [--root <repo>] [--out <.project/proof>]
 
 Ingest skips paths via defaults + optional .contextignore at corpus root.
+eval runs offline golden retrieval suite (exact/sparse/dense/hybrid + multilingual/lexicon/pack).
 Modes dense and hybrid-dense require PostgreSQL/pgvector (see .project/local-server.md).
 Set CONTEXT_ENABLE_DENSE=1 to upsert dense vectors on ingest and include dense in hybrid search.
 Set CONTEXT_DENSE_REBUILD=1 to force search-time vector rebuild (default: prefer ingest commit).
@@ -257,6 +261,25 @@ func cmdFocusList(args []string) error {
 		return err
 	}
 	return devcli.PrintJSON(res)
+}
+
+func cmdEval(args []string) error {
+	f := flagMap(args)
+	out := f["out"]
+	if out == "" {
+		out = ".project/proof/eval/report.json"
+	}
+	res, err := devcli.RunEval(out)
+	if err != nil {
+		return err
+	}
+	if err := devcli.PrintJSON(res); err != nil {
+		return err
+	}
+	if !res.Report.OK {
+		return fmt.Errorf("eval golden suite failed")
+	}
+	return nil
 }
 
 func cmdTrace(args []string) error {

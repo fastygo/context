@@ -69,9 +69,9 @@ ADRs 0001–0023; do not re-implement.
 | 12 | E2E proof — hypothesis **validated** (`.project/proof/`) |
 | 13 | Durable CLI metadata opt-in (`CONTEXT_METADATA_KIND=postgres`) |
 
-Open gaps carried into Phase 2: semantic/provider Embedder still deferred
-(local_hash is measurable offline); no service API. Lang/lexicon contract
-harnesses shipped (Chunk 18); production `context-lang-*` / TEI still external.
+Open gaps carried into Phase 2: semantic/provider Embedder still deferred.
+Thin HTTP service shipped (Chunk 20 / ADR-0024). Full SDK and multi-tenant
+auth remain deferred.
 
 ## UX / DX / DSL Consumer Track
 
@@ -80,7 +80,7 @@ harnesses shipped (Chunk 18); production `context-lang-*` / TEI still external.
 | Proof fixtures | Chunks 08–12 | Render `.project/proof/*.json` | No Context import |
 | Durable local stack | Chunk 13 | Show postgres-backed project/snapshot/trace | Env-configured CLI |
 | Eval / golden UX | Chunk 19 | Display eval reports | Lab consumes JSON reports |
-| BFF/API consumer | **Chunk 20** | Call HTTP/gRPC client | Service contract before Go SDK |
+| BFF/API consumer | **Chunk 20 done** | Call HTTP client | ADR-0024; SDK later |
 | DSL workbench | After Chunk 20 | Edit FocusProfile / plans / policies | Neutral DTOs only |
 
 ## Plan Chunk 14: PostgreSQL FTS SparseSearchClient
@@ -319,7 +319,18 @@ Acceptance criteria:
 - Report is machine-readable for Lab without importing internal packages.
 ```
 
-Status: pending
+Status: **completed** (2026-07-13)
+
+### Completion notes
+
+- Suite: `internal/evals/golden` — exact / sparse / dense / hybrid +
+  multilingual + lexicon + pack_verify (offline fake dense).
+- Specs listed in `.project/proof/eval/golden.json` (Lab-readable).
+- Commands:
+  - `go test ./internal/evals/golden/ -count=1`
+  - `go run ./cmd/context-dev eval --out .project/proof/eval/report.json`
+  (non-zero exit when `report.ok=false`).
+- Report JSON keys: `ok`, `suite_id`, `generated_at`, `cases`, `summary`.
 
 ## Plan Chunk 20: Thin HTTP Or gRPC Service Contract
 
@@ -352,7 +363,18 @@ Acceptance criteria:
 - Context still does not import Lab.
 ```
 
-Status: pending
+Status: **completed** (2026-07-13)
+
+### Completion notes
+
+- ADR-0024: HTTP+JSON first; CLI DTO field alignment; no host path leak;
+  optional local shared-secret auth.
+- `internal/httpserver` + `cmd/context-serve --data <dir> [--addr :8080] [--token]`.
+- Routes: `/health`, `/v1/status`, `/v1/search`, `/v1/context-pack`,
+  `/v1/agent-run`, `/v1/trace`, `/v1/focus`, `/v1/focuses`, `/v1/eval`,
+  `/v1/ingest` (`path_key` relative to corpus only).
+- Tests: `go test ./internal/httpserver/` (httptest, offline).
+- Docs: `.project/local-server.md` curl examples; decisions index updated.
 
 ## Completion Notes
 

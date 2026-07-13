@@ -70,12 +70,13 @@ Nearest work follows `.project/progress.md` plan chunks:
 | --- | --- | --- |
 | **0 — Architecture baseline** | Chunk 01 + Foundation Gate done | Lock package, storage, index, trace, linguistic, and scoring boundaries |
 | **1 — Proof of concept** | Chunks 02–13 done | CLI loop + pgvector/Postgres + durable metadata opt-in; proof validated |
-| **2 — MVP toward service API** | Chunks **14–18** done; **19–20** pending | … → lang/lex harness → eval → **HTTP/gRPC** |
+| **2 — MVP toward service API** | Chunks **14–20** done | Phase 2 exit: thin HTTP service |
 
-Immediate next step: **Chunk 19** — eval golden harness.
+Immediate next step: Phase 2 closed for MVP service boundary; further work
+follows roadmap (SDK, auth, adapters) only with a new progress chunk.
 
-Phase 2 exit: thin HTTP (preferred) or gRPC service so Lab/BFF call Context
-without importing `internal/`. See `.project/progress.md`.
+Phase 2 MVP service boundary: thin HTTP+JSON (`cmd/context-serve`, ADR-0024)
+so Lab/BFF call Context without importing `internal/`. Full SDK deferred.
 
 Local stack: `./scripts/dev.sh up` then `./scripts/dev.sh health`.
 Durable CLI: `CONTEXT_METADATA_KIND=postgres` + `CONTEXT_PG_DSN=...`.
@@ -361,6 +362,7 @@ the target skeleton for Chunk 02 onward, not an existing tree.
 ```text
 cmd/
   context-dev/              # local developer CLI for indexing, search, evals
+  context-serve/            # thin HTTP+JSON service (ADR-0024)
 
 internal/
   agentruntime/             # agent runs, orchestration, subagents, scheduling
@@ -401,6 +403,7 @@ domain models and store ports
   -> context pack builder and verifier
   -> fake model/tool agent run
   -> context-dev CLI with machine-readable JSON
+  -> context-serve HTTP+JSON (same DTOs; Lab/BFF without internal/)
 ```
 
 **Stage B — live local stack (Chunks 09–12)**

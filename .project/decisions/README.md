@@ -68,6 +68,7 @@ only when a later chunk or measurement requires them.
 | [0021](0021-snapshot-commit-failure-semantics.md) | Snapshot commit failure semantics | Accepted |
 | [0022](0022-structured-artifact-schema-id.md) | Structured artifact schema identity | Accepted |
 | [0023](0023-derived-artifact-lineage-temporal-source-metadata.md) | Derived artifact lineage and temporal source metadata | Accepted |
+| [0024](0024-thin-http-service-boundary.md) | Thin HTTP service boundary | Accepted |
 
 ## Adapter progression by plan chunk
 

@@ -192,6 +192,44 @@ External `context-lang-*` / TEI adapters satisfy the same `RunContract` entry
 points (see `.project/adapters-backlog.md`). Core remains brand-neutral and
 fixture-only (`linguistic/simple`, `lexicon/fake`).
 
+## Eval golden harness (Chunk 19)
+
+Offline by default (fake dense vectors):
+
+```bash
+go test ./internal/evals/golden/ -count=1
+go run ./cmd/context-dev eval --out .project/proof/eval/report.json
+```
+
+Case catalog: `.project/proof/eval/golden.json`. Report is Lab-facing JSON
+(`ok`, `cases[].passed`, scores/reasons) without importing `internal/`.
+
+## Thin HTTP service (Chunk 20 / ADR-0024)
+
+Prepare a workspace with `context-dev` (`init-project` + `ingest`), then:
+
+```bash
+go run ./cmd/context-serve --data /path/to/data --addr :8080
+# optional: --token local-secret  or CONTEXT_SERVE_TOKEN=...
+```
+
+```bash
+curl -s http://127.0.0.1:8080/health
+curl -s 'http://127.0.0.1:8080/v1/status?project_id=local'
+curl -s -X POST http://127.0.0.1:8080/v1/search \
+  -H 'Content-Type: application/json' \
+  -d '{"project_id":"local","query":"ZEBRA42","mode":"exact"}'
+curl -s -X POST http://127.0.0.1:8080/v1/context-pack \
+  -H 'Content-Type: application/json' \
+  -d '{"project_id":"local","query":"ZEBRA42"}'
+# after agent-run:
+curl -s 'http://127.0.0.1:8080/v1/trace?project_id=local&run_id=RUN_ID'
+```
+
+With token: `-H 'Authorization: Bearer local-secret'` or `-H 'X-Context-Token: ...'`.
+Ingest over HTTP uses `path_key` relative to the workspace corpus root only
+(absolute paths rejected). Same backend env vars as `context-dev`.
+
 ## Metadata store (Chunk 11)
 
 Migrations live in `internal/storage/postgres/migrations/` and apply on

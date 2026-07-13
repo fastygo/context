@@ -35,6 +35,10 @@
   `CONTEXT_ENABLE_DENSE=1` (Chunk 15).
 - Language/lexicon: contract harnesses in `internal/linguistic/harness` and
   `internal/lexicon/harness` (Chunk 18); production adapters stay external.
+- Eval: offline golden suite `internal/evals/golden` + `context-dev eval`
+  (Chunk 19); report under `.project/proof/eval/`.
+- Service: thin HTTP+JSON `cmd/context-serve` / `internal/httpserver`
+  (Chunk 20, ADR-0024); Lab/BFF call without importing `internal/`.
 - Multilingual/lexicon proofs use in-memory fixtures with simple-lang adapters; context-lang-* and TEI/SKOS lexicon adapters are not wired.
 
 ## Next decisions

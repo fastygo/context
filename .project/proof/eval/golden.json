@@ -1,0 +1,13 @@
+{
+  "suite_id": "eval-golden-v1",
+  "description": "Neutral offline golden cases for Chunk 19. Executed by go test ./internal/evals/golden and context-dev eval.",
+  "cases": [
+    {"id": "exact-runners", "kind": "exact", "query": "runners", "want_chunk_ids": ["c-run"]},
+    {"id": "sparse-park", "kind": "sparse", "query": "park runners", "want_chunk_ids": ["c-run"]},
+    {"id": "dense-run", "kind": "dense", "query": "runners run in the park", "want_chunk_ids": ["c-run"]},
+    {"id": "hybrid-run-expand", "kind": "hybrid", "query": "run", "want_chunk_ids": ["c-run"]},
+    {"id": "multilingual-en-filter", "kind": "multilingual", "query": "run", "want_chunk_ids": ["c-en"], "language": "en"},
+    {"id": "lexicon-sense-concept", "kind": "lexicon", "query": "runners", "want_chunk_ids": ["c-lex"], "sense_id": "sense-run-sport", "concept_id": "concept-running"},
+    {"id": "pack-verify-source", "kind": "pack_verify", "query": "runners", "want_chunk_ids": ["c-run"]}
+  ]
+}
