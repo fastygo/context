@@ -180,6 +180,18 @@ go run ./cmd/context-dev search --data <dir> --project <id> --query '...' --focu
 With `CONTEXT_METADATA_KIND=postgres`, FocusProfile rows live in `focus_profiles`
 and survive restart (state.json remains a cache).
 
+## Language / lexicon contract harnesses (Chunk 18)
+
+Offline only — no network corpora:
+
+```bash
+go test ./internal/linguistic/harness/ ./internal/lexicon/harness/ -count=1
+```
+
+External `context-lang-*` / TEI adapters satisfy the same `RunContract` entry
+points (see `.project/adapters-backlog.md`). Core remains brand-neutral and
+fixture-only (`linguistic/simple`, `lexicon/fake`).
+
 ## Metadata store (Chunk 11)
 
 Migrations live in `internal/storage/postgres/migrations/` and apply on

@@ -33,6 +33,8 @@
   `local_hash` (`local-hash-v1` dim=32) via `CONTEXT_EMBEDDER_KIND` (Chunk 16).
   Provider/TEI adapters remain deferred. Dense rows upsert on ingest when
   `CONTEXT_ENABLE_DENSE=1` (Chunk 15).
+- Language/lexicon: contract harnesses in `internal/linguistic/harness` and
+  `internal/lexicon/harness` (Chunk 18); production adapters stay external.
 - Multilingual/lexicon proofs use in-memory fixtures with simple-lang adapters; context-lang-* and TEI/SKOS lexicon adapters are not wired.
 
 ## Next decisions

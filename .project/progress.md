@@ -70,8 +70,8 @@ ADRs 0001–0023; do not re-implement.
 | 13 | Durable CLI metadata opt-in (`CONTEXT_METADATA_KIND=postgres`) |
 
 Open gaps carried into Phase 2: semantic/provider Embedder still deferred
-(local_hash is measurable offline); lang/lexicon only fixture-level; no service
-API. Ignore + FocusProfile persistence shipped (Chunk 17).
+(local_hash is measurable offline); no service API. Lang/lexicon contract
+harnesses shipped (Chunk 18); production `context-lang-*` / TEI still external.
 
 ## UX / DX / DSL Consumer Track
 
@@ -283,7 +283,17 @@ Acceptance criteria:
 - Core still has no product-specific language packs.
 ```
 
-Status: pending
+Status: **completed** (2026-07-13)
+
+### Completion notes
+
+- `internal/linguistic/harness.RunContract` — en + ru surfaces; normalize /
+  analyze / expand; span + original surface + analyzer_version pins.
+- `internal/lexicon/harness.RunContract` — Sense/Concept/Attestation/
+  LexiconSource lookups + explainable sense/concept filters preserving
+  checksum/span (aligned with proof `04-lexicon.json` IDs).
+- CI defaults: `linguistic/simple` and `lexicon/fake` satisfy harnesses offline.
+- External adapter checklist: `.project/adapters-backlog.md` (Chunk 18 section).
 
 ## Plan Chunk 19: Eval Golden Harness
 
