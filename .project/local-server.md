@@ -102,22 +102,31 @@ Integration:
 CONTEXT_PG_DSN=... go test ./internal/devcli/ -run Durable -count=1
 ```
 
-## Dense search (Chunk 10)
+## Dense search (Chunk 10) / dense commit (Chunk 15)
 
 With the stack up:
 
 ```bash
 export CONTEXT_PG_DSN='postgres://context:context@127.0.0.1:5432/context?sslmode=disable'
+export CONTEXT_ENABLE_DENSE=1
+go run ./cmd/context-dev ingest --data <dir> --project <id>
+# dense vectors + version pins committed before snapshot is active
 go run ./cmd/context-dev search --data <dir> --project <id> --query '...' --mode dense
 # or: --mode hybrid-dense
 # or: CONTEXT_ENABLE_DENSE=1 ... --mode hybrid
+# optional: CONTEXT_DENSE_REBUILD=1 to force search-time re-upsert
 ```
+
+Chunk rows pin `chunker_version`, `embedding_version`, `morph_version`,
+`dictionary_version`, and `sparse_version`. Snapshot records `dense_enabled`
+and `embed_model_version`. Failed dense/sparse writers mark the snapshot
+`failed` with `failure_reason` and do not flip `active_snapshot_id`.
 
 Integration tests:
 
 ```bash
 CONTEXT_PG_DSN='postgres://context:context@127.0.0.1:5432/context?sslmode=disable' \
-  go test ./internal/retrieval/dense/postgresvector/ -count=1
+  go test ./internal/retrieval/dense/postgresvector/ ./internal/devcli/ -run 'Dense|FTS' -count=1
 ```
 
 Without `CONTEXT_PG_DSN`, those tests skip and `go test ./...` stays green.

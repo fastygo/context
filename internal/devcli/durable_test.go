@@ -2,10 +2,12 @@ package devcli_test
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/fastygo/context/internal/config"
 	"github.com/fastygo/context/internal/devcli"
@@ -82,10 +84,11 @@ func TestDurablePostgresIngestAndTrace(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, "note.md"), []byte("# Hello\n\nContextPack durable metadata.\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := devcli.InitProject(data, root, "durable", "Durable"); err != nil {
+	proj := fmt.Sprintf("durable-%d", time.Now().UnixNano())
+	if _, err := devcli.InitProject(data, root, proj, "Durable"); err != nil {
 		t.Fatal(err)
 	}
-	st, err := devcli.Ingest(data, "durable", root)
+	st, err := devcli.Ingest(data, proj, root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -112,14 +115,14 @@ func TestDurablePostgresIngestAndTrace(t *testing.T) {
 		t.Fatalf("chunks=%d want=%d err=%v", len(chunks), len(st.Chunks), err)
 	}
 
-	agent, err := devcli.AgentRun(data, "durable", "ContextPack")
+	agent, err := devcli.AgentRun(data, proj, "ContextPack")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if agent.MetaKind != "postgres" {
 		t.Fatalf("meta_kind=%q", agent.MetaKind)
 	}
-	tr, err := devcli.Trace(data, "durable", string(agent.Run.ID))
+	tr, err := devcli.Trace(data, proj, string(agent.Run.ID))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -254,8 +254,9 @@ func (s *Store) PutChunk(ctx context.Context, chunk corpus.Chunk) error {
 INSERT INTO chunks (
   project_id, chunk_id, source_id, artifact_id, snapshot_id, chunker_version,
   span_start, span_end, text_checksum, chunk_hash, language, embedding_version, sparse_version,
+  morph_version, dictionary_version,
   temporal_start, temporal_end, temporal_basis, ingested_at
-) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
 ON CONFLICT (project_id, chunk_id) DO UPDATE SET
   source_id = EXCLUDED.source_id,
   artifact_id = EXCLUDED.artifact_id,
@@ -268,6 +269,8 @@ ON CONFLICT (project_id, chunk_id) DO UPDATE SET
   language = EXCLUDED.language,
   embedding_version = EXCLUDED.embedding_version,
   sparse_version = EXCLUDED.sparse_version,
+  morph_version = EXCLUDED.morph_version,
+  dictionary_version = EXCLUDED.dictionary_version,
   temporal_start = EXCLUDED.temporal_start,
   temporal_end = EXCLUDED.temporal_end,
   temporal_basis = EXCLUDED.temporal_basis,
@@ -275,6 +278,7 @@ ON CONFLICT (project_id, chunk_id) DO UPDATE SET
 `, string(chunk.ProjectID), string(chunk.ID), string(chunk.SourceID), string(chunk.ArtifactID),
 		string(chunk.SnapshotID), chunk.ChunkerVersion, int64(chunk.Span.Start), int64(chunk.Span.End),
 		string(chunk.TextChecksum), string(chunk.ChunkHash), chunk.Language, chunk.EmbeddingVersion, chunk.SparseVersion,
+		chunk.MorphVersion, chunk.DictionaryVersion,
 		ts, te, tb, ing)
 	return wrapDB(err, "put chunk")
 }
@@ -291,11 +295,13 @@ func (s *Store) GetChunk(ctx context.Context, projectID ids.ProjectID, chunkID i
 	err := s.conn(ctx).QueryRow(ctx, `
 SELECT project_id, chunk_id, source_id, artifact_id, snapshot_id, chunker_version,
        span_start, span_end, text_checksum, chunk_hash, language, embedding_version, sparse_version,
+       morph_version, dictionary_version,
        temporal_start, temporal_end, temporal_basis, ingested_at
 FROM chunks WHERE project_id = $1 AND chunk_id = $2
 `, string(projectID), string(chunkID)).Scan(
 		&ch.ProjectID, &ch.ID, &ch.SourceID, &ch.ArtifactID, &ch.SnapshotID, &ch.ChunkerVersion,
 		&spanStart, &spanEnd, &textSum, &chunkHash, &ch.Language, &ch.EmbeddingVersion, &ch.SparseVersion,
+		&ch.MorphVersion, &ch.DictionaryVersion,
 		&ts, &te, &tb, &ing)
 	if err != nil {
 		return corpus.Chunk{}, mapNotFound(err, "chunk not found")
@@ -314,6 +320,7 @@ func (s *Store) ListChunks(ctx context.Context, projectID ids.ProjectID, snapsho
 	rows, err := s.conn(ctx).Query(ctx, `
 SELECT project_id, chunk_id, source_id, artifact_id, snapshot_id, chunker_version,
        span_start, span_end, text_checksum, chunk_hash, language, embedding_version, sparse_version,
+       morph_version, dictionary_version,
        temporal_start, temporal_end, temporal_basis, ingested_at
 FROM chunks WHERE project_id = $1 AND snapshot_id = $2 ORDER BY chunk_id
 `, string(projectID), string(snapshotID))
@@ -331,6 +338,7 @@ FROM chunks WHERE project_id = $1 AND snapshot_id = $2 ORDER BY chunk_id
 		if err := rows.Scan(
 			&ch.ProjectID, &ch.ID, &ch.SourceID, &ch.ArtifactID, &ch.SnapshotID, &ch.ChunkerVersion,
 			&spanStart, &spanEnd, &textSum, &chunkHash, &ch.Language, &ch.EmbeddingVersion, &ch.SparseVersion,
+			&ch.MorphVersion, &ch.DictionaryVersion,
 			&ts, &te, &tb, &ing); err != nil {
 			return nil, wrapDB(err, "scan chunk")
 		}

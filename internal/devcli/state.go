@@ -22,17 +22,23 @@ const stateFile = "state.json"
 
 // IndexedChunk is a persisted searchable chunk for local CLI workflows.
 type IndexedChunk struct {
-	ChunkID      ids.ChunkID      `json:"chunk_id"`
-	SourceID     ids.SourceID     `json:"source_id"`
-	SnapshotID   ids.SnapshotID   `json:"snapshot_id"`
-	PathKey      string           `json:"path_key"`
-	RelativePath string           `json:"relative_path"`
-	SpanStart    uint64           `json:"span_start"`
-	SpanEnd      uint64           `json:"span_end"`
-	Text         string           `json:"text"`
-	TextChecksum foundation.ChecksumHex `json:"text_checksum"`
-	ChunkHash    foundation.ChecksumHex `json:"chunk_hash"`
-	TrustLevel   foundation.TrustLevel  `json:"trust_level"`
+	ChunkID            ids.ChunkID              `json:"chunk_id"`
+	SourceID           ids.SourceID             `json:"source_id"`
+	SnapshotID         ids.SnapshotID           `json:"snapshot_id"`
+	PathKey            string                   `json:"path_key"`
+	RelativePath       string                   `json:"relative_path"`
+	SpanStart          uint64                   `json:"span_start"`
+	SpanEnd            uint64                   `json:"span_end"`
+	Text               string                   `json:"text"`
+	TextChecksum       foundation.ChecksumHex   `json:"text_checksum"`
+	ChunkHash          foundation.ChecksumHex   `json:"chunk_hash"`
+	TrustLevel         foundation.TrustLevel    `json:"trust_level"`
+	ChunkerVersion     string                   `json:"chunker_version,omitempty"`
+	EmbeddingVersion   string                   `json:"embedding_version,omitempty"`
+	MorphVersion       string                   `json:"morph_version,omitempty"`
+	DictionaryVersion  string                   `json:"dictionary_version,omitempty"`
+	SparseVersion      string                   `json:"sparse_version,omitempty"`
+	Language           string                   `json:"language,omitempty"`
 }
 
 // State is the durable local PoC workspace persisted under --data.

@@ -59,7 +59,8 @@ Usage:
   context-dev proof-run [--root <repo>] [--out <.project/proof>]
 
 Modes dense and hybrid-dense require PostgreSQL/pgvector (see .project/local-server.md).
-Set CONTEXT_ENABLE_DENSE=1 to include dense in hybrid when Postgres is up.
+Set CONTEXT_ENABLE_DENSE=1 to upsert dense vectors on ingest and include dense in hybrid search.
+Set CONTEXT_DENSE_REBUILD=1 to force search-time vector rebuild (default: prefer ingest commit).
 Set CONTEXT_SPARSE_KIND=postgres_fts for live Postgres FTS sparse/hybrid search.
 meta-check verifies durable metadata (schema_id, lineage, temporal, documents).
 proof-run executes Chunk 12 end-to-end proof and writes JSON under --out.

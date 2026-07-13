@@ -70,9 +70,9 @@ Nearest work follows `.project/progress.md` plan chunks:
 | --- | --- | --- |
 | **0 — Architecture baseline** | Chunk 01 + Foundation Gate done | Lock package, storage, index, trace, linguistic, and scoring boundaries |
 | **1 — Proof of concept** | Chunks 02–13 done | CLI loop + pgvector/Postgres + durable metadata opt-in; proof validated |
-| **2 — MVP toward service API** | Chunk **14** done; **15–20** pending | FTS live → versioned dense commit → embedder → ignore/focus → lang/lex harness → eval → **HTTP/gRPC** |
+| **2 — MVP toward service API** | Chunks **14–15** done; **16–20** pending | FTS + versioned dense commit → embedder → ignore/focus → lang/lex harness → eval → **HTTP/gRPC** |
 
-Immediate next step: **Chunk 15** — ingest version pins + dense upsert on snapshot commit.
+Immediate next step: **Chunk 16** — Embedder adapter beyond fake-hash.
 
 Phase 2 exit: thin HTTP (preferred) or gRPC service so Lab/BFF call Context
 without importing `internal/`. See `.project/progress.md`.
@@ -80,6 +80,8 @@ without importing `internal/`. See `.project/progress.md`.
 Local stack: `./scripts/dev.sh up` then `./scripts/dev.sh health`.
 Durable CLI: `CONTEXT_METADATA_KIND=postgres` + `CONTEXT_PG_DSN=...`.
 Sparse FTS: `CONTEXT_SPARSE_KIND=postgres_fts` + `CONTEXT_PG_DSN=...`.
+Dense on ingest: `CONTEXT_ENABLE_DENSE=1` (search uses committed vectors;
+`CONTEXT_DENSE_REBUILD=1` optional).
 Dense modes: `--mode dense` / `--mode hybrid-dense`.
 Proof artifacts: [`.project/proof/`](.project/proof/).
 See [`.project/local-server.md`](.project/local-server.md).

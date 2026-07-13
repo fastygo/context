@@ -70,15 +70,20 @@ func PersistIngest(ctx context.Context, meta storage.MetadataStore, project corp
 		for _, ch := range chunks {
 			artID := ids.ArtifactID("src_" + sanitizeID(string(ch.SourceID)))
 			domain := corpus.Chunk{
-				ID:             ch.ChunkID,
-				ProjectID:      project.ID,
-				SourceID:       ch.SourceID,
-				ArtifactID:     artID,
-				SnapshotID:     ch.SnapshotID,
-				ChunkerVersion: chunkerVersionFor(ch.RelativePath),
-				Span:           foundation.ByteSpan{Start: ch.SpanStart, End: ch.SpanEnd},
-				TextChecksum:   ch.TextChecksum,
-				ChunkHash:      ch.ChunkHash,
+				ID:                ch.ChunkID,
+				ProjectID:         project.ID,
+				SourceID:          ch.SourceID,
+				ArtifactID:        artID,
+				SnapshotID:        ch.SnapshotID,
+				ChunkerVersion:    firstNonEmptyPersist(ch.ChunkerVersion, chunkerVersionFor(ch.RelativePath)),
+				Span:              foundation.ByteSpan{Start: ch.SpanStart, End: ch.SpanEnd},
+				TextChecksum:      ch.TextChecksum,
+				ChunkHash:         ch.ChunkHash,
+				Language:          ch.Language,
+				EmbeddingVersion:  ch.EmbeddingVersion,
+				SparseVersion:     ch.SparseVersion,
+				MorphVersion:      ch.MorphVersion,
+				DictionaryVersion: ch.DictionaryVersion,
 			}
 			if err := meta.PutChunk(ctx, domain); err != nil {
 				return err
@@ -94,4 +99,13 @@ func PersistIngest(ctx context.Context, meta storage.MetadataStore, project corp
 		return tx.WithTx(ctx, write)
 	}
 	return write(ctx)
+}
+
+func firstNonEmptyPersist(vals ...string) string {
+	for _, v := range vals {
+		if v != "" {
+			return v
+		}
+	}
+	return ""
 }

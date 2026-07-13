@@ -47,14 +47,16 @@ func loadIndex(st State) (*index.Memory, ids.SnapshotID, error) {
 			continue
 		}
 		mem.Add(index.ChunkRecord{
-			ProjectID:    st.Project.ID,
-			SnapshotID:   ch.SnapshotID,
-			ChunkID:       ch.ChunkID,
-			SourceID:     ch.SourceID,
-			Span:         foundation.ByteSpan{Start: ch.SpanStart, End: ch.SpanEnd},
-			Text:         ch.Text,
-			TextChecksum: ch.TextChecksum,
-			TrustLevel:   ch.TrustLevel,
+			ProjectID:       st.Project.ID,
+			SnapshotID:      ch.SnapshotID,
+			ChunkID:         ch.ChunkID,
+			SourceID:        ch.SourceID,
+			Span:            foundation.ByteSpan{Start: ch.SpanStart, End: ch.SpanEnd},
+			Text:            ch.Text,
+			TextChecksum:    ch.TextChecksum,
+			TrustLevel:      ch.TrustLevel,
+			Language:        ch.Language,
+			AnalyzerVersion: ch.MorphVersion,
 		})
 	}
 	return mem, snap, nil
@@ -111,8 +113,13 @@ func Search(dataDir, projectID, query, mode string) (SearchResult, error) {
 			return SearchResult{}, err
 		}
 		defer store.Close()
-		if err := ensureDenseIndex(ctx, store, ns, emb, idx, st.Project.ID, snap); err != nil {
-			return SearchResult{}, err
+		// Prefer vectors written at ingest. Rebuild/backfill only when forced or
+		// when the active snapshot was not dense-committed (legacy workspaces).
+		needUpsert := denseRebuildByEnv() || !st.Snapshot.DenseEnabled
+		if needUpsert {
+			if err := ensureDenseIndex(ctx, store, ns, emb, idx, st.Project.ID, snap); err != nil {
+				return SearchResult{}, err
+			}
 		}
 		eng.Dense = dense.Retriever{
 			Store: store, Embedder: emb, Index: idx, Namespace: ns,
@@ -166,6 +173,11 @@ func denseEnabledByEnv() bool {
 	return v == "1" || strings.EqualFold(v, "true")
 }
 
+func denseRebuildByEnv() bool {
+	v := strings.TrimSpace(os.Getenv("CONTEXT_DENSE_REBUILD"))
+	return v == "1" || strings.EqualFold(v, "true")
+}
+
 func openDenseStore(ctx context.Context) (*postgresvector.Store, indexing.VectorNamespace, modelfake.Embedder, error) {
 	cfg, err := config.LoadStorageConfigFromEnv()
 	if err != nil {
@@ -215,29 +227,26 @@ func ensureDenseIndex(
 	if len(recs) == 0 {
 		return nil
 	}
-	texts := make([]string, len(recs))
-	for i, rec := range recs {
-		texts[i] = rec.Text
-	}
-	vecs, modelVer, err := emb.Embed(ctx, texts)
-	if err != nil {
-		return err
-	}
-	points := make([]retrieval.VectorPoint, 0, len(recs))
-	for i, rec := range recs {
-		points = append(points, retrieval.VectorPoint{
-			ChunkID:          rec.ChunkID,
+	docs := make([]dense.ChunkDoc, 0, len(recs))
+	for _, rec := range recs {
+		chunker := "cli-para-v1"
+		morphVer := "simple-v1"
+		if rec.AnalyzerVersion != "" {
+			morphVer = rec.AnalyzerVersion
+		}
+		docs = append(docs, dense.ChunkDoc{
 			ProjectID:        rec.ProjectID,
 			SnapshotID:       rec.SnapshotID,
-			EmbeddingVersion: firstNonEmpty(ns.EmbeddingVersion, modelVer),
-			ChunkerVersion:   "cli-para-v1",
-			MorphVersion:     "simple-v1",
+			ChunkID:          rec.ChunkID,
+			Text:             rec.Text,
 			Language:         rec.Language,
+			ChunkerVersion:   chunker,
+			EmbeddingVersion: ns.EmbeddingVersion,
+			MorphVersion:     morphVer,
 			Span:             rec.Span,
-			Vector:           vecs[i],
 		})
 	}
-	return store.Upsert(ctx, ns, points)
+	return dense.UpsertEmbedded(ctx, store, emb, ns, docs)
 }
 
 func firstNonEmpty(vals ...string) string {

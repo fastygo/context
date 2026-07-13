@@ -29,7 +29,9 @@
 - ~~Sparse path remains fake term-overlap~~ **Closed in Chunk 14:**
   `CONTEXT_SPARSE_KIND=postgres_fts` live FTS; fake remains default offline.
   Lexical limits: [14-sparse-fts-limits.md](14-sparse-fts-limits.md).
-- Dense embeddings use fake-hash-v1 dim=8; live embedding providers are deferred.
+- Dense embeddings use fake-hash-v1 dim=8; live embedding providers are deferred
+  (Chunk 16). Dense rows are upserted on ingest when `CONTEXT_ENABLE_DENSE=1`
+  (Chunk 15); search prefers committed vectors.
 - Multilingual/lexicon proofs use in-memory fixtures with simple-lang adapters; context-lang-* and TEI/SKOS lexicon adapters are not wired.
 
 ## Next decisions

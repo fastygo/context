@@ -69,9 +69,10 @@ ADRs 0001–0023; do not re-implement.
 | 12 | E2E proof — hypothesis **validated** (`.project/proof/`) |
 | 13 | Durable CLI metadata opt-in (`CONTEXT_METADATA_KIND=postgres`) |
 
-Open gaps carried into Phase 2: fake-hash embeddings; version pins
-not applied on ingest commit; lang/lexicon only fixture-level; no service API.
-Sparse FTS is live behind `CONTEXT_SPARSE_KIND=postgres_fts` (Chunk 14).
+Open gaps carried into Phase 2: fake-hash embeddings; lang/lexicon only
+fixture-level; no service API. Sparse FTS is live behind
+`CONTEXT_SPARSE_KIND=postgres_fts` (Chunk 14). Version pins + dense upsert on
+ingest when `CONTEXT_ENABLE_DENSE=1` (Chunk 15).
 
 ## UX / DX / DSL Consumer Track
 
@@ -162,7 +163,22 @@ Acceptance criteria:
 - Lazy search-time upsert is no longer the primary path.
 ```
 
-Status: pending
+Status: **completed** (2026-07-13)
+
+### Completion notes
+
+- Chunk metadata pins: `chunker_version`, `embedding_version`, `morph_version`,
+  `dictionary_version`, `sparse_version` on `IndexedChunk` / `corpus.Chunk`
+  (migration `002_chunk_version_pins.sql`).
+- Snapshot annotate: `embed_model_version`, `morph_version`, `dense_enabled`,
+  `sparse_enabled`, `vector_namespace` before activate.
+- Dense commit: `dense.UpsertEmbedded` on ingest when `CONTEXT_ENABLE_DENSE=1`;
+  failure → `status=failed` + `failure_reason=dense_write_failed` (or
+  `sparse_write_failed`), prior `active_snapshot_id` retained (ADR-0021).
+- Search prefers ingest-committed vectors; `CONTEXT_DENSE_REBUILD=1` or
+  legacy `DenseEnabled=false` triggers search-time backfill only.
+- Tests: offline pin + `UpsertEmbedded` fake store; gated
+  `TestDenseCommitOnIngestIntegration`.
 
 ## Plan Chunk 16: Embedder Adapter Beyond Fake-Hash
 

@@ -105,10 +105,12 @@ type Chunk struct {
 	Span             foundation.ByteSpan
 	TextChecksum     foundation.ChecksumHex
 	ChunkHash        foundation.ChecksumHex
-	Language         string // BCP 47; empty allowed until language adapter runs
-	EmbeddingVersion string
-	SparseVersion    string
-	TemporalMetadata *TemporalMetadata // optional source-domain time; never runtime trace time
+	Language           string // BCP 47; empty allowed until language adapter runs
+	EmbeddingVersion   string
+	SparseVersion      string
+	MorphVersion       string // analyzer / morph adapter pin (ADR-0011)
+	DictionaryVersion  string // lexicon resource pin when present
+	TemporalMetadata   *TemporalMetadata // optional source-domain time; never runtime trace time
 }
 
 func (c Chunk) Validate() error {
