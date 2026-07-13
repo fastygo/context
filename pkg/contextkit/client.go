@@ -211,6 +211,17 @@ func (c *Client) Metrics(ctx context.Context, projectID string) (MetricsResult, 
 	return out, err
 }
 
+// Quota calls GET /v1/quota.
+func (c *Client) Quota(ctx context.Context, projectID string) (QuotaResult, error) {
+	q := url.Values{}
+	if projectID != "" {
+		q.Set("project_id", projectID)
+	}
+	var out QuotaResult
+	err := c.do(ctx, http.MethodGet, "/v1/quota", q, nil, &out)
+	return out, err
+}
+
 // Repair calls POST /v1/repair.
 func (c *Client) Repair(ctx context.Context, req RepairRequest) (RepairResult, error) {
 	var out RepairResult

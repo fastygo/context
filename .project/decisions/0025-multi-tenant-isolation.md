@@ -81,7 +81,7 @@ process-local `--data` workspace; Lab/BFF may host many projects later.
 ### Follow-ups
 
 - Membership/ACL checks when auth lands (future-layer Layer 02).
-- Quota enforcement + soft limits using ops metrics.
+- ~~Quota enforcement + soft limits using ops metrics.~~ (Chunk 28)
 - Contract tests remain mandatory for any new store/retriever adapter.
 
 ## Contract tests (Chunk 24)

@@ -90,6 +90,7 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("POST /v1/eval", s.handleEval)
 	s.mux.HandleFunc("GET /v1/eval/history", s.handleEvalHistory)
 	s.mux.HandleFunc("GET /v1/metrics", s.handleMetrics)
+	s.mux.HandleFunc("GET /v1/quota", s.handleQuota)
 	s.mux.HandleFunc("POST /v1/repair", s.handleRepair)
 	s.mux.HandleFunc("POST /v1/inspect", s.handleInspect)
 	s.mux.HandleFunc("POST /v1/ingest", s.handleIngest)
@@ -323,6 +324,25 @@ func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := isolation.RequireProjectMatch(ids.ProjectID(res.ProjectID), ids.ProjectID(projectQ)); err != nil {
+		writeAppErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
+}
+
+func (s *Server) handleQuota(w http.ResponseWriter, r *http.Request) {
+	projectQ := r.URL.Query().Get("project_id")
+	res, err := devcli.QuotaStatus(s.cfg.DataDir)
+	if err != nil {
+		writeAppErr(w, err)
+		return
+	}
+	m, err := devcli.Metrics(s.cfg.DataDir)
+	if err != nil {
+		writeAppErr(w, err)
+		return
+	}
+	if err := isolation.RequireProjectMatch(ids.ProjectID(m.ProjectID), ids.ProjectID(projectQ)); err != nil {
 		writeAppErr(w, err)
 		return
 	}

@@ -297,3 +297,41 @@ func TestEvalOffline(t *testing.T) {
 		t.Fatalf("history: %d %s", rr.Code, rr.Body.String())
 	}
 }
+
+func TestQuotaEndpointAndDeny(t *testing.T) {
+	dataDir := setupWorkspace(t)
+	t.Setenv("CONTEXT_QUOTA_MAX_PACKS", "1")
+	t.Setenv("CONTEXT_QUOTA_MAX_RUNS", "")
+	t.Setenv("CONTEXT_QUOTA_MAX_CHUNKS", "")
+
+	srv, err := httpserver.New(httpserver.Config{DataDir: dataDir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	h := srv.Handler()
+
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/v1/quota?project_id=proj_http", nil))
+	if rr.Code != http.StatusOK {
+		t.Fatalf("quota: %d %s", rr.Code, rr.Body.String())
+	}
+	var q map[string]any
+	if err := json.Unmarshal(rr.Body.Bytes(), &q); err != nil {
+		t.Fatal(err)
+	}
+	if q["decision"] != "allow" {
+		t.Fatalf("%#v", q)
+	}
+
+	body, _ := json.Marshal(map[string]string{"project_id": "proj_http", "query": "ZEBRA42"})
+	rr = httptest.NewRecorder()
+	h.ServeHTTP(rr, httptest.NewRequest(http.MethodPost, "/v1/context-pack", bytes.NewReader(body)))
+	if rr.Code != http.StatusOK {
+		t.Fatalf("pack1: %d %s", rr.Code, rr.Body.String())
+	}
+	rr = httptest.NewRecorder()
+	h.ServeHTTP(rr, httptest.NewRequest(http.MethodPost, "/v1/context-pack", bytes.NewReader(body)))
+	if rr.Code != http.StatusForbidden {
+		t.Fatalf("want 403 on second pack: %d %s", rr.Code, rr.Body.String())
+	}
+}

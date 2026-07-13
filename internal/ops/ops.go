@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/fastygo/context/internal/apperr"
+	"github.com/fastygo/context/internal/policy/quota"
 )
 
 const (
@@ -118,6 +119,7 @@ type Metrics struct {
 	EvalHistoryCount   int         `json:"eval_history_count"`
 	LastEval           *EvalRecord `json:"last_eval,omitempty"`
 	EvalHistoryPathKey string      `json:"eval_history_path_key,omitempty"`
-	HasLastFailed      bool        `json:"has_last_failed,omitempty"`
-	LastFailedReason   string      `json:"last_failed_reason,omitempty"`
+	HasLastFailed      bool          `json:"has_last_failed,omitempty"`
+	LastFailedReason   string        `json:"last_failed_reason,omitempty"`
+	Quota              *quota.Status `json:"quota,omitempty"`
 }

@@ -71,9 +71,9 @@ ADRs 0001–0023; do not re-implement.
 | 12 | E2E proof — hypothesis **validated** (`.project/proof/`) |
 | 13 | Durable CLI metadata opt-in (`CONTEXT_METADATA_KIND=postgres`) |
 
-Open gaps for Lab-ready Core (Chunks **28–29**): quota soft-limits,
-failure/degraded semantics. Chunks 25–27 shipped (API v1, inspector,
-swappable Completer/Embedder). Auth and OpenAPI codegen remain deferred.
+Open gaps for Lab-ready Core (Chunk **29**): failure/degraded semantics.
+Chunks 25–28 shipped (API v1, inspector, Completer/Embedder, soft quotas).
+Auth and OpenAPI codegen remain deferred.
 
 ## UX / DX / DSL Consumer Track
 
@@ -90,7 +90,7 @@ swappable Completer/Embedder). Auth and OpenAPI codegen remain deferred.
 | API v1 freeze | **Chunk 25 done** | Pin HTTP/contextkit contract | ADR-0026 / api-v1.md |
 | Context inspector | **Chunk 26 done** | Render inspector JSON | No raw DB |
 | Non-fake model/embed | **Chunk 27 done** | Swap Completer/Embedder via config | Adapter, not Lab |
-| Quota soft-limits | **Chunk 28** | Show deny/ask on over-quota | ADR-0025 follow-up |
+| Quota soft-limits | **Chunk 28 done** | Show deny/ask on over-quota | ADR-0025 follow-up |
 | Failure/degraded | **Chunk 29** | Explicit unavailable errors | No silent empty |
 | DSL workbench | After Chunk 29 | Edit FocusProfile / plans / policies | Neutral DTOs only |
 | Redaction / background runs | After Chunk 29 | Later Phase 3 | future-layer |
@@ -630,7 +630,15 @@ counts; deny or ask outside the model (policy). ADR-0025 follow-up. CLI/HTTP
 surface quota status. No billing. Offline tests.
 ```
 
-Status: pending
+Status: **completed** (2026-07-13)
+
+### Completion notes
+
+- `internal/policy/quota`: allow / ask (soft %) / deny (used >= max).
+- Env: `CONTEXT_QUOTA_MAX_CHUNKS|PACKS|RUNS`, `CONTEXT_QUOTA_SOFT_ASK_PERCENT`.
+- Hard deny gates ingest / context-pack / agent-run (`apperr.Permission` → 403).
+- CLI `quota`, HTTP `GET /v1/quota`, `metrics.quota`; `contextkit.Quota`.
+- No billing.
 
 ## Plan Chunk 29: Failure And Degraded Semantics
 

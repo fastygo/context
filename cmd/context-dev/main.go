@@ -42,6 +42,8 @@ func main() {
 		err = cmdEval(args)
 	case "metrics":
 		err = cmdMetrics(args)
+	case "quota":
+		err = cmdQuota(args)
 	case "eval-history":
 		err = cmdEvalHistory(args)
 	case "repair":
@@ -79,6 +81,7 @@ Usage:
   context-dev focus-list --data <dir> --project <id>
   context-dev eval [--out <.project/proof/eval/report.json>] [--history <jsonl>] [--data <dir>]
   context-dev metrics --data <dir>
+  context-dev quota --data <dir>
   context-dev eval-history [--data <dir>] [--history <jsonl>] [--limit N]
   context-dev repair --data <dir> --project <id> [--mode rebuild|retry-failed] [--target all|dense|sparse]
   context-dev inspect --data <dir> --project <id> (--query <text> | --pack <id>) [--focus <id>]
@@ -90,6 +93,7 @@ Ingest skips paths via defaults + optional .contextignore at corpus root.
 eval runs offline golden retrieval suite (exact/sparse/dense/hybrid + multilingual/lexicon/pack).
 With --data, eval also appends a summary to <data>/ops/eval_history.jsonl (or --history).
 metrics / eval-history expose workspace counters and append-only eval regression history.
+quota shows soft project limits (CONTEXT_QUOTA_MAX_*) with allow|ask|deny outside the model.
 repair rebuilds index payloads for the active ready snapshot, or retries last_failed under a new snapshot_id (ADR-0021).
 inspect explains search/pack decisions for Lab (budget, selected/rejected, scores) without host paths.
 Modes dense and hybrid-dense require PostgreSQL/pgvector (see .project/local-server.md).
@@ -97,6 +101,7 @@ Set CONTEXT_ENABLE_DENSE=1 to upsert dense vectors on ingest and include dense i
 Set CONTEXT_DENSE_REBUILD=1 to force search-time vector rebuild (default: prefer ingest commit).
 Set CONTEXT_EMBEDDER_KIND=local_hash for offline L2/SHA embedder (dim 32, local-hash-v1).
 Set CONTEXT_COMPLETER_KIND=localecho|http for non-fake agent-run Completer (default fake).
+Set CONTEXT_QUOTA_MAX_CHUNKS|PACKS|RUNS for soft project quotas (0/unset = unlimited; deny at hard limit).
 Set CONTEXT_SPARSE_KIND=postgres_fts for live Postgres FTS sparse/hybrid search.
 Focus profiles persist to state.json and MetadataStore (postgres when configured).
 meta-check verifies durable metadata (schema_id, lineage, temporal, documents).
@@ -310,6 +315,18 @@ func cmdMetrics(args []string) error {
 		return err
 	}
 	res, err := devcli.Metrics(f["data"])
+	if err != nil {
+		return err
+	}
+	return devcli.PrintJSON(res)
+}
+
+func cmdQuota(args []string) error {
+	f := flagMap(args)
+	if err := require(f, "data"); err != nil {
+		return err
+	}
+	res, err := devcli.QuotaStatus(f["data"])
 	if err != nil {
 		return err
 	}

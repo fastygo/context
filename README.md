@@ -71,7 +71,7 @@ Nearest work follows `.project/progress.md` plan chunks:
 | **0 — Architecture baseline** | Chunk 01 + Foundation Gate done | Lock package, storage, index, trace, linguistic, and scoring boundaries |
 | **1 — Proof of concept** | Chunks 02–13 done | CLI loop + pgvector/Postgres + durable metadata opt-in; proof validated |
 | **2 — MVP toward service API** | Chunks **14–20** done | Thin HTTP service (ADR-0024) |
-| **3 — Reliable Beta** | Chunks **21–27** done; **28–29** Lab-ready | quotas → degraded |
+| **3 — Reliable Beta** | Chunks **21–28** done; **29** Lab-ready | degraded semantics |
 
 Immediate next step: **Chunk 28** — quota soft-limits.
 Redaction / background scheduling follow after Chunk 29.

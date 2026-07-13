@@ -5,8 +5,10 @@ import (
 	"time"
 
 	"github.com/fastygo/context/internal/apperr"
+	"github.com/fastygo/context/internal/config"
 	"github.com/fastygo/context/internal/evals/golden"
 	"github.com/fastygo/context/internal/ops"
+	"github.com/fastygo/context/internal/policy/quota"
 )
 
 // EvalHistoryResult is CLI/HTTP JSON for eval-history.
@@ -67,6 +69,10 @@ func Metrics(dataDir string) (MetricsResult, error) {
 	if st.LastFailed != nil {
 		m.HasLastFailed = true
 		m.LastFailedReason = st.LastFailed.Snapshot.FailureReason
+	}
+	if limits, err := config.LoadQuotaLimitsFromEnv(); err == nil {
+		q := quota.Evaluate(limits, usageFromState(st))
+		m.Quota = &q
 	}
 	return m, nil
 }

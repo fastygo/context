@@ -39,6 +39,9 @@ type TraceResult struct {
 
 // AgentRun builds a pack and executes an agent loop with the configured Completer.
 func AgentRun(dataDir, projectID, query, focusID string) (AgentRunResult, error) {
+	if err := requireQuotaResource(dataDir, "runs"); err != nil {
+		return AgentRunResult{}, err
+	}
 	packRes, err := BuildPack(dataDir, projectID, query, focusID)
 	if err != nil {
 		return AgentRunResult{}, err

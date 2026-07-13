@@ -281,6 +281,9 @@ type PackResult struct {
 
 // BuildPack creates a ContextPack from search candidates for a query.
 func BuildPack(dataDir, projectID, query, focusID string) (PackResult, error) {
+	if err := requireQuotaResource(dataDir, "packs"); err != nil {
+		return PackResult{}, err
+	}
 	search, err := Search(dataDir, projectID, query, "hybrid", focusID)
 	if err != nil {
 		return PackResult{}, err

@@ -319,6 +319,25 @@ CONTEXT_EMBEDDER_KIND=http CONTEXT_EMBEDDER_HTTP_URL=http://127.0.0.1:8090 \
 HTTP protocol: `POST {url}/v1/complete` and `POST {url}/v1/embed` (see
 `internal/models/httpjson`). Embedder kinds remain `fake|local_hash|http`.
 
+## Soft quotas (Chunk 28)
+
+Project soft caps from env (0/unset = unlimited). Enforcement is outside the
+model (`policy/quota`): soft → `ask`, hard → `deny` + HTTP 403 on mutating
+ingest/pack/agent-run. No billing.
+
+```bash
+export CONTEXT_QUOTA_MAX_CHUNKS=5000
+export CONTEXT_QUOTA_MAX_PACKS=200
+export CONTEXT_QUOTA_MAX_RUNS=100
+# optional; default 80 when any max is set
+export CONTEXT_QUOTA_SOFT_ASK_PERCENT=80
+
+go run ./cmd/context-dev quota --data /path/to/data
+curl -s 'http://127.0.0.1:8080/v1/quota?project_id=local'
+```
+
+`GET /v1/metrics` also embeds a `quota` object when limits are configured.
+
 ## Metadata store (Chunk 11)
 
 Migrations live in `internal/storage/postgres/migrations/` and apply on

@@ -11,7 +11,8 @@ Transport: HTTP+JSON (`cmd/context-serve`) and Go client (`pkg/contextkit`).
 | --- | --- | --- |
 | GET | `/health` | Liveness + `api_version` |
 | GET | `/v1/status` | Workspace ingest status (no host paths) |
-| GET | `/v1/metrics` | Counts + last eval + `has_last_failed` |
+| GET | `/v1/metrics` | Counts + last eval + `quota` + `has_last_failed` |
+| GET | `/v1/quota` | Soft project quota status (`allow`/`ask`/`deny`) |
 | POST | `/v1/search` | Retrieval candidates |
 | POST | `/v1/context-pack` | Build ContextPack |
 | POST | `/v1/agent-run` | Fake/swappable agent loop |
@@ -25,7 +26,14 @@ Transport: HTTP+JSON (`cmd/context-serve`) and Go client (`pkg/contextkit`).
 | POST | `/v1/inspect` | Explain search/pack (Lab inspector) |
 | POST | `/v1/ingest` | Ingest by relative `path_key` |
 
-Planned under v1 (additive): quota status (Chunk 28).
+## Soft quotas (Chunk 28)
+
+Env (0/unset = unlimited): `CONTEXT_QUOTA_MAX_CHUNKS`, `CONTEXT_QUOTA_MAX_PACKS`,
+`CONTEXT_QUOTA_MAX_RUNS`, optional `CONTEXT_QUOTA_SOFT_ASK_PERCENT` (default 80).
+
+- Soft threshold → decision `ask` (advisory; writes still allowed).
+- Hard limit (`used >= max`) → decision `deny`; ingest / context-pack / agent-run
+  return permission error (HTTP 403). No billing.
 
 ## Compatibility
 

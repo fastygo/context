@@ -24,6 +24,9 @@ import (
 // When CONTEXT_ENABLE_DENSE=1, dense vectors are upserted before the snapshot
 // becomes active (ADR-0021). Version pins are always written on chunks.
 func Ingest(dataDir, projectID, path string) (State, error) {
+	if err := requireQuotaResource(dataDir, "chunks"); err != nil {
+		return State{}, err
+	}
 	ws := Workspace{DataDir: dataDir}
 	st, err := ws.Load()
 	if err != nil {

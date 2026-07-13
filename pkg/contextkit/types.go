@@ -175,6 +175,17 @@ type MetricsResult struct {
 	EvalHistoryPathKey string          `json:"eval_history_path_key,omitempty"`
 	HasLastFailed      bool            `json:"has_last_failed,omitempty"`
 	LastFailedReason   string          `json:"last_failed_reason,omitempty"`
+	Quota              json.RawMessage `json:"quota,omitempty"`
+}
+
+// QuotaResult is GET /v1/quota response.
+type QuotaResult struct {
+	OK       bool            `json:"ok"`
+	Decision string          `json:"decision"`
+	Limits   json.RawMessage `json:"limits"`
+	Usage    json.RawMessage `json:"usage"`
+	Breaches json.RawMessage `json:"breaches,omitempty"`
+	Notes    []string        `json:"notes,omitempty"`
 }
 
 // RepairRequest is POST /v1/repair.
