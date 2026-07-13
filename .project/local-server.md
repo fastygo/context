@@ -97,9 +97,27 @@ CONTEXT_PG_DSN='postgres://context:context@127.0.0.1:5432/context?sslmode=disabl
 
 Without `CONTEXT_PG_DSN`, those tests skip and `go test ./...` stays green.
 
-## Non-goals (this chunk)
+## Metadata store (Chunk 11)
 
-- No `VectorStore` / `MetadataStore` Postgres adapters (Chunks 10–11).
-- No domain migrations, lineage tables, or sparse FTS schema.
-- No QDrant / `context-sparse` services in compose.
-- `go test ./...` remains fully offline.
+Migrations live in `internal/storage/postgres/migrations/` and apply on
+`postgres.Open`. Reset local DB with `./scripts/dev.sh reset` then `up`.
+
+```bash
+export CONTEXT_PG_DSN='postgres://context:context@127.0.0.1:5432/context?sslmode=disable'
+export CONTEXT_METADATA_KIND=postgres
+go run ./cmd/context-dev meta-check --backend postgres
+
+CONTEXT_PG_DSN=... go test ./internal/storage/postgres/ -count=1
+```
+
+Durable rows cover projects, sources/chunks (with temporal bounds), artifact
+meta (`artifact_type` / `schema_id`), lineage, snapshots, packs, runs, tool
+calls, traces, and adapter-neutral `meta_documents` for linguistic/lexicographic
+JSON without importing language/dictionary adapters.
+
+## Non-goals (still deferred)
+
+- No QDrant / Turbopuffer / `context-sparse` services in compose.
+- No production language/dictionary adapters in the storage layer
+  (`meta_documents` stays JSON-neutral).
+- `go test ./...` remains fully offline unless `CONTEXT_PG_DSN` is set.

@@ -85,3 +85,58 @@ type ArtifactMetaStore interface {
 	GetArtifactMeta(ctx context.Context, projectID ids.ProjectID, artifactID ids.ArtifactID) (artifacts.Artifact, error)
 	ListArtifacts(ctx context.Context, projectID ids.ProjectID) ([]artifacts.Artifact, error)
 }
+
+// DocumentKind classifies adapter-neutral metadata documents persisted without
+// importing language or lexicon adapter packages into the storage layer.
+type DocumentKind string
+
+const (
+	DocumentTokenOccurrence DocumentKind = "token_occurrence"
+	DocumentMorphAnalysis   DocumentKind = "morph_analysis"
+	DocumentQueryExpansion  DocumentKind = "query_expansion"
+	DocumentSense           DocumentKind = "sense"
+	DocumentConcept         DocumentKind = "concept"
+	DocumentAttestation     DocumentKind = "attestation"
+	DocumentVariant         DocumentKind = "variant"
+	DocumentMWE             DocumentKind = "multiword_expression"
+	DocumentLexiconSource   DocumentKind = "lexicon_source"
+	DocumentRegister        DocumentKind = "register"
+	DocumentDialectRegion   DocumentKind = "dialect_region"
+	DocumentTimePeriod      DocumentKind = "time_period"
+	DocumentEvaluation      DocumentKind = "evaluation"
+	DocumentManifestNode    DocumentKind = "manifest_node"
+	DocumentChunkAlias      DocumentKind = "chunk_alias"
+)
+
+// MetaDocument is a filterable JSON document for linguistic/lexicographic rows.
+type MetaDocument struct {
+	ProjectID          ids.ProjectID
+	Kind               DocumentKind
+	ID                 string
+	Language           string
+	LexemeID           string
+	SenseID            string
+	ConceptID          string
+	Region             string
+	Register           string
+	TimePeriod         string
+	LexiconSourceID    string
+	SourceAuthority    string
+	AnalyzerVersion    string
+	DictionaryVersion  string
+	SnapshotID         ids.SnapshotID
+	ChunkID            ids.ChunkID
+	Payload            []byte
+}
+
+// DocumentStore persists adapter-neutral JSON documents (Chunk 11).
+type DocumentStore interface {
+	PutDocument(ctx context.Context, doc MetaDocument) error
+	GetDocument(ctx context.Context, projectID ids.ProjectID, kind DocumentKind, id string) (MetaDocument, error)
+	ListDocuments(ctx context.Context, projectID ids.ProjectID, kind DocumentKind) ([]MetaDocument, error)
+}
+
+// TxRunner exposes transactional boundaries for indexing and run updates.
+type TxRunner interface {
+	WithTx(ctx context.Context, fn func(ctx context.Context) error) error
+}

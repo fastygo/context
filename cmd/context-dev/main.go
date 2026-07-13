@@ -28,6 +28,8 @@ func main() {
 		err = cmdAgent(args)
 	case "trace":
 		err = cmdTrace(args)
+	case "meta-check":
+		err = cmdMetaCheck(args)
 	case "help", "-h", "--help":
 		usage()
 	default:
@@ -51,11 +53,22 @@ Usage:
   context-dev context-pack --data <dir> --project <id> --query <text>
   context-dev agent-run --data <dir> --project <id> --query <text>
   context-dev trace --data <dir> --project <id> --run <id>
+  context-dev meta-check [--backend postgres]
 
 Modes dense and hybrid-dense require PostgreSQL/pgvector (see .project/local-server.md).
 Set CONTEXT_ENABLE_DENSE=1 to include dense in hybrid when Postgres is up.
+meta-check verifies durable metadata (schema_id, lineage, temporal, documents).
 Outputs stable JSON on stdout for Lab/fixture consumption.
 `)
+}
+
+func cmdMetaCheck(args []string) error {
+	f := flagMap(args)
+	res, err := devcli.MetaCheck(f["backend"])
+	if err != nil {
+		return err
+	}
+	return devcli.PrintJSON(res)
 }
 
 func flagMap(args []string) map[string]string {

@@ -791,7 +791,23 @@ Acceptance criteria:
 - Tests can run without PostgreSQL unless integration mode is enabled.
 ```
 
-Status: pending
+Status: **completed** (2026-07-13)
+
+### Completion notes
+
+- Added `internal/storage/postgres` MetadataStore + ArtifactMetaStore +
+  DocumentStore + TxRunner; migrations in
+  `internal/storage/postgres/migrations/001_metadata.sql`.
+- Schema covers projects/sources/chunks (temporal columns), artifacts_meta
+  (`artifact_type`, `schema_id`), artifact_lineage, index_snapshots,
+  manifest_nodes, chunk_aliases, context_packs, agent_runs, tool_calls,
+  trace_events, evaluations, and filterable `meta_documents` for
+  linguistic/lexicographic JSON.
+- `SetActiveSnapshot` uses a SQL transaction (supersede previous ready
+  snapshot). Reset local DB via `./scripts/dev.sh reset`.
+- CLI: `context-dev meta-check --backend postgres`.
+- Verified: offline `go test ./...`; with `CONTEXT_PG_DSN`, postgres
+  integration + `meta-check` (`schema_id`, lineage, temporal, sense document).
 
 ## Plan Chunk 12: End-To-End Hypothesis Validation
 

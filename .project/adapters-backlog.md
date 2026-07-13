@@ -10,7 +10,7 @@ beyond PostgreSQL/pgvector wait for Chunk 12 proof or a measured blocker
 | `SparseSearchClient` | fake / exact overlap | PostgreSQL FTS (Chunk 11+), then `context-sparse` (Tantivy) | Do not add Tantivy sidecar until lexical limits of Postgres FTS are measured |
 | `Embedder` | `models/fake` (`fake-hash-v1`, dim 8) | Provider embedding adapters | Dimension change requires new `embedding_version` |
 | Language | `linguistic/simple` | `context-lang-*` repositories | Carry language, token spans, analyzer version, expansions without changing vector adapters |
-| `MetadataStore` | memory | PostgreSQL (Chunk 11) | Lineage + temporal columns from ADR-0022/0023 |
+| `MetadataStore` | `internal/storage/postgres` | SQLite (optional), bbolt cache later | Migrations on Open; DocumentStore for lex/ling JSON |
 | `ArtifactStore` | localfs | Object store | Unchanged by dense path |
 
 ## Capability contract
