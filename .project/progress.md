@@ -45,7 +45,7 @@ API v1 freeze (Chunk 25) ✓
   -> failure / degraded semantics (Chunk 29) ✓
   -> redaction / PII hooks (Chunk 30) ✓
   -> background jobs + cancel (Chunk 31) ✓
-  -> Lab gate freeze (Chunk 32)
+  -> Lab gate freeze (Chunk 32) ✓
 ```
 
 Lang/UI/codegen stay outside core. Fuzzy/trigram only if measured.
@@ -71,8 +71,9 @@ ADRs 0001–0023; do not re-implement.
 | 12 | E2E proof — hypothesis **validated** (`.project/proof/`) |
 | 13 | Durable CLI metadata opt-in (`CONTEXT_METADATA_KIND=postgres`) |
 
-Open gaps: Chunk **32** (Lab gate). Chunks 25–31 shipped. Auth and OpenAPI
-codegen remain deferred.
+Open gaps for Lab binding: none at the Lab gate. Chunks 20–32 shipped
+([lab-gate.md](lab-gate.md)). Auth, OpenAPI, and lang adapters remain deferred.
+
 
 ## UX / DX / DSL Consumer Track
 
@@ -93,7 +94,7 @@ codegen remain deferred.
 | Failure/degraded | **Chunk 29 done** | Explicit unavailable errors | No silent empty |
 | Redaction / PII | **Chunk 30 done** | Model/Lab text redacted | Raw corpus untouched |
 | Background jobs | **Chunk 31 done** | Start/status/cancel | In-process only |
-| Lab gate | **Chunk 32** | Contract freeze smoke | HTTP + contextkit |
+| Lab gate | **Chunk 32 done** | Contract freeze smoke | HTTP + contextkit |
 | DSL workbench | After Chunk 32 | Edit FocusProfile / plans / policies | Neutral DTOs only |
 | Fuzzy / trigram | Later Phase 3 | Only if measured | future-layer |
 
@@ -714,7 +715,14 @@ and an offline smoke that Lab/BFF can bind HTTP+contextkit without internal
 imports. Update progress/proof/README. Optional ADR. No Lab UI in this repo.
 ```
 
-Status: pending
+Status: **completed** (2026-07-13)
+
+### Completion notes
+
+- `.project/lab-gate.md` checklist for Chunks 20–31; ADR-0027.
+- Offline `TestLabGateSmoke`: health→ready→status→search→pack→inspect→
+  metrics→quota→agent-run→job; no host paths; redaction on previews.
+- Lab binds HTTP + `contextkit` only; auth/OpenAPI/lang still deferred.
 
 ## Completion Notes
 

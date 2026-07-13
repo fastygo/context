@@ -51,6 +51,7 @@
 - Failure/degraded: typed unavailable, readiness, `CONTEXT_FAIL_*` (Chunk 29).
 - Redaction: model/Lab text via `CONTEXT_REDACT` (Chunk 30).
 - Background jobs: in-process AgentRun start/status/cancel (Chunk 31).
+- **Lab gate passed** (Chunk 32): [lab-gate.md](../lab-gate.md), ADR-0027.
 - Multilingual/lexicon proofs use in-memory fixtures with simple-lang adapters; context-lang-* and TEI/SKOS lexicon adapters are not wired.
 
 ## Next decisions

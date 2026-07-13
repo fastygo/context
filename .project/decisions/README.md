@@ -71,6 +71,7 @@ only when a later chunk or measurement requires them.
 | [0024](0024-thin-http-service-boundary.md) | Thin HTTP service boundary | Accepted |
 | [0025](0025-multi-tenant-isolation.md) | Multi-tenant isolation boundary | Accepted |
 | [0026](0026-public-api-v1-freeze.md) | Public API v1 compatibility freeze | Accepted |
+| [0027](0027-lab-gate-freeze.md) | Lab gate freeze after Chunk 32 | Accepted |
 
 ## Adapter progression by plan chunk
 

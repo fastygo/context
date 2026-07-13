@@ -71,10 +71,10 @@ Nearest work follows `.project/progress.md` plan chunks:
 | **0 — Architecture baseline** | Chunk 01 + Foundation Gate done | Lock package, storage, index, trace, linguistic, and scoring boundaries |
 | **1 — Proof of concept** | Chunks 02–13 done | CLI loop + pgvector/Postgres + durable metadata opt-in; proof validated |
 | **2 — MVP toward service API** | Chunks **14–20** done | Thin HTTP service (ADR-0024) |
-| **3 — Reliable Beta** | Chunks **21–31**; **32** Lab gate next | Lab gate freeze |
+| **3 — Reliable Beta** | Chunks **21–32** — **Lab gate passed** | Auth / OpenAPI deferred |
 
-Immediate next step: **Chunk 28** — quota soft-limits.
-Redaction / background scheduling follow after Chunk 29.
+Immediate next step: Lab/BFF may bind API v1 ([`.project/lab-gate.md`](.project/lab-gate.md)).
+Deferred: multi-tenant auth, OpenAPI codegen, lang adapters, fuzzy/trigram.
 
 Phase 2 MVP service boundary: thin HTTP+JSON (`cmd/context-serve`, ADR-0024).
 Phase 3 starts with `pkg/contextkit` (Chunk 21). See `.project/progress.md`.

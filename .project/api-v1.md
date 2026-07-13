@@ -26,6 +26,12 @@ Transport: HTTP+JSON (`cmd/context-serve`) and Go client (`pkg/contextkit`).
 | POST | `/v1/repair` | Index rebuild / retry-failed |
 | POST | `/v1/inspect` | Explain search/pack (Lab inspector) |
 | POST | `/v1/ingest` | Ingest by relative `path_key` |
+| POST | `/v1/jobs` | Start background AgentRun (`owner` required) |
+| GET | `/v1/jobs` | List jobs |
+| GET | `/v1/jobs/{id}` | Job status |
+| POST | `/v1/jobs/{id}/cancel` | Cancel pending/running job |
+
+Lab gate: [lab-gate.md](lab-gate.md) ([ADR-0027](decisions/0027-lab-gate-freeze.md)).
 
 ## Soft quotas (Chunk 28)
 
