@@ -5,6 +5,7 @@ import "fmt"
 
 // Typed identifiers keep domain language explicit without premature UUID helpers.
 type (
+	TenantID     string
 	ProjectID    string
 	SourceID     string
 	ArtifactID   string
@@ -45,6 +46,7 @@ func Validate(name, value string) error {
 	return nil
 }
 
+func (id TenantID) Validate() error      { return Validate("tenant_id", string(id)) }
 func (id ProjectID) Validate() error     { return Validate("project_id", string(id)) }
 func (id SourceID) Validate() error      { return Validate("source_id", string(id)) }
 func (id ArtifactID) Validate() error    { return Validate("artifact_id", string(id)) }

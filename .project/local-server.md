@@ -277,6 +277,14 @@ Offline (no dense/FTS env): repair still succeeds with `dense_skipped` /
 `sparse_skipped`. Failed ingest retains `last_failed` in `state.json` for retry.
 Metrics exposes `has_last_failed` / `last_failed_reason`.
 
+## Multi-tenant isolation (Chunk 24 / ADR-0025)
+
+- `TenantID` (optional) → `ProjectID` (required) → `SnapshotID`.
+- Every storage/retrieval op stays project-scoped; cross-project APIs forbidden.
+- `context-serve --data` is still one workspace; BFF binds caller → `project_id`.
+- Auth and quota enforcement remain deferred; mismatch on `project_id` → HTTP 403.
+- Contract tests: memory/index leakage + `policy/isolation` helpers.
+
 ## Metadata store (Chunk 11)
 
 Migrations live in `internal/storage/postgres/migrations/` and apply on
@@ -300,4 +308,5 @@ JSON without importing language/dictionary adapters.
 - No QDrant / Turbopuffer / `context-sparse` services in compose.
 - No production language/dictionary adapters in the storage layer
   (`meta_documents` stays JSON-neutral).
+- No multi-tenant auth / quota enforcement yet (ADR-0025 design only).
 - `go test ./...` remains fully offline unless `CONTEXT_PG_DSN` is set.

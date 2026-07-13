@@ -102,13 +102,14 @@ func (s *Store) PutProject(ctx context.Context, project corpus.Project) error {
 		return apperr.Wrap(apperr.Validation, "project", err)
 	}
 	_, err := s.conn(ctx).Exec(ctx, `
-INSERT INTO projects (id, name, active_snapshot_id, updated_at)
-VALUES ($1,$2,$3,now())
+INSERT INTO projects (id, name, tenant_id, active_snapshot_id, updated_at)
+VALUES ($1,$2,$3,$4,now())
 ON CONFLICT (id) DO UPDATE SET
   name = EXCLUDED.name,
+  tenant_id = EXCLUDED.tenant_id,
   active_snapshot_id = EXCLUDED.active_snapshot_id,
   updated_at = now()
-`, string(project.ID), project.Name, string(project.ActiveSnapshotID))
+`, string(project.ID), project.Name, string(project.TenantID), string(project.ActiveSnapshotID))
 	return wrapDB(err, "put project")
 }
 
@@ -117,13 +118,14 @@ func (s *Store) GetProject(ctx context.Context, id ids.ProjectID) (corpus.Projec
 		return corpus.Project{}, err
 	}
 	var p corpus.Project
-	var active string
+	var active, tenant string
 	err := s.conn(ctx).QueryRow(ctx, `
-SELECT id, name, active_snapshot_id FROM projects WHERE id = $1
-`, string(id)).Scan(&p.ID, &p.Name, &active)
+SELECT id, name, COALESCE(tenant_id, ''), active_snapshot_id FROM projects WHERE id = $1
+`, string(id)).Scan(&p.ID, &p.Name, &tenant, &active)
 	if err != nil {
 		return corpus.Project{}, mapNotFound(err, "project not found")
 	}
+	p.TenantID = ids.TenantID(tenant)
 	p.ActiveSnapshotID = ids.SnapshotID(active)
 	return p, nil
 }
@@ -132,7 +134,8 @@ func (s *Store) ListProjects(ctx context.Context) ([]corpus.Project, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	rows, err := s.conn(ctx).Query(ctx, `SELECT id, name, active_snapshot_id FROM projects ORDER BY id`)
+	rows, err := s.conn(ctx).Query(ctx, `
+SELECT id, name, COALESCE(tenant_id, ''), active_snapshot_id FROM projects ORDER BY id`)
 	if err != nil {
 		return nil, wrapDB(err, "list projects")
 	}
@@ -140,10 +143,11 @@ func (s *Store) ListProjects(ctx context.Context) ([]corpus.Project, error) {
 	var out []corpus.Project
 	for rows.Next() {
 		var p corpus.Project
-		var active string
-		if err := rows.Scan(&p.ID, &p.Name, &active); err != nil {
+		var active, tenant string
+		if err := rows.Scan(&p.ID, &p.Name, &tenant, &active); err != nil {
 			return nil, wrapDB(err, "scan project")
 		}
+		p.TenantID = ids.TenantID(tenant)
 		p.ActiveSnapshotID = ids.SnapshotID(active)
 		out = append(out, p)
 	}

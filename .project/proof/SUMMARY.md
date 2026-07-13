@@ -43,6 +43,7 @@
 - Ops: append-only eval history + workspace metrics (Chunk 22);
   `ops/eval_history.jsonl` path_key under data dir.
 - Repair: rebuild / retry-failed (Chunk 23, ADR-0021); `last_failed` in state.
+- Isolation: ADR-0025 Tenant/Project boundary; leakage contract tests (Chunk 24).
 - Multilingual/lexicon proofs use in-memory fixtures with simple-lang adapters; context-lang-* and TEI/SKOS lexicon adapters are not wired.
 
 ## Next decisions

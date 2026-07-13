@@ -8,10 +8,13 @@ import (
 	"github.com/fastygo/context/internal/ids"
 )
 
-// Project is an isolated workspace or tenant boundary.
+// Project is an isolated index/workspace boundary (ADR-0025).
+// Optional TenantID is the outer ACL/quota/billing root when multi-tenant
+// hosting is enabled; empty TenantID is valid for single-tenant local serve.
 type Project struct {
 	ID               ids.ProjectID
 	Name             string
+	TenantID         ids.TenantID  `json:"tenant_id,omitempty"`
 	ActiveSnapshotID ids.SnapshotID // empty until first ready snapshot
 }
 

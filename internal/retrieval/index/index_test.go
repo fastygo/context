@@ -5,9 +5,33 @@ import (
 	"time"
 
 	"github.com/fastygo/context/internal/corpus"
+	"github.com/fastygo/context/internal/foundation"
 	"github.com/fastygo/context/internal/retrieval"
 	"github.com/fastygo/context/internal/retrieval/index"
 )
+
+func TestNoCrossProjectIndexLeakage(t *testing.T) {
+	t.Parallel()
+	mem := index.NewMemory(
+		index.ChunkRecord{
+			ProjectID: "pa", SnapshotID: "s1", ChunkID: "c_a",
+			Text: "secret alpha", TextChecksum: "aa", TrustLevel: foundation.TrustProject,
+		},
+		index.ChunkRecord{
+			ProjectID: "pb", SnapshotID: "s1", ChunkID: "c_b",
+			Text: "other beta", TextChecksum: "bb", TrustLevel: foundation.TrustProject,
+		},
+	)
+	if got := mem.List("pb", "s1"); len(got) != 1 || got[0].ChunkID != "c_b" {
+		t.Fatalf("list pb: %#v", got)
+	}
+	if _, ok := mem.Get("pb", "s1", "c_a"); ok {
+		t.Fatal("project_b must not get project_a chunk")
+	}
+	if got := mem.List("pa", "s1"); len(got) != 1 || got[0].ChunkID != "c_a" {
+		t.Fatalf("list pa: %#v", got)
+	}
+}
 
 func TestTemporalFilterUsesDeterministicOverlap(t *testing.T) {
 	t.Parallel()

@@ -15,6 +15,7 @@ import (
 	"github.com/fastygo/context/internal/devcli"
 	"github.com/fastygo/context/internal/foundation"
 	"github.com/fastygo/context/internal/ids"
+	"github.com/fastygo/context/internal/policy/isolation"
 	"github.com/fastygo/context/internal/retrieval"
 )
 
@@ -121,8 +122,8 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	projectQ := r.URL.Query().Get("project_id")
-	if projectQ != "" && ids.ProjectID(projectQ) != st.Project.ID {
-		writeErr(w, http.StatusBadRequest, apperr.New(apperr.Validation, "project id mismatch"))
+	if err := isolation.RequireProjectMatch(st.Project.ID, ids.ProjectID(projectQ)); err != nil {
+		writeAppErr(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, StatusResponse{
@@ -318,8 +319,8 @@ func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
 		writeAppErr(w, err)
 		return
 	}
-	if projectQ != "" && res.ProjectID != projectQ {
-		writeErr(w, http.StatusBadRequest, apperr.New(apperr.Validation, "project id mismatch"))
+	if err := isolation.RequireProjectMatch(ids.ProjectID(res.ProjectID), ids.ProjectID(projectQ)); err != nil {
+		writeAppErr(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, res)

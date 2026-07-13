@@ -40,7 +40,7 @@ Current target is **Phase 3 Reliable Beta** (start):
 thin pkg/contextkit HTTP client (Chunk 21)
   -> operational metrics + eval history (Chunk 22)
   -> index rebuild/repair tools (Chunk 23)
-  -> multi-tenant isolation design (later ADR)
+  -> multi-tenant isolation design (Chunk 24 / ADR-0025)
 ```
 
 QDrant, Turbopuffer, `context-sparse`, and full `context-lang-*` / TEI adapters
@@ -65,8 +65,8 @@ ADRs 0001–0023; do not re-implement.
 | 13 | Durable CLI metadata opt-in (`CONTEXT_METADATA_KIND=postgres`) |
 
 Open gaps after Phase 2: semantic/provider Embedder still deferred; full SDK /
-OpenAPI generation deferred; multi-tenant auth deferred. Thin HTTP (Chunk 20)
-and `pkg/contextkit` client (Chunk 21) shipped.
+OpenAPI generation deferred; multi-tenant **auth** and quota **enforcement**
+deferred (isolation design ADR-0025 shipped in Chunk 24).
 
 ## UX / DX / DSL Consumer Track
 
@@ -79,7 +79,8 @@ and `pkg/contextkit` client (Chunk 21) shipped.
 | Go client surface | **Chunk 21 done** | Import `pkg/contextkit` only | No `internal/` |
 | Ops metrics / eval history | **Chunk 22 done** | Show metrics + history JSON | path_key only |
 | Index repair | **Chunk 23 done** | Trigger rebuild / retry-failed | ADR-0021 |
-| DSL workbench | After Chunk 23 | Edit FocusProfile / plans / policies | Neutral DTOs only |
+| Tenant isolation design | **Chunk 24 done** | Bind project_id; no cross-project | ADR-0025 |
+| DSL workbench | After Chunk 24 | Edit FocusProfile / plans / policies | Neutral DTOs only |
 
 ## Plan Chunk 14: PostgreSQL FTS SparseSearchClient
 
@@ -494,6 +495,42 @@ Status: **completed** (2026-07-13)
 - CLI / `POST /v1/repair` / `contextkit.Repair`.
 - Metrics flags: `has_last_failed`, `last_failed_reason`.
 - Offline: skipped dense/sparse still `ok=true` with skip reasons.
+
+## Plan Chunk 24: Multi-Tenant Isolation Design
+
+Copy-paste prompt:
+
+```text
+Work in @Context only. Accept ADR for multi-tenant isolation and add minimal
+project-scope checks + leakage contract tests (Phase 3). Read future-layer
+Layer 02, ADR-0011, ADR-0024. Do not implement OIDC, billing, or quota
+enforcement.
+
+Plan and then implement:
+1. ADR-0025: Tenant vs Project hierarchy; hard project_id isolation; no
+   cross-project APIs; auth/quotas deferred; single-workspace serve topology.
+2. Optional TenantID on Project; ids.TenantID; Postgres migration.
+3. internal/policy/isolation RequireProjectMatch / RequireTenantMatch.
+4. HTTP status/metrics use isolation helper (mismatch -> permission).
+5. Contract tests: memory + index no cross-project leakage; HTTP 403 on
+   project_id mismatch.
+6. Docs + progress. Out of scope: membership ACL, quota deny, multi-data
+   router.
+
+Acceptance criteria:
+- ADR accepted and indexed.
+- Wrong project_id cannot read another project's chunks in memory/index tests.
+- go test ./... offline-green.
+```
+
+Status: **completed** (2026-07-13)
+
+### Completion notes
+
+- ADR-0025: Tenant (optional) → Project (required) → Snapshot.
+- `corpus.Project.TenantID`; migration `004_project_tenant_id.sql`.
+- `policy/isolation` helpers; HTTP mismatch → 403.
+- Leakage tests: memory metadata, in-memory index, HTTP status.
 
 ## Completion Notes
 

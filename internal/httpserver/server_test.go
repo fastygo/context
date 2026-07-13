@@ -155,6 +155,19 @@ func TestAuthToken(t *testing.T) {
 	}
 }
 
+func TestProjectMismatchForbidden(t *testing.T) {
+	dataDir := setupWorkspace(t)
+	srv, err := httpserver.New(httpserver.Config{DataDir: dataDir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/v1/status?project_id=other", nil))
+	if rr.Code != http.StatusForbidden {
+		t.Fatalf("want 403, got %d %s", rr.Code, rr.Body.String())
+	}
+}
+
 func TestIngestRejectsAbsolutePathKey(t *testing.T) {
 	dataDir := setupWorkspace(t)
 	srv, err := httpserver.New(httpserver.Config{DataDir: dataDir})
