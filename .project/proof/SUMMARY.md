@@ -49,6 +49,7 @@
 - Models: `localecho` Completer + `http` Completer/Embedder (Chunk 27).
 - Soft quotas: allow/ask/deny via `CONTEXT_QUOTA_MAX_*` (Chunk 28).
 - Failure/degraded: typed unavailable, readiness, `CONTEXT_FAIL_*` (Chunk 29).
+- Redaction: model/Lab text via `CONTEXT_REDACT` (Chunk 30).
 - Multilingual/lexicon proofs use in-memory fixtures with simple-lang adapters; context-lang-* and TEI/SKOS lexicon adapters are not wired.
 
 ## Next decisions

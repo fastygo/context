@@ -12,6 +12,7 @@ import (
 	"github.com/fastygo/context/internal/ids"
 	"github.com/fastygo/context/internal/models/factory"
 	"github.com/fastygo/context/internal/policy"
+	"github.com/fastygo/context/internal/redaction"
 	toolfake "github.com/fastygo/context/internal/tools/fake"
 	toolmem "github.com/fastygo/context/internal/tools/memory"
 	"github.com/fastygo/context/internal/tracing"
@@ -28,6 +29,8 @@ type AgentRunResult struct {
 	ToolCall       any                   `json:"tool_call,omitempty"`
 	VerifyOK       bool                  `json:"verify_ok"`
 	MetaKind       string                `json:"meta_kind,omitempty"`
+	Redacted       bool                  `json:"redacted,omitempty"`
+	RedactCount    int                   `json:"redact_count,omitempty"`
 }
 
 // TraceResult is CLI JSON for trace.
@@ -141,6 +144,10 @@ func AgentRun(dataDir, projectID, query, focusID string) (AgentRunResult, error)
 		VerifyOK:      res.Verify.OK,
 		MetaKind:      string(handle.Kind),
 	}
+	text, rep := redaction.Apply(out.ModelText)
+	out.ModelText = text
+	out.Redacted = rep.Applied
+	out.RedactCount = rep.Count
 	if res.ToolCall != nil {
 		out.ToolCall = res.ToolCall
 	}

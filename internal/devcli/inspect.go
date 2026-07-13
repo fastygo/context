@@ -1,12 +1,14 @@
 package devcli
 
 import (
+	"strings"
 	"unicode/utf8"
 
 	"github.com/fastygo/context/internal/apperr"
 	"github.com/fastygo/context/internal/foundation"
 	"github.com/fastygo/context/internal/ids"
 	"github.com/fastygo/context/internal/policy/isolation"
+	"github.com/fastygo/context/internal/redaction"
 	"github.com/fastygo/context/internal/retrieval"
 )
 
@@ -31,6 +33,7 @@ type InspectReport struct {
 	Candidates   []InspectCandidate `json:"candidates,omitempty"`
 	Checksum     foundation.ChecksumHex `json:"pack_checksum,omitempty"`
 	Notes        []string          `json:"notes,omitempty"`
+	Redacted     bool              `json:"redacted,omitempty"`
 }
 
 // InspectBudget summarizes ContextPack budget for Lab.
@@ -167,7 +170,22 @@ func inspectPack(st State, pack retrieval.ContextPack, query, mode, focusID stri
 		Selected:     selected,
 		Rejected:     rejected,
 		Checksum:     pack.Checksum,
+		Redacted:     inspectHasRedaction(selected, rejected),
 	}
+}
+
+func inspectHasRedaction(selected, rejected []InspectEvidence) bool {
+	for _, e := range selected {
+		if strings.Contains(e.SurfacePreview, redaction.Replacement) {
+			return true
+		}
+	}
+	for _, e := range rejected {
+		if strings.Contains(e.SurfacePreview, redaction.Replacement) {
+			return true
+		}
+	}
+	return false
 }
 
 func packResFocusFromState(st State, pack retrieval.ContextPack) ids.FocusID {
@@ -184,6 +202,7 @@ func inspectEvidence(st State, e retrieval.EvidenceItem) InspectEvidence {
 	if chunkID == "" {
 		chunkID = e.SourceRef.ChunkID
 	}
+	preview, _ := redaction.Apply(truncateRunes(e.Surface, inspectorSurfaceMax))
 	out := InspectEvidence{
 		ID:              e.ID,
 		Class:           e.Class,
@@ -196,7 +215,7 @@ func inspectEvidence(st State, e retrieval.EvidenceItem) InspectEvidence {
 		TextChecksum:    firstChecksum(e.Candidate.TextChecksum, e.SourceRef.Checksum),
 		MergedScore:     e.Candidate.MergedScore,
 		Reasons:         contributionReasons(e.Candidate.Contributions),
-		SurfacePreview:  truncateRunes(e.Surface, inspectorSurfaceMax),
+		SurfacePreview:  preview,
 		RejectionReason: e.RejectionReason,
 	}
 	return out

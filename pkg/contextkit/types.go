@@ -96,12 +96,14 @@ type PackResult struct {
 
 // AgentRunResult is POST /v1/agent-run response.
 type AgentRunResult struct {
-	Run       json.RawMessage `json:"run"`
-	PackID    string          `json:"pack_id,omitempty"`
-	ModelText string          `json:"model_text,omitempty"`
-	ToolCall  json.RawMessage `json:"tool_call,omitempty"`
-	VerifyOK  bool            `json:"verify_ok"`
-	MetaKind  string          `json:"meta_kind,omitempty"`
+	Run         json.RawMessage `json:"run"`
+	PackID      string          `json:"pack_id,omitempty"`
+	ModelText   string          `json:"model_text,omitempty"`
+	ToolCall    json.RawMessage `json:"tool_call,omitempty"`
+	VerifyOK    bool            `json:"verify_ok"`
+	MetaKind    string          `json:"meta_kind,omitempty"`
+	Redacted    bool            `json:"redacted,omitempty"`
+	RedactCount int             `json:"redact_count,omitempty"`
 }
 
 // RunID extracts run.id from AgentRunResult.Run.
@@ -255,6 +257,7 @@ type InspectResult struct {
 	Candidates   []json.RawMessage `json:"candidates,omitempty"`
 	Checksum     string            `json:"pack_checksum,omitempty"`
 	Notes        []string          `json:"notes,omitempty"`
+	Redacted     bool              `json:"redacted,omitempty"`
 }
 
 // IngestRequest is POST /v1/ingest (path_key relative to corpus only).

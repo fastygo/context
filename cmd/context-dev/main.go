@@ -108,6 +108,7 @@ Set CONTEXT_EMBEDDER_KIND=local_hash for offline L2/SHA embedder (dim 32, local-
 Set CONTEXT_COMPLETER_KIND=localecho|http for non-fake agent-run Completer (default fake).
 Set CONTEXT_QUOTA_MAX_CHUNKS|PACKS|RUNS for soft project quotas (0/unset = unlimited; deny at hard limit).
 Set CONTEXT_FAIL_METADATA|VECTOR|SPARSE|EMBEDDER|ARTIFACT|COMPLETER=1 to inject Unavailable (Chunk 29).
+Set CONTEXT_REDACT=0 to disable secret/PII redaction on model_text / inspect previews (default on).
 Set CONTEXT_SPARSE_KIND=postgres_fts for live Postgres FTS sparse/hybrid search.
 Focus profiles persist to state.json and MetadataStore (postgres when configured).
 meta-check verifies durable metadata (schema_id, lineage, temporal, documents).

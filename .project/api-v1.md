@@ -44,6 +44,13 @@ Env (0/unset = unlimited): `CONTEXT_QUOTA_MAX_CHUNKS`, `CONTEXT_QUOTA_MAX_PACKS`
 - Failure injection: `CONTEXT_FAIL_METADATA|VECTOR|SPARSE|EMBEDDER|ARTIFACT|COMPLETER=1`.
 - `/health` stays live (`ok:true`) and embeds readiness; `/v1/ready` is `503` when not ready.
 
+## Redaction (Chunk 30)
+
+- `CONTEXT_REDACT` defaults **on** (`0`/`false`/`off` to disable for local debug).
+- Applies to agent-run `model_text` and inspect `surface_preview` only (corpus/index untouched).
+- Patterns: bearer tokens, api_key/password/token assignments, email-like addresses.
+- Response fields: `redacted`, optional `redact_count`.
+
 ## Compatibility
 
 - Documented JSON fields: do not rename/remove within v1.

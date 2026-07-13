@@ -34,21 +34,21 @@ consumer surface is HTTP (Chunk 20) plus a thin `pkg/contextkit` client
 
 Phase 1 (Chunks 01–13) and Phase 2 (Chunks 14–20) are **complete**.
 
-Current target is **Phase 3 Reliable Beta** — Lab-ready stability track
-(roadmap Phase 3 + Phase 2 leftovers needed before external labs freeze on the
-contract). Chunks **21–24** done; **25–29** are the minimum before treating the
-HTTP/`contextkit` surface as stable for Lab/BFF:
+Current target is **Phase 3 Reliable Beta** — Lab-ready 25–29 done; next is
+redaction / background / Lab gate (Chunks **30–32**):
 
 ```text
 API v1 freeze (Chunk 25) ✓
   -> Context inspector JSON (Chunk 26) ✓
   -> non-fake Completer + provider Embedder path (Chunk 27) ✓
-  -> quota soft-limits (Chunk 28)
-  -> failure / degraded semantics (Chunk 29)
+  -> quota soft-limits (Chunk 28) ✓
+  -> failure / degraded semantics (Chunk 29) ✓
+  -> redaction / PII hooks (Chunk 30)
+  -> background jobs + cancel (Chunk 31)
+  -> Lab gate freeze (Chunk 32)
 ```
 
-Later Phase 3 (after 29): redaction/PII hooks, background scheduling/cancellation,
-trigram/fuzzy only if measured. Lang/UI/codegen stay outside core.
+Lang/UI/codegen stay outside core. Fuzzy/trigram only if measured.
 
 QDrant, Turbopuffer, `context-sparse`, and full `context-lang-*` / TEI adapters
 remain deferred ([ADR-0017](decisions/0017-poc-backend-order.md),
@@ -71,10 +71,8 @@ ADRs 0001–0023; do not re-implement.
 | 12 | E2E proof — hypothesis **validated** (`.project/proof/`) |
 | 13 | Durable CLI metadata opt-in (`CONTEXT_METADATA_KIND=postgres`) |
 
-Open gaps for Lab-ready Core: none in the 25–29 track. Chunks 25–29 shipped
-(API v1, inspector, Completer/Embedder, soft quotas, failure/degraded).
-Auth and OpenAPI codegen remain deferred. Next optional Phase 3: redaction /
-background runs (after Chunk 29 per roadmap).
+Open gaps: Chunks **31–32** (background jobs, Lab gate). Chunk 30 redaction done.
+Auth and OpenAPI codegen remain deferred.
 
 ## UX / DX / DSL Consumer Track
 
@@ -93,8 +91,11 @@ background runs (after Chunk 29 per roadmap).
 | Non-fake model/embed | **Chunk 27 done** | Swap Completer/Embedder via config | Adapter, not Lab |
 | Quota soft-limits | **Chunk 28 done** | Show deny/ask on over-quota | ADR-0025 follow-up |
 | Failure/degraded | **Chunk 29 done** | Explicit unavailable errors | No silent empty |
-| DSL workbench | After Chunk 29 | Edit FocusProfile / plans / policies | Neutral DTOs only |
-| Redaction / background runs | After Chunk 29 | Later Phase 3 | future-layer |
+| Redaction / PII | **Chunk 30 done** | Model/Lab text redacted | Raw corpus untouched |
+| Background jobs | **Chunk 31** | Start/status/cancel | In-process only |
+| Lab gate | **Chunk 32** | Contract freeze smoke | HTTP + contextkit |
+| DSL workbench | After Chunk 32 | Edit FocusProfile / plans / policies | Neutral DTOs only |
+| Fuzzy / trigram | Later Phase 3 | Only if measured | future-layer |
 
 ## Plan Chunk 14: PostgreSQL FTS SparseSearchClient
 
@@ -663,6 +664,50 @@ Status: **completed** (2026-07-13)
 - `ops/failinject` via `CONTEXT_FAIL_*`; `ops/readiness` probe for backends.
 - CLI `ready`; HTTP `/health` embeds readiness; `GET /v1/ready` → 200/503;
   `metrics.readiness`.
+
+## Plan Chunk 30: Redaction And PII Hooks
+
+Copy-paste prompt:
+
+```text
+Work in @Context only. Add secret/PII redaction before model-visible and
+Lab-facing text (agent model_text, inspect surface_preview). Stdlib patterns
+only; do not rewrite corpus/index. CONTEXT_REDACT default on. Offline tests.
+```
+
+Status: **completed** (2026-07-13)
+
+### Completion notes
+
+- `internal/redaction`: bearer / api_key / password|token / email patterns.
+- Wired into agent-run `model_text` and inspect `surface_preview`.
+- `CONTEXT_REDACT` default on; `0|false|off` disables. Corpus/index untouched.
+- JSON: `redacted`, `redact_count` (agent).
+
+## Plan Chunk 31: Background Jobs And Cancel
+
+Copy-paste prompt:
+
+```text
+Work in @Context only. In-process background AgentRun jobs with owner, policy,
+trace, and cancellation (context cancel). CLI/HTTP/contextkit job
+start/status/list/cancel. Persist under workspace ops/jobs. No cron/queue.
+Offline tests.
+```
+
+Status: pending
+
+## Plan Chunk 32: Lab Gate Freeze
+
+Copy-paste prompt:
+
+```text
+Work in @Context only. Publish .project/lab-gate.md checklist for Chunks 20–31
+and an offline smoke that Lab/BFF can bind HTTP+contextkit without internal
+imports. Update progress/proof/README. Optional ADR. No Lab UI in this repo.
+```
+
+Status: pending
 
 ## Completion Notes
 

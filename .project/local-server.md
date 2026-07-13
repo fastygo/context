@@ -354,6 +354,16 @@ curl -s http://127.0.0.1:8080/v1/ready
 curl -s http://127.0.0.1:8080/health   # liveness + backends summary
 ```
 
+## Redaction (Chunk 30)
+
+Secrets/PII are stripped from model-visible and Lab preview text. Raw chunks stay intact.
+
+```bash
+# default on
+go run ./cmd/context-dev agent-run --data ... --project ... --query '...'
+# CONTEXT_REDACT=0 to disable for offline debug
+```
+
 ## Metadata store (Chunk 11)
 
 Migrations live in `internal/storage/postgres/migrations/` and apply on
