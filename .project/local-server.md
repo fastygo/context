@@ -244,6 +244,21 @@ res, err := cli.Search(ctx, contextkit.SearchRequest{ProjectID: "local", Query: 
 
 Compat smoke: `go test ./internal/httpserver/ -run ContextKitCompat -count=1`.
 
+## Metrics and eval history (Chunk 22)
+
+Append-only JSONL under `<data>/ops/eval_history.jsonl` (path_key only in API):
+
+```bash
+go run ./cmd/context-dev eval --data /path/to/data --out .project/proof/eval/report.json
+go run ./cmd/context-dev metrics --data /path/to/data
+go run ./cmd/context-dev eval-history --data /path/to/data --limit 10
+
+curl -s 'http://127.0.0.1:8080/v1/metrics'
+curl -s 'http://127.0.0.1:8080/v1/eval/history?limit=10'
+```
+
+`pkg/contextkit`: `Metrics`, `EvalHistory` (plus existing `Eval`).
+
 ## Metadata store (Chunk 11)
 
 Migrations live in `internal/storage/postgres/migrations/` and apply on

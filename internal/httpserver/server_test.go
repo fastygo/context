@@ -191,4 +191,30 @@ func TestEvalOffline(t *testing.T) {
 	if report == nil {
 		t.Fatalf("missing report: %s", rr.Body.String())
 	}
+	// Second eval builds history; metrics exposes last_eval.
+	rr = httptest.NewRecorder()
+	srv.Handler().ServeHTTP(rr, httptest.NewRequest(http.MethodPost, "/v1/eval", bytes.NewReader([]byte("{}"))))
+	if rr.Code != http.StatusOK && rr.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("eval2: %d %s", rr.Code, rr.Body.String())
+	}
+	rr = httptest.NewRecorder()
+	srv.Handler().ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/v1/metrics", nil))
+	if rr.Code != http.StatusOK {
+		t.Fatalf("metrics: %d %s", rr.Code, rr.Body.String())
+	}
+	var metrics map[string]any
+	if err := json.Unmarshal(rr.Body.Bytes(), &metrics); err != nil {
+		t.Fatal(err)
+	}
+	if metrics["eval_history_count"].(float64) < 2 {
+		t.Fatalf("want history>=2: %#v", metrics)
+	}
+	if metrics["last_eval"] == nil {
+		t.Fatalf("missing last_eval: %#v", metrics)
+	}
+	rr = httptest.NewRecorder()
+	srv.Handler().ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/v1/eval/history?limit=5", nil))
+	if rr.Code != http.StatusOK {
+		t.Fatalf("history: %d %s", rr.Code, rr.Body.String())
+	}
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/fastygo/context/internal/devcli"
 	"github.com/fastygo/context/internal/foundation"
@@ -39,6 +40,10 @@ func main() {
 		err = cmdFocusList(args)
 	case "eval":
 		err = cmdEval(args)
+	case "metrics":
+		err = cmdMetrics(args)
+	case "eval-history":
+		err = cmdEvalHistory(args)
 	case "meta-check":
 		err = cmdMetaCheck(args)
 	case "proof-run":
@@ -68,13 +73,17 @@ Usage:
   context-dev focus-put --data <dir> --project <id> --json <file-or-inline> [--id <focus_id>]
   context-dev focus-get --data <dir> --project <id> --focus <id>
   context-dev focus-list --data <dir> --project <id>
-  context-dev eval [--out <.project/proof/eval/report.json>]
+  context-dev eval [--out <.project/proof/eval/report.json>] [--history <jsonl>] [--data <dir>]
+  context-dev metrics --data <dir>
+  context-dev eval-history [--data <dir>] [--history <jsonl>] [--limit N]
   context-dev trace --data <dir> --project <id> --run <id>
   context-dev meta-check [--backend postgres]
   context-dev proof-run [--root <repo>] [--out <.project/proof>]
 
 Ingest skips paths via defaults + optional .contextignore at corpus root.
 eval runs offline golden retrieval suite (exact/sparse/dense/hybrid + multilingual/lexicon/pack).
+With --data, eval also appends a summary to <data>/ops/eval_history.jsonl (or --history).
+metrics / eval-history expose workspace counters and append-only eval regression history.
 Modes dense and hybrid-dense require PostgreSQL/pgvector (see .project/local-server.md).
 Set CONTEXT_ENABLE_DENSE=1 to upsert dense vectors on ingest and include dense in hybrid search.
 Set CONTEXT_DENSE_REBUILD=1 to force search-time vector rebuild (default: prefer ingest commit).
@@ -269,7 +278,11 @@ func cmdEval(args []string) error {
 	if out == "" {
 		out = ".project/proof/eval/report.json"
 	}
-	res, err := devcli.RunEval(out)
+	history := f["history"]
+	if history == "" && f["data"] != "" {
+		history = filepath.Join(f["data"], "ops", "eval_history.jsonl")
+	}
+	res, err := devcli.RunEval(out, history)
 	if err != nil {
 		return err
 	}
@@ -280,6 +293,35 @@ func cmdEval(args []string) error {
 		return fmt.Errorf("eval golden suite failed")
 	}
 	return nil
+}
+
+func cmdMetrics(args []string) error {
+	f := flagMap(args)
+	if err := require(f, "data"); err != nil {
+		return err
+	}
+	res, err := devcli.Metrics(f["data"])
+	if err != nil {
+		return err
+	}
+	return devcli.PrintJSON(res)
+}
+
+func cmdEvalHistory(args []string) error {
+	f := flagMap(args)
+	history := f["history"]
+	if history == "" && f["data"] != "" {
+		history = filepath.Join(f["data"], "ops", "eval_history.jsonl")
+	}
+	if history == "" {
+		return fmt.Errorf("missing --history or --data")
+	}
+	limit := devcli.ParseLimit(f["limit"], 20)
+	res, err := devcli.EvalHistory(history, limit)
+	if err != nil {
+		return err
+	}
+	return devcli.PrintJSON(res)
 }
 
 func cmdTrace(args []string) error {

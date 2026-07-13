@@ -71,9 +71,9 @@ Nearest work follows `.project/progress.md` plan chunks:
 | **0 — Architecture baseline** | Chunk 01 + Foundation Gate done | Lock package, storage, index, trace, linguistic, and scoring boundaries |
 | **1 — Proof of concept** | Chunks 02–13 done | CLI loop + pgvector/Postgres + durable metadata opt-in; proof validated |
 | **2 — MVP toward service API** | Chunks **14–20** done | Thin HTTP service (ADR-0024) |
-| **3 — Reliable Beta (start)** | Chunk **21** done | `pkg/contextkit` HTTP client |
+| **3 — Reliable Beta (start)** | Chunks **21–22** | contextkit + metrics/eval history |
 
-Immediate next step: next Phase 3 chunk (metrics / rebuild / tenant ADR) —
+Immediate next step: next Phase 3 chunk (rebuild/repair or tenant ADR) —
 define in `.project/progress.md` before implementing.
 
 Phase 2 MVP service boundary: thin HTTP+JSON (`cmd/context-serve`, ADR-0024).
@@ -371,6 +371,7 @@ internal/
   config/                   # project config, rules, ignore patterns
   corpus/                   # projects, sources, chunks, provenance
   evals/                    # retrieval and task evaluation harnesses
+  ops/                      # metrics snapshot + append-only eval history
   graph/                    # entity, citation, co-occurrence, dependency edges
   indexing/                 # parsing, chunking, enrichment, manifests
   lexicon/                  # sense, concept, attestation, resource contracts

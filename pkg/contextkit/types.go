@@ -145,8 +145,33 @@ type FocusListResult struct {
 
 // EvalResult is POST /v1/eval response.
 type EvalResult struct {
-	Report json.RawMessage `json:"report"`
-	Out    string          `json:"out,omitempty"`
+	Report  json.RawMessage `json:"report"`
+	Out     string          `json:"out,omitempty"`
+	History string          `json:"history,omitempty"`
+}
+
+// EvalHistoryResult is GET /v1/eval/history response.
+type EvalHistoryResult struct {
+	Records []json.RawMessage `json:"records"`
+	PathKey string            `json:"path_key,omitempty"`
+}
+
+// MetricsResult is GET /v1/metrics response.
+type MetricsResult struct {
+	OK                 bool            `json:"ok"`
+	ProjectID          string          `json:"project_id,omitempty"`
+	ProjectName        string          `json:"project_name,omitempty"`
+	ActiveSnapshotID   string          `json:"active_snapshot_id,omitempty"`
+	SnapshotID         string          `json:"snapshot_id,omitempty"`
+	SnapshotStatus     string          `json:"snapshot_status,omitempty"`
+	Chunks             int             `json:"chunks"`
+	Packs              int             `json:"packs"`
+	Runs               int             `json:"runs"`
+	Focuses            int             `json:"focuses"`
+	Traces             int             `json:"traces"`
+	EvalHistoryCount   int             `json:"eval_history_count"`
+	LastEval           json.RawMessage `json:"last_eval,omitempty"`
+	EvalHistoryPathKey string          `json:"eval_history_path_key,omitempty"`
 }
 
 // IngestRequest is POST /v1/ingest (path_key relative to corpus only).

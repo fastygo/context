@@ -184,6 +184,28 @@ func (c *Client) Eval(ctx context.Context) (EvalResult, error) {
 	return out, err
 }
 
+// EvalHistory calls GET /v1/eval/history.
+func (c *Client) EvalHistory(ctx context.Context, limit int) (EvalHistoryResult, error) {
+	q := url.Values{}
+	if limit > 0 {
+		q.Set("limit", fmt.Sprintf("%d", limit))
+	}
+	var out EvalHistoryResult
+	err := c.do(ctx, http.MethodGet, "/v1/eval/history", q, nil, &out)
+	return out, err
+}
+
+// Metrics calls GET /v1/metrics.
+func (c *Client) Metrics(ctx context.Context, projectID string) (MetricsResult, error) {
+	q := url.Values{}
+	if projectID != "" {
+		q.Set("project_id", projectID)
+	}
+	var out MetricsResult
+	err := c.do(ctx, http.MethodGet, "/v1/metrics", q, nil, &out)
+	return out, err
+}
+
 // Ingest calls POST /v1/ingest.
 func (c *Client) Ingest(ctx context.Context, req IngestRequest) (IngestResult, error) {
 	var out IngestResult

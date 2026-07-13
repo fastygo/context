@@ -37,9 +37,9 @@ Phase 1 (Chunks 01–13) and Phase 2 (Chunks 14–20) are **complete**.
 Current target is **Phase 3 Reliable Beta** (start):
 
 ```text
-thin pkg/contextkit HTTP client (no internal import)
-  -> operational metrics / eval history (later chunks)
-  -> index rebuild/repair tools (later)
+thin pkg/contextkit HTTP client (Chunk 21)
+  -> operational metrics + eval history (Chunk 22)
+  -> index rebuild/repair tools (next)
   -> multi-tenant isolation design (later ADR)
 ```
 
@@ -77,7 +77,8 @@ and `pkg/contextkit` client (Chunk 21) shipped.
 | Eval / golden UX | Chunk 19 | Display eval reports | Lab consumes JSON reports |
 | BFF/API consumer | **Chunk 20 done** | Call HTTP client | ADR-0024 |
 | Go client surface | **Chunk 21 done** | Import `pkg/contextkit` only | No `internal/` |
-| DSL workbench | After Chunk 21 | Edit FocusProfile / plans / policies | Neutral DTOs only |
+| Ops metrics / eval history | **Chunk 22 done** | Show metrics + history JSON | path_key only |
+| DSL workbench | After Chunk 22 | Edit FocusProfile / plans / policies | Neutral DTOs only |
 
 ## Plan Chunk 14: PostgreSQL FTS SparseSearchClient
 
@@ -412,6 +413,48 @@ Status: **completed** (2026-07-13)
 - Guard: `go list` test fails if `pkg/contextkit` imports `internal/`.
 - Compat: `internal/httpserver` smoke uses contextkit against real Server.
 - Docs: README + `.project/local-server.md`.
+
+## Plan Chunk 22: Operational Metrics And Eval History
+
+Copy-paste prompt:
+
+```text
+Work in @Context only. Add structured operational metrics and append-only eval
+history so retrieval regressions are trackable over time (Phase 3). Read
+progress Phase 3, ADR-0006 (append-only spirit), Chunk 19 eval notes.
+Do not build dashboards, multi-tenant auth, or QDrant.
+
+Plan and then implement:
+1. Add internal/ops with EvalRecord (suite_id, ok, passed/failed/total,
+   duration_ms, summary, recorded_at) and append-only JSONL history helpers.
+2. Workspace Metrics snapshot: project_id, chunk/pack/run/focus/trace counts,
+   snapshot status, last eval record — no host filesystem paths.
+3. Wire context-dev eval to optionally append history (--history path;
+   default under data/ops when --data set, else optional proof path).
+4. CLI: metrics --data <dir>; eval-history --history <path> [--limit N].
+5. HTTP: GET /v1/metrics, GET /v1/eval/history; POST /v1/eval appends to
+   data/ops/eval_history.jsonl.
+6. pkg/contextkit: Metrics + EvalHistory methods.
+7. Unit tests offline (ops JSONL + httptest/CLI smoke).
+8. Document in local-server.md; update progress. Out of scope: Grafana,
+   Prometheus exporters, rebuild tools, tenant quotas.
+
+Acceptance criteria:
+- Two eval runs produce two history records; metrics exposes last summary.
+- Lab/BFF can fetch metrics/history via HTTP or contextkit without internal/.
+- go test ./... offline-green.
+```
+
+Status: **completed** (2026-07-13)
+
+### Completion notes
+
+- Package: `internal/ops` — append-only `EvalRecord` JSONL + `Metrics` snapshot.
+- Default history path_key: `ops/eval_history.jsonl` under `--data`.
+- CLI: `eval --data/--history`, `metrics --data`, `eval-history`.
+- HTTP: `GET /v1/metrics`, `GET /v1/eval/history`; `POST /v1/eval` appends.
+- `pkg/contextkit`: `Metrics`, `EvalHistory`.
+- No host paths in metrics JSON; Lab consumes counts + last_eval summary.
 
 ## Completion Notes
 

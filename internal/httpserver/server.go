@@ -86,6 +86,8 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /v1/focus", s.handleFocusGet)
 	s.mux.HandleFunc("GET /v1/focuses", s.handleFocusList)
 	s.mux.HandleFunc("POST /v1/eval", s.handleEval)
+	s.mux.HandleFunc("GET /v1/eval/history", s.handleEvalHistory)
+	s.mux.HandleFunc("GET /v1/metrics", s.handleMetrics)
 	s.mux.HandleFunc("POST /v1/ingest", s.handleIngest)
 }
 
@@ -280,12 +282,12 @@ func (s *Server) handleEval(w http.ResponseWriter, r *http.Request) {
 	if r.Body != nil && r.ContentLength != 0 {
 		_ = decodeJSON(r, &body)
 		if body.Out != "" {
-			// Reject client-chosen host paths; only server EvalOut is used.
 			writeErr(w, http.StatusBadRequest, apperr.New(apperr.Validation, "client out path not allowed; configure server eval_out"))
 			return
 		}
 	}
-	res, err := devcli.RunEval(out)
+	history := filepath.Join(s.cfg.DataDir, "ops", "eval_history.jsonl")
+	res, err := devcli.RunEval(out, history)
 	if err != nil {
 		writeAppErr(w, err)
 		return
@@ -295,6 +297,31 @@ func (s *Server) handleEval(w http.ResponseWriter, r *http.Request) {
 		status = http.StatusUnprocessableEntity
 	}
 	writeJSON(w, status, res)
+}
+
+func (s *Server) handleEvalHistory(w http.ResponseWriter, r *http.Request) {
+	limit := devcli.ParseLimit(r.URL.Query().Get("limit"), 20)
+	history := filepath.Join(s.cfg.DataDir, "ops", "eval_history.jsonl")
+	res, err := devcli.EvalHistory(history, limit)
+	if err != nil {
+		writeAppErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
+}
+
+func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
+	projectQ := r.URL.Query().Get("project_id")
+	res, err := devcli.Metrics(s.cfg.DataDir)
+	if err != nil {
+		writeAppErr(w, err)
+		return
+	}
+	if projectQ != "" && res.ProjectID != projectQ {
+		writeErr(w, http.StatusBadRequest, apperr.New(apperr.Validation, "project id mismatch"))
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
 }
 
 type ingestRequest struct {
