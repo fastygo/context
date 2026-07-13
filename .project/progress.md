@@ -1,8 +1,8 @@
 # Context Core Progress
 
 Status: active planning tracker  
-Scope: Phase 2 MVP path from validated PoC (Chunks 01–13) to a thin HTTP/gRPC
-service contract that Lab/BFF consumers can call without importing `internal/`.
+Scope: Phase 3 Reliable Beta path after Phase 2 MVP exit (Chunks 14–20,
+HTTP service ADR-0024). Phase 1 PoC archive: Chunks 01–13.
 
 This file is intentionally written as copy-paste Plan chunks. Each chunk should
 fit one agent planning session and stay small enough for controlled execution.
@@ -18,8 +18,9 @@ The `.project` folder is intentionally self-contained with this tracker,
 - Keep concrete scenarios as adapters/plugins/downstream products.
 - Keep source/observation events separate from runtime trace events.
 - Do not map `Project` to a person in core contracts.
-- Prefer `internal` packages until interfaces prove stable; public service
-  surface arrives only in Chunk 20 as an explicit boundary.
+- Prefer `internal` packages until interfaces prove stable. The first public
+consumer surface is HTTP (Chunk 20) plus a thin `pkg/contextkit` client
+(Chunk 21); do not export domain ports wholesale.
 - Add external dependencies only when the current chunk needs them.
 - Language-specific and lexicographic content stay in adapters/resources.
 - Every runtime behavior that can affect a model or tool decision must be
@@ -31,27 +32,21 @@ The `.project` folder is intentionally self-contained with this tracker,
 
 ## Phase Target
 
-Phase 1 (Chunks 01–13) is **complete**: hypothesis validated; durable CLI
-opt-in via `CONTEXT_METADATA_KIND=postgres`; proof artifacts in
-`.project/proof/`.
+Phase 1 (Chunks 01–13) and Phase 2 (Chunks 14–20) are **complete**.
 
-Current target is **Phase 2 MVP**:
+Current target is **Phase 3 Reliable Beta** (start):
 
 ```text
-Postgres FTS sparse path
-  -> version-pinned ingest + dense upsert on snapshot commit
-  -> real (or measurable) Embedder adapter
-  -> ignore patterns + FocusProfile persistence
-  -> lang/lexicon contract-test harnesses (fixtures only)
-  -> eval golden harness (exact/sparse/dense/hybrid)
-  -> thin HTTP or gRPC service over stable CLI contracts
+thin pkg/contextkit HTTP client (no internal import)
+  -> operational metrics / eval history (later chunks)
+  -> index rebuild/repair tools (later)
+  -> multi-tenant isolation design (later ADR)
 ```
 
-Expected Phase 2 exit: a Lab/BFF can call Context through a service contract
-without depending on `internal/` packages. QDrant, Turbopuffer, `context-sparse`,
-and full `context-lang-*` / TEI adapters remain deferred until measurements and
-a superseding ADR ([ADR-0017](decisions/0017-poc-backend-order.md),
-[adapters-backlog.md](adapters-backlog.md)).
+QDrant, Turbopuffer, `context-sparse`, and full `context-lang-*` / TEI adapters
+remain deferred ([ADR-0017](decisions/0017-poc-backend-order.md),
+[adapters-backlog.md](adapters-backlog.md)). Full multi-tenant auth and
+production SDK generation remain deferred.
 
 ## Phase 1 Archive (Chunks 01–13)
 
@@ -69,9 +64,9 @@ ADRs 0001–0023; do not re-implement.
 | 12 | E2E proof — hypothesis **validated** (`.project/proof/`) |
 | 13 | Durable CLI metadata opt-in (`CONTEXT_METADATA_KIND=postgres`) |
 
-Open gaps carried into Phase 2: semantic/provider Embedder still deferred.
-Thin HTTP service shipped (Chunk 20 / ADR-0024). Full SDK and multi-tenant
-auth remain deferred.
+Open gaps after Phase 2: semantic/provider Embedder still deferred; full SDK /
+OpenAPI generation deferred; multi-tenant auth deferred. Thin HTTP (Chunk 20)
+and `pkg/contextkit` client (Chunk 21) shipped.
 
 ## UX / DX / DSL Consumer Track
 
@@ -80,8 +75,9 @@ auth remain deferred.
 | Proof fixtures | Chunks 08–12 | Render `.project/proof/*.json` | No Context import |
 | Durable local stack | Chunk 13 | Show postgres-backed project/snapshot/trace | Env-configured CLI |
 | Eval / golden UX | Chunk 19 | Display eval reports | Lab consumes JSON reports |
-| BFF/API consumer | **Chunk 20 done** | Call HTTP client | ADR-0024; SDK later |
-| DSL workbench | After Chunk 20 | Edit FocusProfile / plans / policies | Neutral DTOs only |
+| BFF/API consumer | **Chunk 20 done** | Call HTTP client | ADR-0024 |
+| Go client surface | **Chunk 21 done** | Import `pkg/contextkit` only | No `internal/` |
+| DSL workbench | After Chunk 21 | Edit FocusProfile / plans / policies | Neutral DTOs only |
 
 ## Plan Chunk 14: PostgreSQL FTS SparseSearchClient
 
@@ -375,6 +371,47 @@ Status: **completed** (2026-07-13)
   `/v1/ingest` (`path_key` relative to corpus only).
 - Tests: `go test ./internal/httpserver/` (httptest, offline).
 - Docs: `.project/local-server.md` curl examples; decisions index updated.
+
+## Plan Chunk 21: Thin pkg/contextkit HTTP Client
+
+Copy-paste prompt:
+
+```text
+Work in @Context only. Promote the first public Go consumer surface under
+pkg/contextkit: an HTTP client over the Chunk 20 / ADR-0024 JSON contract.
+Read ADR-0001, ADR-0024, progress.md. Do not export internal domain ports.
+Do not add OpenAPI generation, gRPC, or multi-tenant auth.
+
+Plan and then implement:
+1. Add pkg/contextkit with Client (BaseURL, optional Token) and methods mirroring
+   proven endpoints: Health, Status, Search, ContextPack, AgentRun, Trace,
+   FocusPut/Get/List, Eval, Ingest.
+2. Public request/response DTOs use the same JSON field names as CLI/HTTP;
+   keep types minimal (strings/IDs as string) — no import of internal/.
+3. Unit tests in pkg/contextkit against httptest mock JSON.
+4. Compat smoke in internal/httpserver importing contextkit against a real
+   Server handler (search + pack + agent + trace).
+5. Document import path and example in README / local-server.md.
+6. Explicitly out of scope: full domain SDK, codegen, QDrant, Lab UI.
+7. Run go test ./... and update progress completion notes.
+
+Acceptance criteria:
+- A downstream Go module can call Context using only github.com/fastygo/context/pkg/contextkit.
+- pkg/contextkit has zero imports of github.com/fastygo/context/internal/...
+- Offline go test ./... stays green.
+```
+
+Status: **completed** (2026-07-13)
+
+### Completion notes
+
+- Package: `pkg/contextkit` — `Client` + DTOs aligned with ADR-0024 JSON.
+- Methods: Health, Status, Search, ContextPack, AgentRun, Trace, Focus*, Eval,
+  Ingest. Nested pack/run/events kept as `json.RawMessage` where full domain
+  trees would otherwise leak into pkg/.
+- Guard: `go list` test fails if `pkg/contextkit` imports `internal/`.
+- Compat: `internal/httpserver` smoke uses contextkit against real Server.
+- Docs: README + `.project/local-server.md`.
 
 ## Completion Notes
 

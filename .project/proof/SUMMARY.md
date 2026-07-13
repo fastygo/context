@@ -39,6 +39,7 @@
   (Chunk 19); report under `.project/proof/eval/`.
 - Service: thin HTTP+JSON `cmd/context-serve` / `internal/httpserver`
   (Chunk 20, ADR-0024); Lab/BFF call without importing `internal/`.
+- Client: `pkg/contextkit` HTTP client (Chunk 21); zero `internal/` imports.
 - Multilingual/lexicon proofs use in-memory fixtures with simple-lang adapters; context-lang-* and TEI/SKOS lexicon adapters are not wired.
 
 ## Next decisions

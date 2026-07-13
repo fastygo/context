@@ -230,6 +230,20 @@ With token: `-H 'Authorization: Bearer local-secret'` or `-H 'X-Context-Token: .
 Ingest over HTTP uses `path_key` relative to the workspace corpus root only
 (absolute paths rejected). Same backend env vars as `context-dev`.
 
+## Go client (Chunk 21 / `pkg/contextkit`)
+
+Downstream Go code imports the public client only — never `internal/`:
+
+```go
+import "github.com/fastygo/context/pkg/contextkit"
+
+cli := &contextkit.Client{BaseURL: "http://127.0.0.1:8080", Token: "local-secret"}
+st, err := cli.Status(ctx, "local")
+res, err := cli.Search(ctx, contextkit.SearchRequest{ProjectID: "local", Query: "ZEBRA42", Mode: "exact"})
+```
+
+Compat smoke: `go test ./internal/httpserver/ -run ContextKitCompat -count=1`.
+
 ## Metadata store (Chunk 11)
 
 Migrations live in `internal/storage/postgres/migrations/` and apply on

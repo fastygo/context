@@ -70,13 +70,14 @@ Nearest work follows `.project/progress.md` plan chunks:
 | --- | --- | --- |
 | **0 — Architecture baseline** | Chunk 01 + Foundation Gate done | Lock package, storage, index, trace, linguistic, and scoring boundaries |
 | **1 — Proof of concept** | Chunks 02–13 done | CLI loop + pgvector/Postgres + durable metadata opt-in; proof validated |
-| **2 — MVP toward service API** | Chunks **14–20** done | Phase 2 exit: thin HTTP service |
+| **2 — MVP toward service API** | Chunks **14–20** done | Thin HTTP service (ADR-0024) |
+| **3 — Reliable Beta (start)** | Chunk **21** done | `pkg/contextkit` HTTP client |
 
-Immediate next step: Phase 2 closed for MVP service boundary; further work
-follows roadmap (SDK, auth, adapters) only with a new progress chunk.
+Immediate next step: next Phase 3 chunk (metrics / rebuild / tenant ADR) —
+define in `.project/progress.md` before implementing.
 
-Phase 2 MVP service boundary: thin HTTP+JSON (`cmd/context-serve`, ADR-0024)
-so Lab/BFF call Context without importing `internal/`. Full SDK deferred.
+Phase 2 MVP service boundary: thin HTTP+JSON (`cmd/context-serve`, ADR-0024).
+Phase 3 starts with `pkg/contextkit` (Chunk 21). See `.project/progress.md`.
 
 Local stack: `./scripts/dev.sh up` then `./scripts/dev.sh health`.
 Durable CLI: `CONTEXT_METADATA_KIND=postgres` + `CONTEXT_PG_DSN=...`.
@@ -383,11 +384,11 @@ internal/
   tracing/                  # append-only runtime events and redaction
 
 pkg/
-  contextkit/               # stable public interfaces, added only when proven
+  contextkit/               # thin HTTP client over ADR-0024 (Chunk 21)
 ```
 
-Prefer `internal` while interfaces are changing. Move packages to `pkg` only
-when another module needs a stable import surface.
+Prefer `internal` for domain/adapters. `pkg/contextkit` is the first public
+consumer surface (HTTP client only — not a dump of domain ports).
 
 ## First Proof Target
 
@@ -469,10 +470,10 @@ Expected first demo corpus: repository docs such as `README.md` and
 | Item | State |
 | --- | --- |
 | Planning baseline | Accepted (`roadmap-context-core.md`) |
-| Architecture decisions | 21 ADRs under `.project/decisions/` (Chunk 01 + Foundation Gate) |
-| Go implementation | Chunks 02–08 complete; Chunk 09 next |
-| Public API | None exported yet; `pkg/contextkit` deferred until proven |
-| Dependencies | `go.mod` intentionally minimal |
+| Architecture decisions | ADRs under `.project/decisions/` (through ADR-0024) |
+| Go implementation | Phases 1–2 done (Chunks 01–20); Phase 3 starts Chunk 21 |
+| Public API | `pkg/contextkit` HTTP client (Chunk 21) |
+| Dependencies | Prefer stdlib + narrow adapters (`pgx` when Postgres gated) |
 
 Public APIs are expected to change until the PoC CLI loop and core runtime
 stabilize.
