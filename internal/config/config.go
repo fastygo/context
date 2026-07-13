@@ -38,6 +38,7 @@ const (
 	DefaultVectorCollection    = "context_dense_v1"
 	DefaultArtifactRoot        = ".context/artifacts"
 	DefaultEmbedderKind        = EmbedderKindFake
+	DefaultCompleterKind       = CompleterKindFake
 )
 
 // EmbedderKind selects a models.Embedder adapter (ADR-0005).
@@ -46,6 +47,16 @@ type EmbedderKind string
 const (
 	EmbedderKindFake      EmbedderKind = "fake"
 	EmbedderKindLocalHash EmbedderKind = "local_hash"
+	EmbedderKindHTTP      EmbedderKind = "http"
+)
+
+// CompleterKind selects a models.Completer adapter (ADR-0005 / Chunk 27).
+type CompleterKind string
+
+const (
+	CompleterKindFake      CompleterKind = "fake"
+	CompleterKindLocalEcho CompleterKind = "localecho"
+	CompleterKindHTTP      CompleterKind = "http"
 )
 
 // StorageConfig groups the four replaceable store roles (ADR-0014, ADR-0017)
@@ -56,11 +67,19 @@ type StorageConfig struct {
 	Sparse   SparseStoreConfig   `json:"sparse"`
 	Artifact ArtifactStoreConfig `json:"artifact"`
 	Embedder EmbedderConfig      `json:"embedder"`
+	Completer CompleterConfig    `json:"completer"`
 }
 
 // EmbedderConfig selects the dense embedding adapter.
 type EmbedderConfig struct {
-	Kind EmbedderKind `json:"kind"`
+	Kind     EmbedderKind `json:"kind"`
+	Endpoint string       `json:"endpoint,omitempty"` // required for kind=http
+}
+
+// CompleterConfig selects the LLM/completer adapter.
+type CompleterConfig struct {
+	Kind     CompleterKind `json:"kind"`
+	Endpoint string        `json:"endpoint,omitempty"` // required for kind=http
 }
 
 // MetadataStoreConfig configures relational/project metadata.
@@ -124,6 +143,9 @@ func DefaultStorageConfig() StorageConfig {
 		},
 		Embedder: EmbedderConfig{
 			Kind: DefaultEmbedderKind,
+		},
+		Completer: CompleterConfig{
+			Kind: DefaultCompleterKind,
 		},
 	}
 }
@@ -203,6 +225,15 @@ func LoadStorageConfigFromEnv() (StorageConfig, error) {
 	if v := strings.TrimSpace(os.Getenv("CONTEXT_EMBEDDER_KIND")); v != "" {
 		cfg.Embedder.Kind = EmbedderKind(v)
 	}
+	if v := strings.TrimSpace(os.Getenv("CONTEXT_EMBEDDER_HTTP_URL")); v != "" {
+		cfg.Embedder.Endpoint = v
+	}
+	if v := strings.TrimSpace(os.Getenv("CONTEXT_COMPLETER_KIND")); v != "" {
+		cfg.Completer.Kind = CompleterKind(v)
+	}
+	if v := strings.TrimSpace(os.Getenv("CONTEXT_COMPLETER_HTTP_URL")); v != "" {
+		cfg.Completer.Endpoint = v
+	}
 
 	// local_hash must not silently reuse the fake-hash version pin.
 	if cfg.Embedder.Kind == EmbedderKindLocalHash {
@@ -261,8 +292,24 @@ func (c StorageConfig) Validate() error {
 	}
 	switch c.Embedder.Kind {
 	case EmbedderKindFake, EmbedderKindLocalHash:
+	case EmbedderKindHTTP:
+		if strings.TrimSpace(c.Embedder.Endpoint) == "" {
+			return fmt.Errorf("embedder.endpoint required for kind http (CONTEXT_EMBEDDER_HTTP_URL)")
+		}
 	default:
 		return fmt.Errorf("embedder.kind %q unsupported", c.Embedder.Kind)
+	}
+	if c.Completer.Kind == "" {
+		return fmt.Errorf("completer.kind required")
+	}
+	switch c.Completer.Kind {
+	case CompleterKindFake, CompleterKindLocalEcho:
+	case CompleterKindHTTP:
+		if strings.TrimSpace(c.Completer.Endpoint) == "" {
+			return fmt.Errorf("completer.endpoint required for kind http (CONTEXT_COMPLETER_HTTP_URL)")
+		}
+	default:
+		return fmt.Errorf("completer.kind %q unsupported", c.Completer.Kind)
 	}
 	if c.Embedder.Kind == EmbedderKindLocalHash && c.Vector.EmbeddingVersion == DefaultEmbeddingVersion {
 		return fmt.Errorf("embedder local_hash cannot use embedding_version %q; set CONTEXT_EMBEDDING_VERSION", DefaultEmbeddingVersion)

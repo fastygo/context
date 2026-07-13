@@ -45,6 +45,27 @@ func TestOpenEmbedderLocalHash(t *testing.T) {
 	}
 }
 
+func TestOpenCompleterLocalEcho(t *testing.T) {
+	t.Parallel()
+	cfg := config.DefaultStorageConfig()
+	cfg.Completer.Kind = config.CompleterKindLocalEcho
+	comp, kind, err := factory.OpenCompleter(cfg, factory.CompleterOptions{})
+	if err != nil || kind != "localecho" {
+		t.Fatalf("kind=%q err=%v", kind, err)
+	}
+	_ = comp
+}
+
+func TestOpenCompleterHTTPRequiresURL(t *testing.T) {
+	t.Parallel()
+	cfg := config.DefaultStorageConfig()
+	cfg.Completer.Kind = config.CompleterKindHTTP
+	_, _, err := factory.OpenCompleter(cfg, factory.CompleterOptions{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
 func TestOpenEmbedderRejectsUnknownKind(t *testing.T) {
 	t.Parallel()
 	cfg := config.DefaultStorageConfig()

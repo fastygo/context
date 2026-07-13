@@ -8,8 +8,9 @@ import (
 	"github.com/fastygo/context/internal/agentruntime/orchestrator"
 	"github.com/fastygo/context/internal/apperr"
 	"github.com/fastygo/context/internal/artifacts/localfs"
+	"github.com/fastygo/context/internal/config"
 	"github.com/fastygo/context/internal/ids"
-	modelfake "github.com/fastygo/context/internal/models/fake"
+	"github.com/fastygo/context/internal/models/factory"
 	"github.com/fastygo/context/internal/policy"
 	toolfake "github.com/fastygo/context/internal/tools/fake"
 	toolmem "github.com/fastygo/context/internal/tools/memory"
@@ -18,12 +19,15 @@ import (
 
 // AgentRunResult is CLI JSON for agent-run.
 type AgentRunResult struct {
-	Run       agentruntime.AgentRun `json:"run"`
-	PackID    ids.PackID            `json:"pack_id"`
-	ModelText string                `json:"model_text"`
-	ToolCall  any                   `json:"tool_call,omitempty"`
-	VerifyOK  bool                  `json:"verify_ok"`
-	MetaKind  string                `json:"meta_kind,omitempty"`
+	Run            agentruntime.AgentRun `json:"run"`
+	PackID         ids.PackID            `json:"pack_id"`
+	ModelText      string                `json:"model_text"`
+	CompleterKind  string                `json:"completer_kind,omitempty"`
+	ModelProvider  string                `json:"model_provider,omitempty"`
+	ModelVersion   string                `json:"model_version,omitempty"`
+	ToolCall       any                   `json:"tool_call,omitempty"`
+	VerifyOK       bool                  `json:"verify_ok"`
+	MetaKind       string                `json:"meta_kind,omitempty"`
 }
 
 // TraceResult is CLI JSON for trace.
@@ -33,7 +37,7 @@ type TraceResult struct {
 	MetaKind string                `json:"meta_kind,omitempty"`
 }
 
-// AgentRun builds a pack and executes a fake agent loop.
+// AgentRun builds a pack and executes an agent loop with the configured Completer.
 func AgentRun(dataDir, projectID, query, focusID string) (AgentRunResult, error) {
 	packRes, err := BuildPack(dataDir, projectID, query, focusID)
 	if err != nil {
@@ -77,12 +81,23 @@ func AgentRun(dataDir, projectID, query, focusID string) (AgentRunResult, error)
 	}
 	input, _ := json.Marshal(map[string]string{"source_id": sourceID})
 
+	cfg, err := config.LoadStorageConfigFromEnv()
+	if err != nil {
+		return AgentRunResult{}, err
+	}
+	comp, compKind, err := factory.OpenCompleter(cfg, factory.CompleterOptions{
+		ToolHint: toolfake.ReadSnippetName, ToolInput: string(input),
+	})
+	if err != nil {
+		return AgentRunResult{}, err
+	}
+
 	runner := orchestrator.Runner{
 		Meta:      meta,
 		Artifacts: arts,
 		Tools:     reg,
 		Exec:      toolfake.ReadSnippetExecutor{Snippets: snippets},
-		Model:     modelfake.Completer{ToolHint: toolfake.ReadSnippetName, ToolInput: string(input)},
+		Model:     comp,
 	}
 	pol := policy.PolicySnapshot{
 		ID: "cli-policy", ProjectID: st.Project.ID, Version: "v1",
@@ -114,11 +129,14 @@ func AgentRun(dataDir, projectID, query, focusID string) (AgentRunResult, error)
 	}
 
 	out := AgentRunResult{
-		Run:       res.Run,
-		PackID:    packRes.Pack.ID,
-		ModelText: res.Model.Text,
-		VerifyOK:  res.Verify.OK,
-		MetaKind:  string(handle.Kind),
+		Run:           res.Run,
+		PackID:        packRes.Pack.ID,
+		ModelText:     res.Model.Text,
+		CompleterKind: compKind,
+		ModelProvider: res.Model.ModelCall.ProviderID,
+		ModelVersion:  res.Model.ModelCall.ModelVersion,
+		VerifyOK:      res.Verify.OK,
+		MetaKind:      string(handle.Kind),
 	}
 	if res.ToolCall != nil {
 		out.ToolCall = res.ToolCall

@@ -42,7 +42,7 @@ HTTP/`contextkit` surface as stable for Lab/BFF:
 ```text
 API v1 freeze (Chunk 25) ✓
   -> Context inspector JSON (Chunk 26) ✓
-  -> non-fake Completer + provider Embedder path (Chunk 27)
+  -> non-fake Completer + provider Embedder path (Chunk 27) ✓
   -> quota soft-limits (Chunk 28)
   -> failure / degraded semantics (Chunk 29)
 ```
@@ -71,9 +71,9 @@ ADRs 0001–0023; do not re-implement.
 | 12 | E2E proof — hypothesis **validated** (`.project/proof/`) |
 | 13 | Durable CLI metadata opt-in (`CONTEXT_METADATA_KIND=postgres`) |
 
-Open gaps for Lab-ready Core (Chunks **27–29**): non-fake model/embed path,
-quota soft-limits, failure/degraded semantics. API v1 + inspector shipped
-(Chunks 25–26). Auth and OpenAPI codegen remain deferred.
+Open gaps for Lab-ready Core (Chunks **28–29**): quota soft-limits,
+failure/degraded semantics. Chunks 25–27 shipped (API v1, inspector,
+swappable Completer/Embedder). Auth and OpenAPI codegen remain deferred.
 
 ## UX / DX / DSL Consumer Track
 
@@ -89,7 +89,7 @@ quota soft-limits, failure/degraded semantics. API v1 + inspector shipped
 | Tenant isolation design | **Chunk 24 done** | Bind project_id; no cross-project | ADR-0025 |
 | API v1 freeze | **Chunk 25 done** | Pin HTTP/contextkit contract | ADR-0026 / api-v1.md |
 | Context inspector | **Chunk 26 done** | Render inspector JSON | No raw DB |
-| Non-fake model/embed | **Chunk 27** | Swap Completer/Embedder via config | Adapter, not Lab |
+| Non-fake model/embed | **Chunk 27 done** | Swap Completer/Embedder via config | Adapter, not Lab |
 | Quota soft-limits | **Chunk 28** | Show deny/ask on over-quota | ADR-0025 follow-up |
 | Failure/degraded | **Chunk 29** | Explicit unavailable errors | No silent empty |
 | DSL workbench | After Chunk 29 | Edit FocusProfile / plans / policies | Neutral DTOs only |
@@ -609,7 +609,16 @@ Config via env; agent-run must be swappable without code edits. Out of scope:
 Lang adapters, Lab UI, billing.
 ```
 
-Status: pending
+Status: **completed** (2026-07-13)
+
+### Completion notes
+
+- Completer kinds: `fake` (default) | `localecho` | `http`.
+- Embedder kinds: `fake` | `local_hash` | `http` (+ `CONTEXT_EMBEDDER_HTTP_URL`).
+- `localecho` cites pack evidence offline (measurable, no network).
+- `httpjson` adapters: `POST {url}/v1/complete` and `/v1/embed` (stdlib only).
+- `factory.OpenCompleter`; `agent-run` selects via `CONTEXT_COMPLETER_KIND`.
+- Result JSON includes `completer_kind`, `model_provider`, `model_version`.
 
 ## Plan Chunk 28: Quota Soft-Limits
 

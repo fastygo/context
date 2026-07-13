@@ -302,6 +302,23 @@ curl -s -X POST http://127.0.0.1:8080/v1/inspect \
 Returns budget, selected/rejected evidence (scores, reasons, path_key, spans,
 surface_preview), and candidates — no host paths.
 
+## Completer / Embedder adapters (Chunk 27)
+
+Defaults stay offline-safe (`fake`). Swap without code edits:
+
+```bash
+# Offline citation Completer (no network)
+CONTEXT_COMPLETER_KIND=localecho go run ./cmd/context-dev agent-run --data ... --project ... --query '...'
+
+# HTTP JSON Completer / Embedder (stdlib client; no vendor SDK)
+CONTEXT_COMPLETER_KIND=http CONTEXT_COMPLETER_HTTP_URL=http://127.0.0.1:8090
+CONTEXT_EMBEDDER_KIND=http CONTEXT_EMBEDDER_HTTP_URL=http://127.0.0.1:8090 \
+  CONTEXT_EMBEDDING_VERSION=remote-emb-v1 CONTEXT_EMBEDDING_DIMENSION=32
+```
+
+HTTP protocol: `POST {url}/v1/complete` and `POST {url}/v1/embed` (see
+`internal/models/httpjson`). Embedder kinds remain `fake|local_hash|http`.
+
 ## Metadata store (Chunk 11)
 
 Migrations live in `internal/storage/postgres/migrations/` and apply on

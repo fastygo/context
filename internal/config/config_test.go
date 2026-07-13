@@ -30,6 +30,9 @@ func TestDefaultStorageConfig(t *testing.T) {
 	if cfg.Embedder.Kind != EmbedderKindFake {
 		t.Fatalf("embedder kind = %q", cfg.Embedder.Kind)
 	}
+	if cfg.Completer.Kind != CompleterKindFake {
+		t.Fatalf("completer kind = %q", cfg.Completer.Kind)
+	}
 	wantDSN := DefaultPostgresDSN()
 	if cfg.Vector.DSN != wantDSN {
 		t.Fatalf("vector dsn = %q, want %q", cfg.Vector.DSN, wantDSN)
@@ -80,6 +83,25 @@ func TestLoadStorageConfigRejectsLocalHashWithFakeVersion(t *testing.T) {
 	_, err := LoadStorageConfigFromEnv()
 	if err == nil {
 		t.Fatal("expected error")
+	}
+}
+
+func TestLoadCompleterAndHTTPEmbedderEnv(t *testing.T) {
+	t.Setenv("CONTEXT_COMPLETER_KIND", "localecho")
+	t.Setenv("CONTEXT_EMBEDDER_KIND", "http")
+	t.Setenv("CONTEXT_EMBEDDER_HTTP_URL", "http://127.0.0.1:9999")
+	t.Setenv("CONTEXT_EMBEDDING_VERSION", "remote-emb-v1")
+	t.Setenv("CONTEXT_EMBEDDING_DIMENSION", "3")
+	t.Setenv("CONTEXT_PG_DSN", "")
+	cfg, err := LoadStorageConfigFromEnv()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Completer.Kind != CompleterKindLocalEcho {
+		t.Fatalf("completer=%q", cfg.Completer.Kind)
+	}
+	if cfg.Embedder.Kind != EmbedderKindHTTP || cfg.Embedder.Endpoint == "" {
+		t.Fatalf("embedder=%#v", cfg.Embedder)
 	}
 }
 

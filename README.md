@@ -71,9 +71,9 @@ Nearest work follows `.project/progress.md` plan chunks:
 | **0 — Architecture baseline** | Chunk 01 + Foundation Gate done | Lock package, storage, index, trace, linguistic, and scoring boundaries |
 | **1 — Proof of concept** | Chunks 02–13 done | CLI loop + pgvector/Postgres + durable metadata opt-in; proof validated |
 | **2 — MVP toward service API** | Chunks **14–20** done | Thin HTTP service (ADR-0024) |
-| **3 — Reliable Beta** | Chunks **21–26** done; **27–29** Lab-ready | model/embed → quotas → degraded |
+| **3 — Reliable Beta** | Chunks **21–27** done; **28–29** Lab-ready | quotas → degraded |
 
-Immediate next step: **Chunk 27** — non-fake Completer / provider Embedder path.
+Immediate next step: **Chunk 28** — quota soft-limits.
 Redaction / background scheduling follow after Chunk 29.
 
 Phase 2 MVP service boundary: thin HTTP+JSON (`cmd/context-serve`, ADR-0024).
@@ -82,7 +82,10 @@ Phase 3 starts with `pkg/contextkit` (Chunk 21). See `.project/progress.md`.
 Local stack: `./scripts/dev.sh up` then `./scripts/dev.sh health`.
 Durable CLI: `CONTEXT_METADATA_KIND=postgres` + `CONTEXT_PG_DSN=...`.
 Sparse FTS: `CONTEXT_SPARSE_KIND=postgres_fts` + `CONTEXT_PG_DSN=...`.
-Embedder: `CONTEXT_EMBEDDER_KIND=fake|local_hash` (local-hash-v1 dim 32).
+Embedder: `CONTEXT_EMBEDDER_KIND=fake|local_hash|http` (local-hash-v1 dim 32;
+`CONTEXT_EMBEDDER_HTTP_URL` for http).
+Completer: `CONTEXT_COMPLETER_KIND=fake|localecho|http`
+(`CONTEXT_COMPLETER_HTTP_URL` for http).
 Dense on ingest: `CONTEXT_ENABLE_DENSE=1` (search uses committed vectors;
 `CONTEXT_DENSE_REBUILD=1` optional).
 Dense modes: `--mode dense` / `--mode hybrid-dense`.
