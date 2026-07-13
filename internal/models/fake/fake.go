@@ -61,7 +61,8 @@ func (c Completer) Complete(ctx context.Context, req models.CompletionRequest) (
 
 // Embedder is a deterministic HashEmbed-based embedding adapter.
 type Embedder struct {
-	Dim int
+	Dim     int
+	Version string // defaults to EmbeddingVersion (fake-hash-v1)
 }
 
 func (e Embedder) Embed(ctx context.Context, texts []string) ([][]float32, string, error) {
@@ -72,11 +73,15 @@ func (e Embedder) Embed(ctx context.Context, texts []string) ([][]float32, strin
 	if dim <= 0 {
 		dim = DefaultEmbedDim
 	}
+	ver := e.Version
+	if ver == "" {
+		ver = EmbeddingVersion
+	}
 	out := make([][]float32, len(texts))
 	for i, text := range texts {
 		out[i] = hashEmbed(text, dim)
 	}
-	return out, EmbeddingVersion, nil
+	return out, ver, nil
 }
 
 func hashEmbed(text string, dim int) []float32 {

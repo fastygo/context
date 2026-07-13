@@ -37,14 +37,30 @@ const (
 	DefaultVectorMetric        = "cosine"
 	DefaultVectorCollection    = "context_dense_v1"
 	DefaultArtifactRoot        = ".context/artifacts"
+	DefaultEmbedderKind        = EmbedderKindFake
 )
 
-// StorageConfig groups the four replaceable store roles (ADR-0014, ADR-0017).
+// EmbedderKind selects a models.Embedder adapter (ADR-0005).
+type EmbedderKind string
+
+const (
+	EmbedderKindFake      EmbedderKind = "fake"
+	EmbedderKindLocalHash EmbedderKind = "local_hash"
+)
+
+// StorageConfig groups the four replaceable store roles (ADR-0014, ADR-0017)
+// plus the selected Embedder kind for dense paths.
 type StorageConfig struct {
 	Metadata MetadataStoreConfig `json:"metadata"`
 	Vector   VectorStoreConfig   `json:"vector"`
 	Sparse   SparseStoreConfig   `json:"sparse"`
 	Artifact ArtifactStoreConfig `json:"artifact"`
+	Embedder EmbedderConfig      `json:"embedder"`
+}
+
+// EmbedderConfig selects the dense embedding adapter.
+type EmbedderConfig struct {
+	Kind EmbedderKind `json:"kind"`
 }
 
 // MetadataStoreConfig configures relational/project metadata.
@@ -105,6 +121,9 @@ func DefaultStorageConfig() StorageConfig {
 		Artifact: ArtifactStoreConfig{
 			Kind: StoreKindLocalFS,
 			Root: DefaultArtifactRoot,
+		},
+		Embedder: EmbedderConfig{
+			Kind: DefaultEmbedderKind,
 		},
 	}
 }
@@ -181,6 +200,25 @@ func LoadStorageConfigFromEnv() (StorageConfig, error) {
 		}
 		cfg.Vector.Dimension = dim
 	}
+	if v := strings.TrimSpace(os.Getenv("CONTEXT_EMBEDDER_KIND")); v != "" {
+		cfg.Embedder.Kind = EmbedderKind(v)
+	}
+
+	// local_hash must not silently reuse the fake-hash version pin.
+	if cfg.Embedder.Kind == EmbedderKindLocalHash {
+		if cfg.Vector.EmbeddingVersion == "" || cfg.Vector.EmbeddingVersion == DefaultEmbeddingVersion {
+			explicitVer := strings.TrimSpace(os.Getenv("CONTEXT_EMBEDDING_VERSION"))
+			if explicitVer == "" {
+				cfg.Vector.EmbeddingVersion = "local-hash-v1"
+			}
+		}
+		// Prefer the local_hash default dim when the user only switched kind.
+		if strings.TrimSpace(os.Getenv("CONTEXT_EMBEDDING_DIMENSION")) == "" &&
+			cfg.Vector.Dimension == DefaultEmbeddingDimension &&
+			cfg.Vector.EmbeddingVersion == "local-hash-v1" {
+			cfg.Vector.Dimension = 32
+		}
+	}
 
 	if err := cfg.Validate(); err != nil {
 		return StorageConfig{}, err
@@ -217,6 +255,40 @@ func (c StorageConfig) Validate() error {
 	}
 	if c.Artifact.Kind == StoreKindLocalFS && strings.TrimSpace(c.Artifact.Root) == "" {
 		return fmt.Errorf("artifact.root required for kind %q", c.Artifact.Kind)
+	}
+	if c.Embedder.Kind == "" {
+		return fmt.Errorf("embedder.kind required")
+	}
+	switch c.Embedder.Kind {
+	case EmbedderKindFake, EmbedderKindLocalHash:
+	default:
+		return fmt.Errorf("embedder.kind %q unsupported", c.Embedder.Kind)
+	}
+	if c.Embedder.Kind == EmbedderKindLocalHash && c.Vector.EmbeddingVersion == DefaultEmbeddingVersion {
+		return fmt.Errorf("embedder local_hash cannot use embedding_version %q; set CONTEXT_EMBEDDING_VERSION", DefaultEmbeddingVersion)
+	}
+	if err := ValidateEmbeddingPin(c.Vector.EmbeddingVersion, c.Vector.Dimension); err != nil {
+		return err
+	}
+	return nil
+}
+
+// ValidateEmbeddingPin enforces that known embedding_version values keep a
+// fixed dimension. Changing dimension requires a new embedding_version.
+func ValidateEmbeddingPin(version string, dimension int) error {
+	if dimension <= 0 {
+		return fmt.Errorf("embedding dimension must be > 0")
+	}
+	switch version {
+	case "", DefaultEmbeddingVersion:
+		if dimension != DefaultEmbeddingDimension {
+			return fmt.Errorf("embedding_version %q requires dimension %d; set a new CONTEXT_EMBEDDING_VERSION when changing dimension", DefaultEmbeddingVersion, DefaultEmbeddingDimension)
+		}
+	case "local-hash-v1":
+		// local-hash-v1 is pinned to dim 32 in PoC docs; other dims need a new version.
+		if dimension != 32 {
+			return fmt.Errorf("embedding_version local-hash-v1 requires dimension 32; bump embedding_version when changing dimension")
+		}
 	}
 	return nil
 }

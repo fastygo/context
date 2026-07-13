@@ -10,7 +10,8 @@ import (
 	"github.com/fastygo/context/internal/foundation"
 	"github.com/fastygo/context/internal/ids"
 	"github.com/fastygo/context/internal/indexing"
-	modelfake "github.com/fastygo/context/internal/models/fake"
+	"github.com/fastygo/context/internal/models"
+	"github.com/fastygo/context/internal/models/factory"
 	"github.com/fastygo/context/internal/retrieval"
 	"github.com/fastygo/context/internal/retrieval/dense"
 	"github.com/fastygo/context/internal/retrieval/dense/postgresvector"
@@ -178,13 +179,17 @@ func denseRebuildByEnv() bool {
 	return v == "1" || strings.EqualFold(v, "true")
 }
 
-func openDenseStore(ctx context.Context) (*postgresvector.Store, indexing.VectorNamespace, modelfake.Embedder, error) {
+func openDenseStore(ctx context.Context) (*postgresvector.Store, indexing.VectorNamespace, models.Embedder, error) {
 	cfg, err := config.LoadStorageConfigFromEnv()
 	if err != nil {
-		return nil, indexing.VectorNamespace{}, modelfake.Embedder{}, err
+		return nil, indexing.VectorNamespace{}, nil, err
 	}
 	if cfg.Vector.Kind != config.StoreKindPostgresVector && cfg.Vector.Kind != "" {
 		// Still allow explicit postgres DSN for CLI dense modes.
+	}
+	emb, embVer, err := factory.OpenEmbedder(cfg)
+	if err != nil {
+		return nil, indexing.VectorNamespace{}, nil, err
 	}
 	store, err := postgresvector.Open(ctx, cfg.Vector.DSN, postgresvector.Config{
 		Collection: cfg.Vector.Collection,
@@ -192,17 +197,16 @@ func openDenseStore(ctx context.Context) (*postgresvector.Store, indexing.Vector
 		Metric:     cfg.Vector.Metric,
 	})
 	if err != nil {
-		return nil, indexing.VectorNamespace{}, modelfake.Embedder{}, err
+		return nil, indexing.VectorNamespace{}, nil, err
 	}
 	if err := store.EnsureSchema(ctx); err != nil {
 		store.Close()
-		return nil, indexing.VectorNamespace{}, modelfake.Embedder{}, err
+		return nil, indexing.VectorNamespace{}, nil, err
 	}
 	ns := indexing.VectorNamespace{
 		Name:             cfg.Vector.Collection,
-		EmbeddingVersion: cfg.Vector.EmbeddingVersion,
+		EmbeddingVersion: firstNonEmpty(cfg.Vector.EmbeddingVersion, embVer),
 	}
-	emb := modelfake.Embedder{Dim: cfg.Vector.Dimension}
 	return store, ns, emb, nil
 }
 
@@ -210,7 +214,7 @@ func ensureDenseIndex(
 	ctx context.Context,
 	store *postgresvector.Store,
 	ns indexing.VectorNamespace,
-	emb modelfake.Embedder,
+	emb models.Embedder,
 	idx *index.Memory,
 	projectID ids.ProjectID,
 	snapshotID ids.SnapshotID,

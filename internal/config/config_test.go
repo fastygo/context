@@ -27,9 +27,59 @@ func TestDefaultStorageConfig(t *testing.T) {
 	if cfg.Vector.EmbeddingVersion != DefaultEmbeddingVersion {
 		t.Fatalf("embedding version = %q", cfg.Vector.EmbeddingVersion)
 	}
+	if cfg.Embedder.Kind != EmbedderKindFake {
+		t.Fatalf("embedder kind = %q", cfg.Embedder.Kind)
+	}
 	wantDSN := DefaultPostgresDSN()
 	if cfg.Vector.DSN != wantDSN {
 		t.Fatalf("vector dsn = %q, want %q", cfg.Vector.DSN, wantDSN)
+	}
+}
+
+func TestValidateEmbeddingPinRejectsDimChangeWithoutVersionBump(t *testing.T) {
+	if err := ValidateEmbeddingPin(DefaultEmbeddingVersion, 384); err == nil {
+		t.Fatal("expected error for fake-hash-v1 dim!=8")
+	}
+	if err := ValidateEmbeddingPin("local-hash-v1", 8); err == nil {
+		t.Fatal("expected error for local-hash-v1 dim!=32")
+	}
+	if err := ValidateEmbeddingPin("local-hash-v1", 32); err != nil {
+		t.Fatal(err)
+	}
+	if err := ValidateEmbeddingPin("model-x", 384); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestLoadStorageConfigLocalHashDefaults(t *testing.T) {
+	t.Setenv("CONTEXT_EMBEDDER_KIND", "local_hash")
+	t.Setenv("CONTEXT_EMBEDDING_VERSION", "")
+	t.Setenv("CONTEXT_EMBEDDING_DIMENSION", "")
+	t.Setenv("CONTEXT_PG_DSN", "")
+
+	cfg, err := LoadStorageConfigFromEnv()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Embedder.Kind != EmbedderKindLocalHash {
+		t.Fatalf("kind=%q", cfg.Embedder.Kind)
+	}
+	if cfg.Vector.EmbeddingVersion != "local-hash-v1" {
+		t.Fatalf("ver=%q", cfg.Vector.EmbeddingVersion)
+	}
+	if cfg.Vector.Dimension != 32 {
+		t.Fatalf("dim=%d", cfg.Vector.Dimension)
+	}
+}
+
+func TestLoadStorageConfigRejectsLocalHashWithFakeVersion(t *testing.T) {
+	t.Setenv("CONTEXT_EMBEDDER_KIND", "local_hash")
+	t.Setenv("CONTEXT_EMBEDDING_VERSION", DefaultEmbeddingVersion)
+	t.Setenv("CONTEXT_EMBEDDING_DIMENSION", "32")
+	t.Setenv("CONTEXT_PG_DSN", "")
+	_, err := LoadStorageConfigFromEnv()
+	if err == nil {
+		t.Fatal("expected error")
 	}
 }
 

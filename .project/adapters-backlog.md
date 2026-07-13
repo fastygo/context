@@ -8,7 +8,7 @@ beyond PostgreSQL/pgvector wait for Chunk 12 proof or a measured blocker
 | --- | --- | --- | --- |
 | `VectorStore` | `internal/retrieval/dense/postgresvector` | QDrant, Turbopuffer | Same `BackendCapabilities`; shared-collection + payload filters first |
 | `SparseSearchClient` | `internal/retrieval/sparse/postgresfts` (Chunk 14) | `context-sparse` (Tantivy) | Fake/memory remains default offline; do not add Tantivy until FTS lexical limits are a measured blocker |
-| `Embedder` | `models/fake` (`fake-hash-v1`, dim 8) | Provider embedding adapters | Dimension change requires new `embedding_version` |
+| `Embedder` | `models/fake` (default) + `models/localhash` (`local-hash-v1`, dim 32) | Provider embedding adapters | Select via `CONTEXT_EMBEDDER_KIND`; dim change requires new `embedding_version` |
 | Language | `linguistic/simple` | `context-lang-*` repositories | Carry language, token spans, analyzer version, expansions without changing vector adapters |
 | `MetadataStore` | `internal/storage/postgres` | SQLite (optional), bbolt cache later | Migrations on Open; DocumentStore for lex/ling JSON |
 | `ArtifactStore` | localfs | Object store | Unchanged by dense path |

@@ -97,7 +97,7 @@ func (s *Store) EnsureSchema(ctx context.Context) error {
 		return apperr.Wrap(apperr.Internal, "postgresvector create extension", err)
 	}
 	ddl := fmt.Sprintf(`
-CREATE TABLE IF NOT EXISTS context_dense_vectors (
+CREATE TABLE IF NOT EXISTS %s (
   collection text NOT NULL,
   project_id text NOT NULL,
   snapshot_id text NOT NULL,
@@ -111,11 +111,17 @@ CREATE TABLE IF NOT EXISTS context_dense_vectors (
   span_end bigint NOT NULL DEFAULT 0,
   embedding vector(%d) NOT NULL,
   PRIMARY KEY (collection, project_id, snapshot_id, chunk_id, embedding_version)
-)`, s.cfg.Dimension)
+)`, s.tableName(), s.cfg.Dimension)
 	if _, err := s.pool.Exec(ctx, ddl); err != nil {
 		return apperr.Wrap(apperr.Internal, "postgresvector create table", err)
 	}
 	return nil
+}
+
+// tableName is dimension-scoped so changing embed dim does not collide with
+// CREATE TABLE IF NOT EXISTS on a fixed vector(N) column (Chunk 16).
+func (s *Store) tableName() string {
+	return fmt.Sprintf("context_dense_vectors_d%d", s.cfg.Dimension)
 }
 
 func (s *Store) Upsert(ctx context.Context, ns indexing.VectorNamespace, points []retrieval.VectorPoint) error {
@@ -153,8 +159,8 @@ func (s *Store) Upsert(ctx context.Context, ns indexing.VectorNamespace, points 
 			return apperr.New(apperr.Validation, fmt.Sprintf(
 				"vector dimension %d != configured %d", len(p.Vector), s.cfg.Dimension))
 		}
-		batch.Queue(`
-INSERT INTO context_dense_vectors (
+		batch.Queue(fmt.Sprintf(`
+INSERT INTO %s (
   collection, project_id, snapshot_id, chunk_id, embedding_version,
   chunker_version, morph_version, context_ref, language, span_start, span_end, embedding
 ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::vector)
@@ -167,7 +173,7 @@ DO UPDATE SET
   span_start = EXCLUDED.span_start,
   span_end = EXCLUDED.span_end,
   embedding = EXCLUDED.embedding
-`, collection, string(p.ProjectID), string(p.SnapshotID), string(p.ChunkID), p.EmbeddingVersion,
+`, s.tableName()), collection, string(p.ProjectID), string(p.SnapshotID), string(p.ChunkID), p.EmbeddingVersion,
 			p.ChunkerVersion, p.MorphVersion, string(p.ContextRef), p.Language,
 			p.Span.Start, p.Span.End, formatVector(p.Vector))
 	}
@@ -212,14 +218,14 @@ func (s *Store) Search(ctx context.Context, ns indexing.VectorNamespace, vector 
 	q := fmt.Sprintf(`
 SELECT chunk_id, embedding_version, chunker_version, morph_version, context_ref, snapshot_id,
        %s AS score
-FROM context_dense_vectors
+FROM %s
 WHERE collection = $1
   AND project_id = $2
   AND snapshot_id = $3
   AND embedding_version = $4
 ORDER BY embedding %s $5::vector
 LIMIT $6
-`, scoreExpr, op)
+`, scoreExpr, s.tableName(), op)
 
 	rows, err := s.pool.Query(ctx, q,
 		collection, string(ns.ProjectID), string(ns.SnapshotID), ns.EmbeddingVersion,

@@ -69,10 +69,10 @@ ADRs 0001–0023; do not re-implement.
 | 12 | E2E proof — hypothesis **validated** (`.project/proof/`) |
 | 13 | Durable CLI metadata opt-in (`CONTEXT_METADATA_KIND=postgres`) |
 
-Open gaps carried into Phase 2: fake-hash embeddings; lang/lexicon only
-fixture-level; no service API. Sparse FTS is live behind
-`CONTEXT_SPARSE_KIND=postgres_fts` (Chunk 14). Version pins + dense upsert on
-ingest when `CONTEXT_ENABLE_DENSE=1` (Chunk 15).
+Open gaps carried into Phase 2: semantic/provider Embedder still deferred
+(local_hash is measurable offline); lang/lexicon only fixture-level; no service
+API. Sparse FTS is live behind `CONTEXT_SPARSE_KIND=postgres_fts` (Chunk 14).
+Version pins + dense upsert on ingest when `CONTEXT_ENABLE_DENSE=1` (Chunk 15).
 
 ## UX / DX / DSL Consumer Track
 
@@ -207,7 +207,20 @@ Acceptance criteria:
 - Fake embedder still powers go test ./... offline.
 ```
 
-Status: pending
+Status: **completed** (2026-07-13)
+
+### Completion notes
+
+- `CONTEXT_EMBEDDER_KIND=fake|local_hash` + `models/factory.OpenEmbedder`.
+- `internal/models/localhash`: deterministic SHA256→L2 vectors, pin
+  `local-hash-v1` / dim **32**.
+- pgvector tables are dimension-scoped (`context_dense_vectors_d{N}`) so dim
+  changes do not collide with `CREATE TABLE IF NOT EXISTS`.
+- `ValidateEmbeddingPin`: `fake-hash-v1`⇒dim 8; `local-hash-v1`⇒dim 32;
+  other versions free; dim change requires version bump.
+- CLI ingest/search dense paths use selected Embedder (no longer hard-coded
+  `modelfake.Embedder`).
+- Fake remains default for offline `go test ./...`.
 
 ## Plan Chunk 17: Ignore Patterns And FocusProfile Persistence
 

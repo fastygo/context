@@ -43,20 +43,27 @@ Stop / reset:
 `./scripts/dev.sh health` runs all of the above. Override dimension with
 `EMBED_DIM=8 ./scripts/dev.sh health` (must match `CONTEXT_EMBEDDING_DIMENSION`).
 
-## PoC embedding dimension
+## PoC embedding dimension (Chunk 16)
 
-Until a live embedding adapter is wired (still fake per ADR-0017), the locked
-contract is:
+Dense embeddings are selected by `CONTEXT_EMBEDDER_KIND` (ADR-0005):
 
-| Field | Value |
-| --- | --- |
-| `embedding_version` | `fake-hash-v1` |
-| `dimension` | `8` (matches `retrieval/fake.HashEmbed` default used in unit tests) |
-| `metric` | `cosine` |
-| `collection` | `context_dense_v1` (logical namespace name; table DDL later) |
+| Kind | `embedding_version` | `dimension` | Collection tip |
+| --- | --- | --- | --- |
+| `fake` (default) | `fake-hash-v1` | `8` | `context_dense_v1` |
+| `local_hash` | `local-hash-v1` | `32` | `context_dense_local_hash_v1` |
 
-Changing dimension later requires a new `embedding_version` and a new vector
-column/index; do not silently rewrite existing rows.
+```bash
+export CONTEXT_EMBEDDER_KIND=local_hash
+# version/dim default to local-hash-v1 / 32 when unset
+export CONTEXT_VECTOR_COLLECTION=context_dense_local_hash_v1
+export CONTEXT_ENABLE_DENSE=1
+```
+
+Changing dimension requires a new `embedding_version` (and a new physical
+pgvector table `context_dense_vectors_d{N}`); do not silently rewrite rows.
+
+Metric remains `cosine`. `local_hash` is deterministic SHA256→L2 (measurable,
+offline) — not a semantic model; provider adapters stay deferred.
 
 ## Storage configuration
 
@@ -65,7 +72,8 @@ hardcoding a vector vendor in domain code:
 
 - `MetadataStoreConfig` — `memory` now; `postgres` in Chunk 11
 - `VectorStoreConfig` — `postgres_pgvector` for live PoC; `qdrant` kind reserved
-- `SparseStoreConfig` — `memory` now; `postgres_fts` / `context_sparse` later
+- `SparseStoreConfig` — `memory` / `postgres_fts` (Chunk 14)
+- `EmbedderConfig` — `fake` / `local_hash` (Chunk 16)
 - `ArtifactStoreConfig` — `localfs` now; `object_store` later
 
 Load with `config.LoadStorageConfigFromEnv()` or start from
