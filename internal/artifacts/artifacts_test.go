@@ -2,8 +2,12 @@ package artifacts_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/fastygo/context/internal/artifacts"
+	"github.com/fastygo/context/internal/corpus"
+	"github.com/fastygo/context/internal/foundation"
+	"github.com/fastygo/context/internal/ids"
 )
 
 func TestArtifactRejectsZeroValue(t *testing.T) {
@@ -64,5 +68,89 @@ func TestApplyPutOptionsPromotesSchemaToStructured(t *testing.T) {
 	})
 	if art.ArtifactType != artifacts.TypeStructured || art.SchemaID != "uxspec.screen.v1" {
 		t.Fatalf("got type=%q schema=%q", art.ArtifactType, art.SchemaID)
+	}
+}
+
+func TestArtifactLineageValidatesMultipleInputs(t *testing.T) {
+	t.Parallel()
+	lineage := artifacts.ArtifactLineage{
+		ProjectID:        "p1",
+		OutputArtifactID: "derived",
+		InputArtifactIDs: []ids.ArtifactID{"input-a", "input-b"},
+		SourceRefs: []corpus.SourceRef{{
+			ProjectID: "p1",
+			SourceID:  "source-a",
+			Span:      foundation.ByteSpan{Start: 0, End: 4},
+			Checksum:  "abcd",
+		}},
+		ContextPackID:      "pack1",
+		AgentRunID:         "run1",
+		ToolCallID:         "tool1",
+		GeneratorID:        "example-generator",
+		GeneratorVersion:   "v1",
+		TransformationKind: "aggregate",
+		CreatedAt:          time.Unix(10, 0).UTC(),
+	}
+	if err := lineage.Validate(); err != nil {
+		t.Fatal(err)
+	}
+
+	lineage.InputArtifactIDs = append(lineage.InputArtifactIDs, "input-a")
+	if err := lineage.Validate(); err == nil {
+		t.Fatal("expected duplicate lineage input to fail")
+	}
+}
+
+func TestArtifactLineageRejectsOutputAsInput(t *testing.T) {
+	t.Parallel()
+	lineage := artifacts.ArtifactLineage{
+		ProjectID:          "p1",
+		OutputArtifactID:   "derived",
+		InputArtifactIDs:   []ids.ArtifactID{"derived"},
+		GeneratorID:        "example-generator",
+		GeneratorVersion:   "v1",
+		TransformationKind: "copy",
+		CreatedAt:          time.Unix(10, 0).UTC(),
+	}
+	if err := lineage.Validate(); err == nil {
+		t.Fatal("expected self-referential lineage to fail")
+	}
+}
+
+func TestArtifactLineageRejectsDuplicateSourceRefs(t *testing.T) {
+	t.Parallel()
+	ref := corpus.SourceRef{
+		ProjectID: "p1",
+		SourceID:  "source-a",
+		Span:      foundation.ByteSpan{Start: 0, End: 4},
+		Checksum:  "abcd",
+	}
+	lineage := artifacts.ArtifactLineage{
+		ProjectID:          "p1",
+		OutputArtifactID:   "derived",
+		SourceRefs:         []corpus.SourceRef{ref, ref},
+		GeneratorID:        "example-generator",
+		GeneratorVersion:   "v1",
+		TransformationKind: "aggregate",
+		CreatedAt:          time.Unix(10, 0).UTC(),
+	}
+	if err := lineage.Validate(); err == nil {
+		t.Fatal("expected duplicate source refs to fail")
+	}
+}
+
+func TestArtifactLineageRejectsContextPackOnlyProvenance(t *testing.T) {
+	t.Parallel()
+	lineage := artifacts.ArtifactLineage{
+		ProjectID:          "p1",
+		OutputArtifactID:   "derived",
+		ContextPackID:      "pack1",
+		GeneratorID:        "example-generator",
+		GeneratorVersion:   "v1",
+		TransformationKind: "summary",
+		CreatedAt:          time.Unix(10, 0).UTC(),
+	}
+	if err := lineage.Validate(); err == nil {
+		t.Fatal("ContextPack-only lineage must include an input artifact or source ref")
 	}
 }

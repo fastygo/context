@@ -24,6 +24,7 @@ type MetadataStore interface {
 	RunStore
 	ToolCallStore
 	TraceStore
+	ArtifactLineageStore
 }
 
 type ProjectStore interface {
@@ -68,6 +69,14 @@ type ToolCallStore interface {
 type TraceStore interface {
 	AppendTrace(ctx context.Context, event tracing.Event) error
 	ListTrace(ctx context.Context, projectID ids.ProjectID, runID ids.RunID) ([]tracing.Event, error)
+}
+
+// ArtifactLineageStore persists derivation provenance independently from
+// runtime traces.
+type ArtifactLineageStore interface {
+	PutArtifactLineage(ctx context.Context, lineage artifacts.ArtifactLineage) error
+	GetArtifactLineage(ctx context.Context, projectID ids.ProjectID, outputArtifactID ids.ArtifactID) (artifacts.ArtifactLineage, error)
+	ListArtifactLineage(ctx context.Context, projectID ids.ProjectID) ([]artifacts.ArtifactLineage, error)
 }
 
 // ArtifactMetaStore optionally indexes artifact metadata separately from blob bytes.

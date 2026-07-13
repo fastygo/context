@@ -46,25 +46,25 @@ func (f FocusProfile) Validate() error {
 
 // Budget constrains ContextPack construction (ADR-0020).
 type Budget struct {
-	MaxItems                int
-	MaxChars                int
-	MaxTokensEstimate       int
-	ReserveForInstructions  int
-	BudgetEstimatorVersion  string
-	RejectScoreFloor        float64
-	AllowSpanTruncate       bool
+	MaxItems               int
+	MaxChars               int
+	MaxTokensEstimate      int
+	ReserveForInstructions int
+	BudgetEstimatorVersion string
+	RejectScoreFloor       float64
+	AllowSpanTruncate      bool
 }
 
 // RetrievalPlan chooses retriever paths, filters, and budgets for a task.
 type RetrievalPlan struct {
-	ID           ids.PlanID
-	ProjectID    ids.ProjectID
-	TaskID       ids.TaskID
-	FocusID      ids.FocusID
-	SnapshotID   ids.SnapshotID
-	Strategies   []RetrieverStrategy
-	Filters      RetrievalFilters
-	TopNRawPool  int
+	ID          ids.PlanID
+	ProjectID   ids.ProjectID
+	TaskID      ids.TaskID
+	FocusID     ids.FocusID
+	SnapshotID  ids.SnapshotID
+	Strategies  []RetrieverStrategy
+	Filters     RetrievalFilters
+	TopNRawPool int
 }
 
 func (p RetrievalPlan) Validate() error {
@@ -80,7 +80,7 @@ func (p RetrievalPlan) Validate() error {
 	if len(p.Strategies) == 0 {
 		return fmt.Errorf("retrieval_plan: strategies required")
 	}
-	return nil
+	return p.Filters.Validate()
 }
 
 // RetrieverStrategy names a retriever family and weight override.
@@ -100,36 +100,58 @@ type RetrievalFilters struct {
 	LexiconSourceID ids.LexiconSourceID
 	SourceAuthority string
 	Language        string
+	TemporalRange   *corpus.TemporalRange
 	// GraphNodeID is an optional extension point; graph traversal is not implemented in Chunk 02.
 	GraphNodeID ids.GraphNodeID
 }
 
+// Validate checks optional generic filters without conflating event time with
+// lexicographic TimePeriod.
+func (f RetrievalFilters) Validate() error {
+	if f.TemporalRange != nil {
+		return f.TemporalRange.Validate()
+	}
+	return nil
+}
+
+// MatchesTemporal applies deterministic half-open overlap semantics. Sources
+// without temporal metadata do not match an explicit temporal filter.
+func (f RetrievalFilters) MatchesTemporal(metadata *corpus.TemporalMetadata) bool {
+	if f.TemporalRange == nil {
+		return true
+	}
+	if metadata == nil || metadata.Validate() != nil {
+		return false
+	}
+	return f.TemporalRange.Overlaps(metadata.Range)
+}
+
 // ScoreContribution records one retriever's contribution (ADR-0019).
 type ScoreContribution struct {
-	RetrieverID     string                  `json:"retriever_id"`
-	RawScore        float64                 `json:"raw_score"`
-	NormalizedScore float64                 `json:"normalized_score"`
-	Weight          float64                 `json:"weight"`
+	RetrieverID     string                   `json:"retriever_id"`
+	RawScore        float64                  `json:"raw_score"`
+	NormalizedScore float64                  `json:"normalized_score"`
+	Weight          float64                  `json:"weight"`
 	Reasons         []foundation.ScoreReason `json:"reasons"`
-	Explanation     string                  `json:"explanation"`
-	SnapshotID      ids.SnapshotID          `json:"snapshot_id"`
-	ProjectID       ids.ProjectID           `json:"project_id"`
-	ExpansionIDs    []ids.ExpansionID       `json:"expansion_ids,omitempty"`
-	SenseID         ids.SenseID             `json:"sense_id,omitempty"`
-	ConceptID       ids.ConceptID           `json:"concept_id,omitempty"`
-	AttestationID   ids.AttestationID       `json:"attestation_id,omitempty"`
-	AnalyzerVersion string                  `json:"analyzer_version,omitempty"`
-	EmbedVersion    string                  `json:"embed_version,omitempty"`
+	Explanation     string                   `json:"explanation"`
+	SnapshotID      ids.SnapshotID           `json:"snapshot_id"`
+	ProjectID       ids.ProjectID            `json:"project_id"`
+	ExpansionIDs    []ids.ExpansionID        `json:"expansion_ids,omitempty"`
+	SenseID         ids.SenseID              `json:"sense_id,omitempty"`
+	ConceptID       ids.ConceptID            `json:"concept_id,omitempty"`
+	AttestationID   ids.AttestationID        `json:"attestation_id,omitempty"`
+	AnalyzerVersion string                   `json:"analyzer_version,omitempty"`
+	EmbedVersion    string                   `json:"embed_version,omitempty"`
 }
 
 // Candidate is a merged retrieval hit before packing.
 type Candidate struct {
-	ChunkID       ids.ChunkID             `json:"chunk_id"`
-	SourceRef     corpus.SourceRef        `json:"source_ref"`
-	MergedScore   float64                 `json:"merged_score"`
-	Contributions []ScoreContribution     `json:"contributions"`
-	TrustLevel    foundation.TrustLevel   `json:"trust_level"`
-	TextChecksum  foundation.ChecksumHex  `json:"text_checksum"`
+	ChunkID       ids.ChunkID            `json:"chunk_id"`
+	SourceRef     corpus.SourceRef       `json:"source_ref"`
+	MergedScore   float64                `json:"merged_score"`
+	Contributions []ScoreContribution    `json:"contributions"`
+	TrustLevel    foundation.TrustLevel  `json:"trust_level"`
+	TextChecksum  foundation.ChecksumHex `json:"text_checksum"`
 }
 
 func (c Candidate) DedupKey() string {
@@ -138,14 +160,14 @@ func (c Candidate) DedupKey() string {
 
 // EvidenceItem is one selected or rejected pack entry.
 type EvidenceItem struct {
-	ID              string                 `json:"id"`
+	ID              string                   `json:"id"`
 	Class           foundation.EvidenceClass `json:"class"`
-	TrustLevel      foundation.TrustLevel  `json:"trust_level"`
-	SourceRef       corpus.SourceRef       `json:"source_ref"`
-	Surface         string                 `json:"surface"`
-	Summary         string                 `json:"summary,omitempty"`
-	Candidate       Candidate              `json:"candidate"`
-	RejectionReason string                 `json:"rejection_reason,omitempty"`
+	TrustLevel      foundation.TrustLevel    `json:"trust_level"`
+	SourceRef       corpus.SourceRef         `json:"source_ref"`
+	Surface         string                   `json:"surface"`
+	Summary         string                   `json:"summary,omitempty"`
+	Candidate       Candidate                `json:"candidate"`
+	RejectionReason string                   `json:"rejection_reason,omitempty"`
 }
 
 func (e EvidenceItem) Validate() error {
@@ -163,19 +185,19 @@ func (e EvidenceItem) Validate() error {
 
 // ContextPack is the central runtime handoff object.
 type ContextPack struct {
-	ID                       ids.PackID              `json:"id"`
-	ProjectID                ids.ProjectID           `json:"project_id"`
-	TaskID                   ids.TaskID              `json:"task_id,omitempty"`
-	RetrievalPlanID          ids.PlanID              `json:"retrieval_plan_id"`
-	Purpose                  string                  `json:"purpose,omitempty"`
-	Budget                   Budget                  `json:"budget"`
-	Instructions             []string                `json:"instructions"`
-	PolicyRefs               []ids.PolicyID          `json:"policy_refs,omitempty"`
-	EvidenceItems            []EvidenceItem          `json:"evidence_items"`
-	RejectedItems            []EvidenceItem          `json:"rejected_items,omitempty"`
-	VerificationRequirements []string                `json:"verification_requirements,omitempty"`
-	Checksum                 foundation.ChecksumHex  `json:"checksum"`
-	BudgetEstimatorVersion   string                  `json:"budget_estimator_version,omitempty"`
+	ID                       ids.PackID             `json:"id"`
+	ProjectID                ids.ProjectID          `json:"project_id"`
+	TaskID                   ids.TaskID             `json:"task_id,omitempty"`
+	RetrievalPlanID          ids.PlanID             `json:"retrieval_plan_id"`
+	Purpose                  string                 `json:"purpose,omitempty"`
+	Budget                   Budget                 `json:"budget"`
+	Instructions             []string               `json:"instructions"`
+	PolicyRefs               []ids.PolicyID         `json:"policy_refs,omitempty"`
+	EvidenceItems            []EvidenceItem         `json:"evidence_items"`
+	RejectedItems            []EvidenceItem         `json:"rejected_items,omitempty"`
+	VerificationRequirements []string               `json:"verification_requirements,omitempty"`
+	Checksum                 foundation.ChecksumHex `json:"checksum"`
+	BudgetEstimatorVersion   string                 `json:"budget_estimator_version,omitempty"`
 }
 
 func (p ContextPack) Validate() error {

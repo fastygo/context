@@ -38,14 +38,15 @@ const (
 
 // Source is a registered project source.
 type Source struct {
-	ID         ids.SourceID
-	ProjectID  ids.ProjectID
-	Type       SourceType
-	PathKey    string // stable logical key; not a host filesystem path
-	URI        string // adapter-specific locator; may be empty
-	TrustLevel foundation.TrustLevel
-	MediaType  string
-	Checksum   foundation.ChecksumHex // of original artifact bytes when available
+	ID               ids.SourceID
+	ProjectID        ids.ProjectID
+	Type             SourceType
+	PathKey          string // stable logical key; not a host filesystem path
+	URI              string // adapter-specific locator; may be empty
+	TrustLevel       foundation.TrustLevel
+	MediaType        string
+	Checksum         foundation.ChecksumHex // of original artifact bytes when available
+	TemporalMetadata *TemporalMetadata      // optional source-domain time; never runtime trace time
 }
 
 func (s Source) Validate() error {
@@ -61,17 +62,23 @@ func (s Source) Validate() error {
 	if s.PathKey == "" {
 		return fmt.Errorf("path_key: empty")
 	}
-	return s.TrustLevel.Validate()
+	if err := s.TrustLevel.Validate(); err != nil {
+		return err
+	}
+	if s.TemporalMetadata != nil {
+		return s.TemporalMetadata.Validate()
+	}
+	return nil
 }
 
 // SourceRef points at a source span for citations and evidence.
 type SourceRef struct {
-	ProjectID  ids.ProjectID           `json:"project_id"`
-	SourceID   ids.SourceID            `json:"source_id"`
-	ChunkID    ids.ChunkID             `json:"chunk_id,omitempty"`
-	Span       foundation.ByteSpan     `json:"span"`
-	Checksum   foundation.ChecksumHex  `json:"checksum"`
-	ContextRef ids.ContextRefID        `json:"context_ref,omitempty"`
+	ProjectID  ids.ProjectID          `json:"project_id"`
+	SourceID   ids.SourceID           `json:"source_id"`
+	ChunkID    ids.ChunkID            `json:"chunk_id,omitempty"`
+	Span       foundation.ByteSpan    `json:"span"`
+	Checksum   foundation.ChecksumHex `json:"checksum"`
+	ContextRef ids.ContextRefID       `json:"context_ref,omitempty"`
 }
 
 func (r SourceRef) Validate() error {
@@ -89,18 +96,19 @@ func (r SourceRef) Validate() error {
 
 // Chunk is an indexed source span with provenance.
 type Chunk struct {
-	ID             ids.ChunkID
-	ProjectID      ids.ProjectID
-	SourceID       ids.SourceID
-	ArtifactID     ids.ArtifactID
-	SnapshotID     ids.SnapshotID
-	ChunkerVersion string
-	Span           foundation.ByteSpan
-	TextChecksum   foundation.ChecksumHex
-	ChunkHash      foundation.ChecksumHex
-	Language       string // BCP 47; empty allowed until language adapter runs
+	ID               ids.ChunkID
+	ProjectID        ids.ProjectID
+	SourceID         ids.SourceID
+	ArtifactID       ids.ArtifactID
+	SnapshotID       ids.SnapshotID
+	ChunkerVersion   string
+	Span             foundation.ByteSpan
+	TextChecksum     foundation.ChecksumHex
+	ChunkHash        foundation.ChecksumHex
+	Language         string // BCP 47; empty allowed until language adapter runs
 	EmbeddingVersion string
-	SparseVersion  string
+	SparseVersion    string
+	TemporalMetadata *TemporalMetadata // optional source-domain time; never runtime trace time
 }
 
 func (c Chunk) Validate() error {
@@ -125,5 +133,11 @@ func (c Chunk) Validate() error {
 	if err := c.TextChecksum.Validate(); err != nil {
 		return err
 	}
-	return c.ChunkHash.Validate()
+	if err := c.ChunkHash.Validate(); err != nil {
+		return err
+	}
+	if c.TemporalMetadata != nil {
+		return c.TemporalMetadata.Validate()
+	}
+	return nil
 }

@@ -20,6 +20,13 @@ references. If more durable decisions are created, they should live under
 - Keep concrete scenarios as adapters/plugins/downstream products. Do not move
   message catalogs, timelines, CRM flows, calendars, dashboards, or methodology
   runtimes into neutral core packages.
+- Keep source/observation events separate from runtime trace events. Device,
+  profile, session, and interpretation schemas belong in adapters/plugins;
+  Context stores their source artifacts, temporal metadata, lineage, evidence,
+  and replayable processing trace.
+- Do not map `Project` to a person in core contracts. Products choose whether a
+  project represents a workspace, case, corpus, organization, or another
+  isolation unit.
 - Prefer `internal` packages until interfaces prove stable.
 - Start with deterministic behavior and in-memory/local adapters before adding
   infrastructure.
@@ -555,13 +562,82 @@ Status: **completed** (2026-07-11)
 - Added JSON tags on key DTO fields for stable Lab consumption.
 - Verification: `go test ./...` passed (2026-07-11).
 
+## Plan Chunk 08A: Derived Artifact Lineage And Temporal Source Contracts
+
+Priority: **next contract gate; complete before Chunk 11 PostgreSQL migrations**.
+It may be implemented before or alongside Chunk 09 because Chunk 09 is
+infrastructure-only.
+
+Copy-paste prompt:
+
+```text
+Work in @Context only. Read ADR-0003, ADR-0006, ADR-0014, ADR-0020,
+ADR-0022, roadmap-context-core.md, progress.md, future-layer.md, and
+.project/plugins/observation-event-adapters.md.
+
+Add only neutral contracts required by unrelated derived-artifact and
+event-window use cases. Do not add device, accessibility, clinical, reaction,
+capability-profile, room, session, or product UI entities to the core.
+
+Plan and then implement:
+1. Add ADR-0023 for derived artifact lineage and neutral temporal source
+   metadata. Record that corpus events are not tracing.Event runtime records.
+2. Define ArtifactLineage (or equivalently narrow relation types) with output
+   artifact id, input artifact ids, source refs, optional ContextPack/AgentRun/
+   ToolCall refs, generator id/version, transformation kind, and created_at.
+3. Keep Artifact.SourceID as the optional immediate origin; do not overload it
+   as many-to-many derivation lineage.
+4. Define a neutral TemporalRange for source/chunk metadata with start/end,
+   time basis (occurred/observed/effective), and ingested_at.
+5. Add optional generic temporal bounds to RetrievalFilters. Do not reuse the
+   lexicographic TimePeriod type for event/log time.
+6. Define event-source compatibility requirements at the SourceAdapter
+   boundary: stable event identity, schema/producer version, occurred and
+   ingested times, trust, idempotent ingest, deterministic batch/window
+   checksums, and handling for late/out-of-order events.
+7. Implement in-memory lineage metadata storage and deterministic ordering only
+   if the accepted ADR requires it before PostgreSQL. Keep raw event schemas in
+   adapters and store event batches as normal source/artifact bytes.
+8. Add tests for lineage validation, temporal range validation/filtering,
+   duplicate/idempotent fixture ingest, and strict separation between source
+   events and runtime trace events.
+9. Run go test ./... and update completion notes only after verification.
+
+Acceptance criteria:
+- A structured derived artifact can be traced to multiple inputs without
+  parsing an AgentRun trace.
+- A source/chunk can carry neutral event-time bounds and retrieval can express
+  a deterministic time window.
+- Runtime tracing remains operational replay; it is not a domain event store.
+- Existing file/document ingestion and ContextPack tests remain unchanged.
+- Product-specific observation schemas can be added as plugins without changing
+  core domain entities.
+```
+
+Status: **completed** (2026-07-13)
+
+### Completion notes
+
+- Accepted [ADR-0023](decisions/0023-derived-artifact-lineage-temporal-source-metadata.md):
+  immutable multi-input `ArtifactLineage`, half-open same-basis temporal overlap,
+  and strict corpus-event/runtime-trace separation.
+- Added optional `TemporalMetadata` to sources/chunks and generic temporal
+  retrieval filters without reusing lexicographic `TimePeriod`.
+- Added event-source compatibility descriptor and deterministic duplicate event
+  identity/batch checksum contracts; payload schemas remain adapter-owned.
+- Added in-memory lineage persistence with immutable records and deterministic
+  output-artifact ordering.
+- Verification: `go test ./...` passed (2026-07-13).
+
 ## Plan Chunk 09: Local Server Environment With PostgreSQL And pgvector
 
 Copy-paste prompt:
 
 ```text
 Work in @Context only. Prepare real local infrastructure for the hypothesis
-validation path. Do not rewrite core contracts unless needed. Prefer Docker
+validation path. Read the accepted Chunk 08A/ADR-0023 contract if available;
+do not invent a PostgreSQL schema before it. Do not otherwise rewrite core
+contracts. Prefer Docker
 Compose or clear shell scripts if the repository already uses that style.
 
 Plan and then implement:
@@ -607,6 +683,8 @@ Plan and then implement:
    interfaces if not already stable.
 3. Implement pgvector adapter under internal/retrieval/dense/postgresvector.
 4. Require project_id and snapshot_id filters on dense and sparse search.
+   Preserve optional neutral temporal bounds and declare whether the backend can
+   enforce temporal/metadata filters server-side.
 5. Record embedding_version, chunker_version, morph_version, context_ref, and
    snapshot_id in vector rows/results.
 6. Add a backend capability model so QDrant and Turbopuffer can later declare
@@ -644,19 +722,21 @@ existing store interfaces. Keep migrations explicit and tests gated.
 
 Plan and then implement:
 1. Add PostgreSQL driver and migration approach only if needed.
-2. Create schema for projects, sources, artifacts, chunks, index_snapshots,
-   manifest_nodes, chunk_aliases, embeddings/vector rows, context packs, agent
-   runs, tool calls, evaluations, trace events, token occurrences, morphology
-   analyses, query expansions, senses, concepts, attestations, variants,
-   multiword expressions, registers, dialect regions, time periods, and lexicon
-   sources.
+2. Create schema for projects, sources, artifacts (`artifact_type`, `schema_id`),
+   artifact lineage/provenance, optional source/chunk temporal ranges,
+   index_snapshots, manifest_nodes, chunk_aliases, embeddings/vector rows,
+   context packs, agent runs, tool calls, evaluations, trace events, token
+   occurrences, morphology analyses, query expansions, senses, concepts,
+   attestations, variants, multiword expressions, registers, dialect regions,
+   time periods, and lexicon sources.
 3. Add migration files under an internal or migrations folder.
 4. Implement PostgreSQL store adapter behind existing interfaces.
 5. Preserve transaction boundaries for indexing and agent run updates.
 6. Add indexes for project_id, source_id, chunk_id, snapshot_id, context_ref,
    run_id, language, lexeme_id, analyzer_version, dictionary_version, and
    timestamps where needed; add filters for sense_id, concept_id, region,
-   register, time_period, lexicon_source, and source_authority where needed.
+   register, time_period, lexicon_source, source_authority, artifact schema,
+   lineage inputs, and neutral temporal bounds where needed.
 7. Add integration tests gated by environment variable.
 8. Add CLI option to use PostgreSQL metadata store.
 9. Verify rollback/reset workflow for local development.
@@ -671,6 +751,8 @@ Acceptance criteria:
   adapter dependencies in the storage adapter.
 - Lexicographic metadata survives process restart without requiring
   dictionary/thesaurus/corpus adapter dependencies in the storage adapter.
+- Structured artifact schema identity, derivation lineage, and temporal bounds
+  survive restart without importing a consumer event/spec schema.
 - Tests can run without PostgreSQL unless integration mode is enabled.
 ```
 
@@ -701,9 +783,14 @@ Plan and then implement/fix only what is needed:
 8. Generate a ContextPack for a roadmap-related query.
 9. Run fake-model agent flow using the ContextPack.
 10. Run verifier and inspect trace output.
-11. Capture command outputs, JSON fixtures, or summaries in .project/proof/ if
+11. Ingest one neutral event/log fixture with stable event ids and occurred/
+   ingested times, build deterministic event-window chunks, then create one
+   schema-identified derived artifact with lineage to multiple inputs.
+12. Prove one temporal retrieval window and show that source events remain
+   separate from AgentRun trace events.
+13. Capture command outputs, JSON fixtures, or summaries in .project/proof/ if
    appropriate so Lab can replay the UX without hitting live services.
-12. Fix only blocking bugs discovered by the proof. Record known gaps and next
+14. Fix only blocking bugs discovered by the proof. Record known gaps and next
    decisions in progress.md, then report whether the
    hypothesis is validated, partially validated, or failed.
 
@@ -717,6 +804,8 @@ Acceptance criteria:
 - The proof identifies what must change before adding TEI/SKOS/dictionary,
   thesaurus, historical, regional, or slang lexicon adapters.
 - The proof produces enough artifacts to debug failure or demonstrate success.
+- The proof replays a derived artifact's lineage independently from runtime
+  trace and deterministically filters an event-window source by time.
 - The proof exports enough neutral JSON for Lab to render project corpus, search,
   ContextPack, FocusProfile, AgentRun, and trace views.
 ```
@@ -839,7 +928,7 @@ Verification:
   then ingest + search for `ContextPack`.
 
 Follow-up:
-- Plan Chunk 09: PostgreSQL/pgvector local compose stack.
+- Plan Chunk 08A contract addendum, then Chunk 09 PostgreSQL/pgvector compose.
 
 ### 2026-07-13 - ADR-0022 Structured Artifact Schema Identity
 
@@ -855,9 +944,25 @@ Verification:
 - `go test ./...` passed.
 
 Follow-up:
-- Chunk 11: persist `schema_id` / `artifact_type` in PostgreSQL metadata.
-- Plan Chunk 09: PostgreSQL/pgvector local compose stack.
+- Plan Chunk 08A: add generic derivation lineage and temporal source contracts.
+- Chunk 11: persist `schema_id`, `artifact_type`, lineage, and temporal metadata.
+- Plan Chunk 09 may proceed after or alongside the 08A contract work.
 - Downstream: register schema-bound draft tools in builders (not core).
+
+### 2026-07-13 - Chunk 08A
+
+Result:
+- Accepted ADR-0023 and added neutral artifact-lineage, temporal source/chunk,
+  temporal retrieval, and event-source compatibility contracts.
+- In-memory metadata can replay multi-input lineage independently from runtime
+  traces; event identities deduplicate deterministically by stable id/checksum.
+
+Verification:
+- `go test ./...` passed.
+
+Follow-up:
+- Plan Chunk 09: PostgreSQL/pgvector local compose stack.
+- Plan Chunk 11: persist accepted lineage and temporal contracts.
 
 ```text
 ### YYYY-MM-DD - Chunk NN

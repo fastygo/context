@@ -213,6 +213,145 @@ func TestNotFoundErrors(t *testing.T) {
 	}
 }
 
+func TestArtifactLineageRoundTripAndDeterministicOrder(t *testing.T) {
+	t.Parallel()
+	store := memory.New()
+	ctx := context.Background()
+	if err := store.PutProject(ctx, corpus.Project{ID: "p1", Name: "demo"}); err != nil {
+		t.Fatal(err)
+	}
+	for _, id := range []ids.ArtifactID{"input-a", "input-b", "output-z", "output-a"} {
+		art := artifacts.Artifact{
+			ID:           id,
+			ProjectID:    "p1",
+			MediaType:    "application/json",
+			ByteSize:     2,
+			Checksum:     foundation.ChecksumHex("checksum-" + string(id)),
+			StorageURI:   "localfs://p1/" + string(id),
+			ArtifactType: artifacts.TypeStructured,
+			SchemaID:     "example.output.v1",
+		}
+		if err := store.PutArtifactMeta(ctx, art); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, outputID := range []ids.ArtifactID{"output-z", "output-a"} {
+		lineage := artifacts.ArtifactLineage{
+			ProjectID:          "p1",
+			OutputArtifactID:   outputID,
+			InputArtifactIDs:   []ids.ArtifactID{"input-a", "input-b"},
+			GeneratorID:        "example-generator",
+			GeneratorVersion:   "v1",
+			TransformationKind: "aggregate",
+			CreatedAt:          time.Unix(10, 0).UTC(),
+		}
+		if err := store.PutArtifactLineage(ctx, lineage); err != nil {
+			t.Fatal(err)
+		}
+		lineage.InputArtifactIDs[0] = "caller-mutated"
+	}
+
+	lineages, err := store.ListArtifactLineage(ctx, "p1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(lineages) != 2 ||
+		lineages[0].OutputArtifactID != "output-a" ||
+		lineages[1].OutputArtifactID != "output-z" {
+		t.Fatalf("lineage order=%#v", lineages)
+	}
+	got, err := store.GetArtifactLineage(ctx, "p1", "output-z")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.InputArtifactIDs) != 2 || got.InputArtifactIDs[0] != "input-a" {
+		t.Fatalf("lineage inputs=%v", got.InputArtifactIDs)
+	}
+	got.InputArtifactIDs[0] = "returned-mutated"
+	again, err := store.GetArtifactLineage(ctx, "p1", "output-z")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if again.InputArtifactIDs[0] != "input-a" {
+		t.Fatalf("stored lineage was mutated through returned slice: %v", again.InputArtifactIDs)
+	}
+}
+
+func TestArtifactLineageRequiresStoredProjectAndArtifacts(t *testing.T) {
+	t.Parallel()
+	store := memory.New()
+	ctx := context.Background()
+	lineage := artifacts.ArtifactLineage{
+		ProjectID:          "p1",
+		OutputArtifactID:   "output",
+		InputArtifactIDs:   []ids.ArtifactID{"input"},
+		GeneratorID:        "example-generator",
+		GeneratorVersion:   "v1",
+		TransformationKind: "aggregate",
+		CreatedAt:          time.Unix(10, 0).UTC(),
+	}
+	if err := store.PutArtifactLineage(ctx, lineage); !apperr.Is(err, apperr.NotFound) {
+		t.Fatalf("expected missing project error, got %v", err)
+	}
+	if err := store.PutProject(ctx, corpus.Project{ID: "p1", Name: "demo"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.PutArtifactLineage(ctx, lineage); !apperr.Is(err, apperr.NotFound) {
+		t.Fatalf("expected missing output artifact error, got %v", err)
+	}
+	output := artifacts.Artifact{
+		ID:           "output",
+		ProjectID:    "p1",
+		MediaType:    "application/json",
+		ByteSize:     2,
+		Checksum:     "output-checksum",
+		StorageURI:   "localfs://p1/output",
+		ArtifactType: artifacts.TypeStructured,
+		SchemaID:     "example.output.v1",
+	}
+	if err := store.PutArtifactMeta(ctx, output); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.PutArtifactLineage(ctx, lineage); !apperr.Is(err, apperr.NotFound) {
+		t.Fatalf("expected missing input artifact error, got %v", err)
+	}
+}
+
+func TestTemporalSourceDoesNotCreateRuntimeTrace(t *testing.T) {
+	t.Parallel()
+	store := memory.New()
+	ctx := context.Background()
+	if err := store.PutProject(ctx, corpus.Project{ID: "p1", Name: "demo"}); err != nil {
+		t.Fatal(err)
+	}
+	base := time.Unix(100, 0).UTC()
+	src := corpus.Source{
+		ID:         "event-source",
+		ProjectID:  "p1",
+		Type:       corpus.SourceTypeArtifact,
+		PathKey:    "events/batch-1",
+		TrustLevel: foundation.TrustProject,
+		TemporalMetadata: &corpus.TemporalMetadata{
+			Range: corpus.TemporalRange{
+				Start: base,
+				End:   base.Add(time.Minute),
+				Basis: corpus.TimeBasisOccurred,
+			},
+			IngestedAt: base.Add(2 * time.Minute),
+		},
+	}
+	if err := store.PutSource(ctx, src); err != nil {
+		t.Fatal(err)
+	}
+	events, err := store.ListTrace(ctx, "p1", "source-events-are-not-runs")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(events) != 0 {
+		t.Fatalf("source ingest must not append runtime traces: %#v", events)
+	}
+}
+
 func projectIDs(projects []corpus.Project) []ids.ProjectID {
 	out := make([]ids.ProjectID, len(projects))
 	for i, p := range projects {

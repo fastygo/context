@@ -32,6 +32,7 @@ type Store struct {
 	toolCalls map[string]tools.ToolCall
 	traces    map[string][]tracing.Event // key: projectID|runID
 	artifacts map[string]artifacts.Artifact
+	lineage   map[string]artifacts.ArtifactLineage
 }
 
 // New returns an empty memory metadata store.
@@ -46,6 +47,7 @@ func New() *Store {
 		toolCalls: make(map[string]tools.ToolCall),
 		traces:    make(map[string][]tracing.Event),
 		artifacts: make(map[string]artifacts.Artifact),
+		lineage:   make(map[string]artifacts.ArtifactLineage),
 	}
 }
 
@@ -404,6 +406,71 @@ func (s *Store) ListArtifacts(ctx context.Context, projectID ids.ProjectID) ([]a
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
 	return out, nil
+}
+
+func (s *Store) PutArtifactLineage(ctx context.Context, lineage artifacts.ArtifactLineage) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if err := lineage.Validate(); err != nil {
+		return apperr.Wrap(apperr.Validation, "artifact_lineage", err)
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if _, ok := s.projects[lineage.ProjectID]; !ok {
+		return apperr.New(apperr.NotFound, "project not found")
+	}
+	outputKey := key2(string(lineage.ProjectID), string(lineage.OutputArtifactID))
+	if _, ok := s.artifacts[outputKey]; !ok {
+		return apperr.New(apperr.NotFound, "output artifact metadata not found")
+	}
+	for _, inputID := range lineage.InputArtifactIDs {
+		if _, ok := s.artifacts[key2(string(lineage.ProjectID), string(inputID))]; !ok {
+			return apperr.New(apperr.NotFound, "input artifact metadata not found")
+		}
+	}
+	if _, exists := s.lineage[outputKey]; exists {
+		return apperr.New(apperr.Conflict, "artifact lineage already exists")
+	}
+	s.lineage[outputKey] = cloneLineage(lineage)
+	return nil
+}
+
+func (s *Store) GetArtifactLineage(ctx context.Context, projectID ids.ProjectID, outputArtifactID ids.ArtifactID) (artifacts.ArtifactLineage, error) {
+	if err := ctx.Err(); err != nil {
+		return artifacts.ArtifactLineage{}, err
+	}
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	lineage, ok := s.lineage[key2(string(projectID), string(outputArtifactID))]
+	if !ok {
+		return artifacts.ArtifactLineage{}, apperr.New(apperr.NotFound, "artifact lineage not found")
+	}
+	return cloneLineage(lineage), nil
+}
+
+func (s *Store) ListArtifactLineage(ctx context.Context, projectID ids.ProjectID) ([]artifacts.ArtifactLineage, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	out := make([]artifacts.ArtifactLineage, 0)
+	for _, lineage := range s.lineage {
+		if lineage.ProjectID == projectID {
+			out = append(out, cloneLineage(lineage))
+		}
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].OutputArtifactID < out[j].OutputArtifactID
+	})
+	return out, nil
+}
+
+func cloneLineage(lineage artifacts.ArtifactLineage) artifacts.ArtifactLineage {
+	lineage.InputArtifactIDs = append([]ids.ArtifactID(nil), lineage.InputArtifactIDs...)
+	lineage.SourceRefs = append([]corpus.SourceRef(nil), lineage.SourceRefs...)
+	return lineage
 }
 
 var (

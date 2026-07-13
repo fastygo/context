@@ -4,6 +4,7 @@ package index
 import (
 	"strings"
 
+	"github.com/fastygo/context/internal/corpus"
 	"github.com/fastygo/context/internal/foundation"
 	"github.com/fastygo/context/internal/ids"
 	"github.com/fastygo/context/internal/lexicon"
@@ -12,24 +13,25 @@ import (
 
 // ChunkRecord is one searchable chunk with optional lexical/lexicographic metadata.
 type ChunkRecord struct {
-	ProjectID       ids.ProjectID
-	SnapshotID      ids.SnapshotID
-	ChunkID         ids.ChunkID
-	SourceID        ids.SourceID
-	Span            foundation.ByteSpan
-	Text            string
-	TextChecksum    foundation.ChecksumHex
-	TrustLevel      foundation.TrustLevel
-	Lemmas          []string
-	Wordforms       []string
-	SenseIDs        []ids.SenseID
-	ConceptIDs      []ids.ConceptID
-	AttestationIDs  []ids.AttestationID
-	Register        lexicon.Register
-	Region          lexicon.DialectRegion
-	TimePeriod      lexicon.TimePeriod
-	LexiconSourceID ids.LexiconSourceID
-	SourceAuthority string
+	ProjectID        ids.ProjectID
+	SnapshotID       ids.SnapshotID
+	ChunkID          ids.ChunkID
+	SourceID         ids.SourceID
+	Span             foundation.ByteSpan
+	Text             string
+	TextChecksum     foundation.ChecksumHex
+	TrustLevel       foundation.TrustLevel
+	Lemmas           []string
+	Wordforms        []string
+	SenseIDs         []ids.SenseID
+	ConceptIDs       []ids.ConceptID
+	AttestationIDs   []ids.AttestationID
+	Register         lexicon.Register
+	Region           lexicon.DialectRegion
+	TimePeriod       lexicon.TimePeriod
+	LexiconSourceID  ids.LexiconSourceID
+	SourceAuthority  string
+	TemporalMetadata *corpus.TemporalMetadata
 }
 
 // Memory is a project/snapshot scoped chunk index.
@@ -91,6 +93,9 @@ func MatchesFilters(c ChunkRecord, f retrieval.RetrievalFilters) bool {
 		return false
 	}
 	if f.SourceAuthority != "" && c.SourceAuthority != f.SourceAuthority {
+		return false
+	}
+	if !f.MatchesTemporal(c.TemporalMetadata) {
 		return false
 	}
 	return true

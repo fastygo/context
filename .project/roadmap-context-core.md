@@ -39,6 +39,11 @@ be designed for, but not prematurely implemented.
 ### Core Responsibilities
 
 - Project-scoped source registration and artifact tracking.
+- Schema-identified structured artifacts plus source-backed lineage for derived
+  outputs, so a generated spec, report, or aggregate can be traced to all of
+  its inputs independently from an `AgentRun`.
+- Neutral temporal metadata and filters for logs, observations, messages, and
+  other event-window sources. Domain event schemas remain adapter-owned.
 - Deterministic source parsing, chunking, enrichment, and manifest generation.
 - Language-neutral lexical and morphology contracts for tokens, lemmas, lexemes,
   wordforms, feature bundles, and analyzer versions.
@@ -61,6 +66,9 @@ be designed for, but not prematurely implemented.
 
 - Brand-specific companion names, mascots, prompts, or marketing copy.
 - Product-specific UI, dashboard layout, CRM screens, or generated app code.
+- Device registries, rooms, interaction/reaction profiles, capability profiles,
+  clinical or educational sessions, skill programs, and domain interpretations
+  of observed behavior. These belong in source adapters, plugins, or products.
 - Scenario-specific domain products such as messaging-platform catalogs,
   timeline/Gantt tools, CRM workflows, calendar assistants, or methodology
   runtimes.
@@ -242,6 +250,9 @@ contracts, and companion configuration:
 
 - Messaging archives are source adapters plus graph projections, not core
   package names.
+- Device, sensor, accessibility, and human-interaction streams are source
+  adapters with schema-versioned event artifacts. Their domain entities and
+  interpretation models stay outside the core.
 - Calendars, Gantt charts, issue trackers, and project dashboards are event and
   tool adapters over core timelines and traces.
 - CRM, catalog, and enterprise-document assistants are downstream products over
@@ -374,6 +385,7 @@ internal/
 
   artifacts/
     artifact.go             # durable raw/source/generated artifact metadata
+    lineage.go              # generic derivation and input provenance
     store.go                # artifact storage interface
     localfs/                # local filesystem artifact store
 
@@ -527,6 +539,11 @@ Required fields:
 - `trust_level`
 - `created_at`
 - `updated_at`
+- `metadata`
+
+Event-like sources use adapter-owned schemas. The core preserves stable source
+identity, schema/producer versions, trust, checksums, and optional temporal
+bounds; it does not define product event names.
 
 ### Artifact
 
@@ -544,6 +561,42 @@ Required fields:
 - `byte_size`
 - `media_type`
 - `retention_policy` (deferred)
+
+### ArtifactLineage
+
+Represents how a derived artifact was produced without making runtime trace the
+only place where provenance exists.
+
+Required fields:
+
+- `output_artifact_id`
+- `input_artifact_ids`
+- `source_refs`
+- `context_pack_id` (optional)
+- `agent_run_id` (optional)
+- `tool_call_id` (optional)
+- `generator_id`
+- `generator_version`
+- `created_at`
+- `transformation_kind`
+
+Lineage is generic. A UX spec, report, observation aggregate, index export, and
+scientific result use the same contract. Domain meanings remain in the
+structured artifact identified by `schema_id`.
+
+### TemporalRange
+
+Represents neutral event/observation time for sources and chunks:
+
+- `start`
+- `end`
+- `basis`: `occurred`, `observed`, `effective`, or adapter-owned raw value
+- `ingested_at`
+
+Adapters preserve individual event timestamps in their own payload schemas.
+The core stores range metadata needed for event-window chunking and retrieval.
+Runtime trace timestamps are operational events and must not be reused as
+domain observation time.
 
 ### Chunk
 
@@ -571,6 +624,7 @@ Required fields:
 - `metadata`
 - `embedding_version`
 - `sparse_version`
+- `temporal_range` (optional)
 
 ### TokenOccurrence
 
@@ -1005,6 +1059,10 @@ Outputs:
 - Recent activity retrieval.
 - Tool-output retrieval.
 - Web/external retrieval requests when enabled.
+
+Neutral filters include project/snapshot scope, source type, trust, language,
+optional temporal range, and bounded adapter metadata predicates.
+Lexicographic `TimePeriod` does not replace generic temporal filtering.
 
 ### Candidate Merge
 
@@ -1897,6 +1955,15 @@ Scenario-specific systems must choose one of these integration shapes:
 
 They should not add scenario names to core package names or domain entities.
 
+Observation/event adapters should follow the deferred plugin roadmap under
+`.project/plugins/observation-event-adapters.md`. In particular:
+
+- source events are corpus data, not `tracing.Event` runtime records;
+- device/profile/session entities stay in the plugin or product;
+- derived maps and aggregates are `structured` artifacts with lineage;
+- stable event identity, occurred/ingested time, trust, and schema versions are
+  adapter compatibility requirements.
+
 ### Web Crawling
 
 Web crawling can create legal, reliability, and abuse risks. Start with explicit
@@ -1904,8 +1971,8 @@ URL capture and strict limits. Defer broad crawling.
 
 ## Architecture decisions
 
-Normative decisions live under [`.project/decisions/`](decisions/README.md) (21
-ADRs as of 2026-07-11). Phase mapping:
+Normative decisions live under [`.project/decisions/`](decisions/README.md) (22
+ADRs as of 2026-07-13). Phase mapping:
 
 - **Domain and no-service baseline:** ADR-0001–0006 define internal-first
   packages, metadata/artifact/model/trace interfaces, deterministic fakes, and
@@ -1919,6 +1986,9 @@ ADRs as of 2026-07-11). Phase mapping:
   contracts, lexicographic context contracts, PoC backend order (pgvector
   first), deterministic identity/spans, phase-1 retrieval scoring, ContextPack
   budget/evidence classes, and snapshot commit failure semantics.
+- **Post-gate structured artifacts:** ADR-0022 adds neutral
+  `artifact_type=structured` + `schema_id` without moving consumer UX/IR
+  schemas into the core.
 - **MVP/local-cloud parity:** ADR-0010 and ADR-0012 still require endpoint-style
   parity across metadata, vector, sparse, and artifact stores. Snapshot
   export/import and local pull are planned after the local CLI proof. ADR-0017
@@ -1936,16 +2006,21 @@ Draft research notes stay in `.project/.draft/` and are non-normative.
 2. ~~Close the foundation gate before runtime code.~~ **Done** — ADR-0015–0021.
 3. ~~Create the internal package skeleton without external dependencies.~~ **Done** — Chunk 02.
 4. ~~Implement domain models and interfaces only...~~ **Done** — see `internal/`.
-5. Add deterministic unit tests for manifest, chunking, context pack, and tool
-   schema behavior.
+5. ~~Add deterministic unit tests for manifest, chunking, context pack, and tool
+   schema behavior.~~ **Done** — Chunks 02–08.
 6. ~~Implement local artifact store and in-memory metadata store.~~ **Done** — Chunk 03.
 7. ~~Implement one source adapter, one parser, one chunker, dual Merkle manifest,
    and `IndexSnapshot` commit model.~~ **Done** — Chunk 04.
 8. ~~Implement retrieval interfaces, exact lookup, fake sparse client, and hybrid
    candidate merge without requiring live services in unit tests.~~ **Done** — Chunk 05.
-9. Add PostgreSQL/pgvector as the first live `VectorStore` adapter after local
+9. Complete the cross-cutting contract addendum in Plan Chunk 08A before
+   PostgreSQL metadata migrations: artifact lineage, neutral temporal ranges,
+   event-source compatibility requirements, and temporal retrieval filters.
+10. Add PostgreSQL/pgvector as the first live `VectorStore` adapter after local
    service contracts exist; keep QDrant, Turbopuffer, and `context-sparse` as
    measured later adapters behind the same interfaces.
-10. Add a fake model provider and fake tool executor for agent-run tests.
-11. Build the first golden retrieval dataset, including lexical/morphology
-    and sense/concept/attestation fixture cases, before adding more algorithms.
+11. ~~Add a fake model provider and fake tool executor for agent-run tests.~~
+    **Done** — Chunk 07.
+12. Build the first golden retrieval dataset, including lexical/morphology,
+    sense/concept/attestation, and one neutral event-window/derived-artifact
+    fixture before adding more algorithms.

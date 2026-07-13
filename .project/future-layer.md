@@ -65,6 +65,10 @@ Project-level isolation is enough for the first PoC. Production systems need
 permissions below the project boundary: source, artifact, chunk, tool output,
 agent run, report, and background result.
 
+For sensitive observation, accessibility, health, education, or human-behavior
+streams, this layer and Layer 13 are **pre-production gates**, not optional
+post-launch hardening. They remain outside the first local CLI proof.
+
 ### Future Capabilities
 
 - ACL model for `Project`, `Source`, `Artifact`, `Chunk`, `ContextPack`,
@@ -332,6 +336,45 @@ senses, concepts, and usage traditions.
 - Dictionary and corpus licenses are recorded before resources are used in
   indexing, retrieval, or training data generation.
 
+## Layer 05C: Event And Observation Source Adapter Lifecycle
+
+### Why This Matters
+
+Logs, messages, device telemetry, scientific observations, accessibility input,
+and human-interaction streams are all time-oriented source corpora. Their
+schemas differ, but they need the same ingestion guarantees. Treating them as
+runtime trace events would mix source truth with engine operations and make
+replay ambiguous.
+
+Plan Chunk 08A defines the minimal core contracts. This layer covers
+production-grade adapter lifecycle and scale after the proof loop.
+
+### Future Capabilities
+
+- Adapter capability descriptor for event identity, ordering, late events,
+  temporal precision, schema evolution, and checkpoint support.
+- Stable event ids and idempotent ingest.
+- Separate `occurred_at`, `observed_at` (when applicable), and `ingested_at`.
+- Deterministic event-window chunking and checksums.
+- Source schema id, producer id/version, and migration metadata.
+- Late/out-of-order event handling without rewriting historical source bytes.
+- Cursor/checkpoint adapters for pull sources and offset adapters for streams.
+- Generic temporal retrieval filters and event-window explain data.
+- Derived artifact lineage from multiple event/source inputs.
+- Contract tests shared by telemetry, message, audit-log, and scientific
+  observation adapters.
+
+### Acceptance Gate
+
+- Re-ingesting the same stable events does not duplicate source truth.
+- A late event produces a deterministic new source/snapshot version.
+- Temporal retrieval explains which event-time window was applied.
+- Derived aggregates retain source/artifact lineage after the creating
+  `AgentRun` is no longer loaded.
+- Runtime `tracing.Event` remains reserved for engine execution.
+- Device, person, reaction, capability, clinical, and product-session schemas
+  remain outside the core.
+
 ## Layer 06: Relevance Feedback And Learning Loop
 
 ### Why This Matters
@@ -339,6 +382,9 @@ senses, concepts, and usage traditions.
 High-quality context management improves through traces: which evidence was
 selected, ignored, opened, rejected, verified, or corrected. This feedback is
 the foundation for better reranking and future custom retrieval models.
+
+These are feedback about runtime/retrieval outcomes. They do not replace
+adapter-owned source observation events from Layer 05C.
 
 ### Future Capabilities
 
@@ -690,25 +736,32 @@ engine.
 
 Recommended order after the current proof loop:
 
+The order is capability-based, not a license to defer workload safety. For any
+product ingesting sensitive human observation or assistive data, fine-grained
+ACL plus privacy/encryption/retention move ahead of real-user ingestion.
+
 1. Threat model and prompt-injection fixtures.
 2. Fine-grained retrieval ACL.
 3. Index lifecycle management.
 4. Snapshot replication and index reuse hardening.
 5. Focus control and memory tiers.
 6. Query language and snippet/highlighting engine.
-7. Multilingual linguistic adapter lifecycle.
-8. Lexicon resource and attestation management.
-9. Relevance feedback events.
-10. Distributed job control.
-11. Tool sandbox and side-effect model.
-12. Operational SLOs and capacity tests.
-13. Claim/contradiction graph for scientific/legal corpora.
-14. Crawler governance.
-15. Privacy/encryption/retention.
-16. Multi-tenant/team governance.
-17. Binary/multi-modal adapters.
-18. Stable SDK and ecosystem contracts.
-19. Lab-driven UX/DX/DSL workbench hardening.
+7. Event/observation source adapter lifecycle when a time-oriented consumer is
+   selected.
+8. Multilingual linguistic adapter lifecycle.
+9. Lexicon resource and attestation management.
+10. Relevance feedback events.
+11. Distributed job control.
+12. Tool sandbox and side-effect model.
+13. Operational SLOs and capacity tests.
+14. Claim/contradiction graph for scientific/legal corpora.
+15. Crawler governance.
+16. Privacy/encryption/retention (or immediately after ACL for sensitive
+   workloads).
+17. Multi-tenant/team governance.
+18. Binary/multi-modal adapters.
+19. Stable SDK and ecosystem contracts.
+20. Lab-driven UX/DX/DSL workbench hardening.
 
 ## What Must Not Move Into The First PoC
 
