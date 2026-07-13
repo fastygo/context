@@ -536,13 +536,14 @@ Required fields:
 
 - `id`
 - `project_id`
-- `source_id`
-- `artifact_type`
+- `source_id` (optional for generated outputs)
+- `artifact_type`: `blob`, `spill`, `tool_output`, `structured` (ADR-0022)
+- `schema_id` (required when `artifact_type` is `structured`)
 - `storage_uri`
 - `checksum`
 - `byte_size`
 - `media_type`
-- `retention_policy`
+- `retention_policy` (deferred)
 
 ### Chunk
 

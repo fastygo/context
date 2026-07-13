@@ -41,7 +41,7 @@ func New(root string) (*Store, error) {
 	return &Store{root: abs}, nil
 }
 
-func (s *Store) Put(ctx context.Context, projectID ids.ProjectID, artifactID ids.ArtifactID, mediaType string, body []byte) (artifacts.Artifact, error) {
+func (s *Store) Put(ctx context.Context, projectID ids.ProjectID, artifactID ids.ArtifactID, mediaType string, body []byte, opts *artifacts.PutOptions) (artifacts.Artifact, error) {
 	if err := ctx.Err(); err != nil {
 		return artifacts.Artifact{}, err
 	}
@@ -67,13 +67,16 @@ func (s *Store) Put(ctx context.Context, projectID ids.ProjectID, artifactID ids
 	if err := os.WriteFile(dataPath, body, 0o644); err != nil {
 		return artifacts.Artifact{}, apperr.Wrap(apperr.Validation, "write artifact data", err)
 	}
-	art := artifacts.Artifact{
+	art := artifacts.ApplyPutOptions(artifacts.Artifact{
 		ID:         artifactID,
 		ProjectID:  projectID,
 		MediaType:  mediaType,
 		ByteSize:   int64(len(body)),
 		Checksum:   checksum,
 		StorageURI: storageURI(projectID, artifactID),
+	}, opts)
+	if err := art.Validate(); err != nil {
+		return artifacts.Artifact{}, apperr.Wrap(apperr.Validation, "artifact", err)
 	}
 	if err := writeMeta(filepath.Join(dir, metaFile), art); err != nil {
 		return artifacts.Artifact{}, err
@@ -167,9 +170,16 @@ func storageURI(projectID ids.ProjectID, artifactID ids.ArtifactID) string {
 }
 
 func writeMeta(path string, art artifacts.Artifact) error {
-	content := fmt.Sprintf("id=%s\nproject_id=%s\nmedia_type=%s\nbyte_size=%d\nchecksum=%s\nstorage_uri=%s\n",
-		art.ID, art.ProjectID, art.MediaType, art.ByteSize, art.Checksum, art.StorageURI)
-	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+	var b strings.Builder
+	fmt.Fprintf(&b, "id=%s\nproject_id=%s\nmedia_type=%s\nbyte_size=%d\nchecksum=%s\nstorage_uri=%s\nartifact_type=%s\n",
+		art.ID, art.ProjectID, art.MediaType, art.ByteSize, art.Checksum, art.StorageURI, artifacts.NormalizeType(art.ArtifactType))
+	if art.SchemaID != "" {
+		fmt.Fprintf(&b, "schema_id=%s\n", art.SchemaID)
+	}
+	if art.SourceID != "" {
+		fmt.Fprintf(&b, "source_id=%s\n", art.SourceID)
+	}
+	if err := os.WriteFile(path, []byte(b.String()), 0o644); err != nil {
 		return apperr.Wrap(apperr.Validation, "write artifact meta", err)
 	}
 	return nil
@@ -209,8 +219,15 @@ func readMeta(path string) (artifacts.Artifact, error) {
 			art.Checksum = foundation.ChecksumHex(val)
 		case "storage_uri":
 			art.StorageURI = val
+		case "artifact_type":
+			art.ArtifactType = val
+		case "schema_id":
+			art.SchemaID = val
+		case "source_id":
+			art.SourceID = ids.SourceID(val)
 		}
 	}
+	art.ArtifactType = artifacts.NormalizeType(art.ArtifactType)
 	if err := art.Validate(); err != nil {
 		return artifacts.Artifact{}, apperr.Wrap(apperr.Validation, "artifact meta", err)
 	}

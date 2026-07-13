@@ -51,7 +51,7 @@ func Ingest(dataDir, projectID, path string) (State, error) {
 		version := chunkerVersionFor(leaf.RelativePath)
 		sourceID := ids.SourceID(leaf.PathKey[:16])
 		artID := ids.ArtifactID("src_" + sanitizeID(string(sourceID)))
-		if _, err := arts.Put(context.Background(), st.Project.ID, artID, "application/octet-stream", []byte(leaf.RelativePath)); err != nil {
+		if _, err := arts.Put(context.Background(), st.Project.ID, artID, "application/octet-stream", []byte(leaf.RelativePath), nil); err != nil {
 			_ = err
 		}
 		for _, rc := range raws {

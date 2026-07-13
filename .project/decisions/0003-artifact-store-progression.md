@@ -17,7 +17,8 @@ coordinates and embeddings, not authoritative plaintext (see ADR-0014).
 2. **Cloud / team:** S3-compatible object storage with content-addressed keys
    (`sha256` prefix sharding).
 3. Artifact records in metadata store hold: `artifact_id`, `checksum`, `size`,
-   `mime`, `storage_uri`, `source_id`, provenance fields.
+   `mime`, `storage_uri`, `source_id`, provenance fields, plus `artifact_type`
+   and optional `schema_id` for machine-readable documents ([0022](0022-structured-artifact-schema-id.md)).
 4. Long tool outputs and terminal streams are **always** artifacts; context
    packs reference slices (offset/limit/grep), not full bodies.
 

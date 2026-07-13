@@ -66,6 +66,7 @@ only when a later chunk or measurement requires them.
 | [0019](0019-phase1-retrieval-scoring.md) | Phase-1 retrieval scoring | Accepted |
 | [0020](0020-contextpack-budget-and-evidence.md) | ContextPack budget and evidence classes | Accepted |
 | [0021](0021-snapshot-commit-failure-semantics.md) | Snapshot commit failure semantics | Accepted |
+| [0022](0022-structured-artifact-schema-id.md) | Structured artifact schema identity | Accepted |
 
 ## Adapter progression by plan chunk
 

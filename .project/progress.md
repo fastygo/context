@@ -841,6 +841,24 @@ Verification:
 Follow-up:
 - Plan Chunk 09: PostgreSQL/pgvector local compose stack.
 
+### 2026-07-13 - ADR-0022 Structured Artifact Schema Identity
+
+Result:
+- Accepted [ADR-0022](decisions/0022-structured-artifact-schema-id.md):
+  `Artifact.SchemaID`, closed `artifact_type` vocabulary, `PutOptions` on
+  `ArtifactStore.Put`.
+- localfs meta persists `artifact_type` / `schema_id` / `source_id`; structured
+  artifacts require `schema_id`.
+- Tool spill marks `artifact_type=tool_output`.
+
+Verification:
+- `go test ./...` passed.
+
+Follow-up:
+- Chunk 11: persist `schema_id` / `artifact_type` in PostgreSQL metadata.
+- Plan Chunk 09: PostgreSQL/pgvector local compose stack.
+- Downstream: register schema-bound draft tools in builders (not core).
+
 ```text
 ### YYYY-MM-DD - Chunk NN
 

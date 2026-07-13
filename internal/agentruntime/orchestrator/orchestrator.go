@@ -236,7 +236,9 @@ func (r Runner) executeTool(ctx context.Context, req Request, toolName string, i
 	}
 	if r.Artifacts != nil && len(out) >= LongOutputThreshold {
 		artID := ids.ArtifactID(strings.ReplaceAll(string(call.ID)+"_out", ":", "_"))
-		art, err := r.Artifacts.Put(ctx, req.ProjectID, artID, "application/json", out)
+		art, err := r.Artifacts.Put(ctx, req.ProjectID, artID, "application/json", out, &artifacts.PutOptions{
+			ArtifactType: artifacts.TypeToolOutput,
+		})
 		if err != nil {
 			return tools.ToolCall{}, err
 		}
