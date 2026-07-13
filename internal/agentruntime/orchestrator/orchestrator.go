@@ -22,16 +22,18 @@ import (
 
 const LongOutputThreshold = 256
 
-// Request drives one foreground agent run.
+// Request drives one agent run (foreground by default).
 type Request struct {
-	RunID       ids.RunID
-	ProjectID   ids.ProjectID
-	TaskID      ids.TaskID
-	Owner       string
-	Policy      policy.PolicySnapshot
-	Pack        retrieval.ContextPack
-	ToolName    string // optional explicit tool after model; empty uses model hint
-	ToolInput   []byte
+	RunID         ids.RunID
+	ProjectID     ids.ProjectID
+	TaskID        ids.TaskID
+	Owner         string
+	Mode          agentruntime.RunMode // empty => foreground
+	FocusID       ids.FocusID
+	Policy        policy.PolicySnapshot
+	Pack          retrieval.ContextPack
+	ToolName      string // optional explicit tool after model; empty uses model hint
+	ToolInput     []byte
 	VerifyFactual map[string]bool
 }
 
@@ -83,6 +85,12 @@ func (r Runner) Run(ctx context.Context, req Request) (Result, error) {
 		Owner:     req.Owner,
 		CreatedAt: now,
 		UpdatedAt: now,
+	}
+	if req.Mode != "" {
+		run.Mode = req.Mode
+	}
+	if req.FocusID != "" {
+		run.FocusID = req.FocusID
 	}
 	if err := r.persistRun(ctx, run); err != nil {
 		return Result{}, err

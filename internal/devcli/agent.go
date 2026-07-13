@@ -42,11 +42,29 @@ type TraceResult struct {
 
 // AgentRun builds a pack and executes an agent loop with the configured Completer.
 func AgentRun(dataDir, projectID, query, focusID string) (AgentRunResult, error) {
+	return AgentRunContext(context.Background(), dataDir, projectID, query, focusID, AgentRunOptions{})
+}
+
+// AgentRunOptions tunes mode/owner for foreground vs background (Chunk 31).
+type AgentRunOptions struct {
+	Mode  agentruntime.RunMode
+	Owner string
+	TaskID ids.TaskID
+}
+
+// AgentRunContext is AgentRun with cancellation and background mode support.
+func AgentRunContext(ctx context.Context, dataDir, projectID, query, focusID string, opts AgentRunOptions) (AgentRunResult, error) {
+	if err := ctx.Err(); err != nil {
+		return AgentRunResult{}, err
+	}
 	if err := requireQuotaResource(dataDir, "runs"); err != nil {
 		return AgentRunResult{}, err
 	}
 	packRes, err := BuildPack(dataDir, projectID, query, focusID)
 	if err != nil {
+		return AgentRunResult{}, err
+	}
+	if err := ctx.Err(); err != nil {
 		return AgentRunResult{}, err
 	}
 	ws := Workspace{DataDir: dataDir}
@@ -55,7 +73,6 @@ func AgentRun(dataDir, projectID, query, focusID string) (AgentRunResult, error)
 		return AgentRunResult{}, err
 	}
 
-	ctx := context.Background()
 	handle, err := OpenMetadata(ctx)
 	if err != nil {
 		return AgentRunResult{}, err
@@ -105,6 +122,18 @@ func AgentRun(dataDir, projectID, query, focusID string) (AgentRunResult, error)
 		Exec:      toolfake.ReadSnippetExecutor{Snippets: snippets},
 		Model:     comp,
 	}
+	owner := opts.Owner
+	if owner == "" {
+		owner = "cli"
+	}
+	taskID := opts.TaskID
+	if taskID == "" {
+		taskID = "cli-task"
+	}
+	mode := opts.Mode
+	if mode == "" {
+		mode = agentruntime.RunModeForeground
+	}
 	pol := policy.PolicySnapshot{
 		ID: "cli-policy", ProjectID: st.Project.ID, Version: "v1",
 		Rules: []policy.Rule{{
@@ -117,7 +146,8 @@ func AgentRun(dataDir, projectID, query, focusID string) (AgentRunResult, error)
 		factual[e.ID] = true
 	}
 	res, err := runner.Run(ctx, orchestrator.Request{
-		RunID: runID, ProjectID: st.Project.ID, TaskID: "cli-task", Owner: "cli",
+		RunID: runID, ProjectID: st.Project.ID, TaskID: taskID, Owner: owner,
+		Mode: mode, FocusID: ids.FocusID(focusID),
 		Policy: pol, Pack: packRes.Pack, VerifyFactual: factual,
 	})
 	if err != nil {

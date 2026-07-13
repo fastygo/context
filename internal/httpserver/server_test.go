@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/fastygo/context/internal/devcli"
 	"github.com/fastygo/context/internal/httpserver"
@@ -368,5 +369,55 @@ func TestReadyEndpoint(t *testing.T) {
 	}
 	if health["ready"] != false {
 		t.Fatalf("health ready: %#v", health)
+	}
+}
+
+func TestJobStartAndStatus(t *testing.T) {
+	t.Setenv("CONTEXT_COMPLETER_KIND", "localecho")
+	t.Setenv("CONTEXT_ENABLE_DENSE", "")
+	dataDir := setupWorkspace(t)
+	srv, err := httpserver.New(httpserver.Config{DataDir: dataDir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	h := srv.Handler()
+
+	body, _ := json.Marshal(map[string]string{
+		"project_id": "proj_http", "query": "ZEBRA42", "owner": "lab",
+	})
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, httptest.NewRequest(http.MethodPost, "/v1/jobs", bytes.NewReader(body)))
+	if rr.Code != http.StatusAccepted {
+		t.Fatalf("job start: %d %s", rr.Code, rr.Body.String())
+	}
+	var start map[string]any
+	if err := json.Unmarshal(rr.Body.Bytes(), &start); err != nil {
+		t.Fatal(err)
+	}
+	job, _ := start["job"].(map[string]any)
+	id, _ := job["id"].(string)
+	if id == "" {
+		t.Fatalf("%#v", start)
+	}
+
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		rr = httptest.NewRecorder()
+		h.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/v1/jobs/"+id+"?project_id=proj_http", nil))
+		if rr.Code != http.StatusOK {
+			t.Fatalf("status: %d %s", rr.Code, rr.Body.String())
+		}
+		var st map[string]any
+		_ = json.Unmarshal(rr.Body.Bytes(), &st)
+		if st["status"] == "completed" {
+			return
+		}
+		if st["status"] == "failed" {
+			t.Fatalf("%#v", st)
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("timeout %#v", st)
+		}
+		time.Sleep(20 * time.Millisecond)
 	}
 }

@@ -364,6 +364,21 @@ go run ./cmd/context-dev agent-run --data ... --project ... --query '...'
 # CONTEXT_REDACT=0 to disable for offline debug
 ```
 
+## Background jobs (Chunk 31)
+
+In-process background AgentRun (same pack→completer→tool→trace path). Requires
+`owner`. Survives only while `context-serve` / CLI process is alive.
+
+```bash
+go run ./cmd/context-dev job-start --data ... --project ... --query 'ZEBRA42' --owner lab
+go run ./cmd/context-dev job-status --data ... --project ... --job job_...
+go run ./cmd/context-dev job-list --data ... --project ...
+go run ./cmd/context-dev job-cancel --data ... --project ... --job job_...
+
+curl -s -X POST http://127.0.0.1:8080/v1/jobs \
+  -d '{"project_id":"local","query":"ZEBRA42","owner":"lab"}'
+```
+
 ## Metadata store (Chunk 11)
 
 Migrations live in `internal/storage/postgres/migrations/` and apply on

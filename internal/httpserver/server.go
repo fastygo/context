@@ -95,6 +95,10 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("POST /v1/repair", s.handleRepair)
 	s.mux.HandleFunc("POST /v1/inspect", s.handleInspect)
 	s.mux.HandleFunc("POST /v1/ingest", s.handleIngest)
+	s.mux.HandleFunc("POST /v1/jobs", s.handleJobStart)
+	s.mux.HandleFunc("GET /v1/jobs", s.handleJobList)
+	s.mux.HandleFunc("GET /v1/jobs/{id}", s.handleJobGet)
+	s.mux.HandleFunc("POST /v1/jobs/{id}/cancel", s.handleJobCancel)
 }
 
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
@@ -415,6 +419,70 @@ func (s *Server) handleInspect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	res, err := devcli.Inspect(s.cfg.DataDir, req.ProjectID, req.Query, req.FocusID, req.PackID)
+	if err != nil {
+		writeAppErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
+}
+
+type jobStartRequest struct {
+	ProjectID string `json:"project_id"`
+	Query     string `json:"query"`
+	FocusID   string `json:"focus_id,omitempty"`
+	Owner     string `json:"owner"`
+}
+
+func (s *Server) handleJobStart(w http.ResponseWriter, r *http.Request) {
+	var req jobStartRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeErr(w, http.StatusBadRequest, err)
+		return
+	}
+	if req.Query == "" {
+		writeErr(w, http.StatusBadRequest, apperr.New(apperr.Validation, "query required"))
+		return
+	}
+	res, err := devcli.JobStart(s.cfg.DataDir, req.ProjectID, req.Query, req.FocusID, req.Owner)
+	if err != nil {
+		writeAppErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusAccepted, res)
+}
+
+func (s *Server) handleJobList(w http.ResponseWriter, r *http.Request) {
+	projectID := r.URL.Query().Get("project_id")
+	res, err := devcli.JobList(s.cfg.DataDir, projectID)
+	if err != nil {
+		writeAppErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
+}
+
+func (s *Server) handleJobGet(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	projectID := r.URL.Query().Get("project_id")
+	res, err := devcli.JobStatus(s.cfg.DataDir, projectID, id)
+	if err != nil {
+		writeAppErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
+}
+
+func (s *Server) handleJobCancel(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	projectID := r.URL.Query().Get("project_id")
+	if projectID == "" {
+		var body struct {
+			ProjectID string `json:"project_id"`
+		}
+		_ = decodeJSON(r, &body)
+		projectID = body.ProjectID
+	}
+	res, err := devcli.JobCancel(s.cfg.DataDir, projectID, id)
 	if err != nil {
 		writeAppErr(w, err)
 		return

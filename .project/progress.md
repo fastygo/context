@@ -43,8 +43,8 @@ API v1 freeze (Chunk 25) ✓
   -> non-fake Completer + provider Embedder path (Chunk 27) ✓
   -> quota soft-limits (Chunk 28) ✓
   -> failure / degraded semantics (Chunk 29) ✓
-  -> redaction / PII hooks (Chunk 30)
-  -> background jobs + cancel (Chunk 31)
+  -> redaction / PII hooks (Chunk 30) ✓
+  -> background jobs + cancel (Chunk 31) ✓
   -> Lab gate freeze (Chunk 32)
 ```
 
@@ -71,8 +71,8 @@ ADRs 0001–0023; do not re-implement.
 | 12 | E2E proof — hypothesis **validated** (`.project/proof/`) |
 | 13 | Durable CLI metadata opt-in (`CONTEXT_METADATA_KIND=postgres`) |
 
-Open gaps: Chunks **31–32** (background jobs, Lab gate). Chunk 30 redaction done.
-Auth and OpenAPI codegen remain deferred.
+Open gaps: Chunk **32** (Lab gate). Chunks 25–31 shipped. Auth and OpenAPI
+codegen remain deferred.
 
 ## UX / DX / DSL Consumer Track
 
@@ -92,7 +92,7 @@ Auth and OpenAPI codegen remain deferred.
 | Quota soft-limits | **Chunk 28 done** | Show deny/ask on over-quota | ADR-0025 follow-up |
 | Failure/degraded | **Chunk 29 done** | Explicit unavailable errors | No silent empty |
 | Redaction / PII | **Chunk 30 done** | Model/Lab text redacted | Raw corpus untouched |
-| Background jobs | **Chunk 31** | Start/status/cancel | In-process only |
+| Background jobs | **Chunk 31 done** | Start/status/cancel | In-process only |
 | Lab gate | **Chunk 32** | Contract freeze smoke | HTTP + contextkit |
 | DSL workbench | After Chunk 32 | Edit FocusProfile / plans / policies | Neutral DTOs only |
 | Fuzzy / trigram | Later Phase 3 | Only if measured | future-layer |
@@ -695,7 +695,14 @@ start/status/list/cancel. Persist under workspace ops/jobs. No cron/queue.
 Offline tests.
 ```
 
-Status: pending
+Status: **completed** (2026-07-13)
+
+### Completion notes
+
+- `internal/agentruntime/jobs`: in-process registry + `ops/jobs/*.json`.
+- Single job kind: background AgentRun (owner required; cancel via context).
+- CLI `job-start|status|list|cancel`; HTTP `/v1/jobs`; `contextkit.Job*`.
+- No cron/queue/multi-process; jobs lost on process restart.
 
 ## Plan Chunk 32: Lab Gate Freeze
 

@@ -31,6 +31,14 @@ func main() {
 		err = cmdPack(args)
 	case "agent-run":
 		err = cmdAgent(args)
+	case "job-start":
+		err = cmdJobStart(args)
+	case "job-status":
+		err = cmdJobStatus(args)
+	case "job-list":
+		err = cmdJobList(args)
+	case "job-cancel":
+		err = cmdJobCancel(args)
 	case "trace":
 		err = cmdTrace(args)
 	case "focus-put":
@@ -79,6 +87,10 @@ Usage:
   context-dev search --data <dir> --project <id> --query <text> [--mode exact|sparse|hybrid|dense|hybrid-dense] [--focus <id>]
   context-dev context-pack --data <dir> --project <id> --query <text> [--focus <id>]
   context-dev agent-run --data <dir> --project <id> --query <text> [--focus <id>]
+  context-dev job-start --data <dir> --project <id> --query <text> --owner <name> [--focus <id>]
+  context-dev job-status --data <dir> --project <id> --job <id>
+  context-dev job-list --data <dir> --project <id>
+  context-dev job-cancel --data <dir> --project <id> --job <id>
   context-dev focus-put --data <dir> --project <id> --json <file-or-inline> [--id <focus_id>]
   context-dev focus-get --data <dir> --project <id> --focus <id>
   context-dev focus-list --data <dir> --project <id>
@@ -109,6 +121,7 @@ Set CONTEXT_COMPLETER_KIND=localecho|http for non-fake agent-run Completer (defa
 Set CONTEXT_QUOTA_MAX_CHUNKS|PACKS|RUNS for soft project quotas (0/unset = unlimited; deny at hard limit).
 Set CONTEXT_FAIL_METADATA|VECTOR|SPARSE|EMBEDDER|ARTIFACT|COMPLETER=1 to inject Unavailable (Chunk 29).
 Set CONTEXT_REDACT=0 to disable secret/PII redaction on model_text / inspect previews (default on).
+Background jobs (job-start) require --owner; in-process only (dies with the process).
 Set CONTEXT_SPARSE_KIND=postgres_fts for live Postgres FTS sparse/hybrid search.
 Focus profiles persist to state.json and MetadataStore (postgres when configured).
 meta-check verifies durable metadata (schema_id, lineage, temporal, documents).
@@ -235,6 +248,54 @@ func cmdAgent(args []string) error {
 		return err
 	}
 	res, err := devcli.AgentRun(f["data"], f["project"], f["query"], f["focus"])
+	if err != nil {
+		return err
+	}
+	return devcli.PrintJSON(res)
+}
+
+func cmdJobStart(args []string) error {
+	f := flagMap(args)
+	if err := require(f, "data", "project", "query", "owner"); err != nil {
+		return err
+	}
+	res, err := devcli.JobStart(f["data"], f["project"], f["query"], f["focus"], f["owner"])
+	if err != nil {
+		return err
+	}
+	return devcli.PrintJSON(res)
+}
+
+func cmdJobStatus(args []string) error {
+	f := flagMap(args)
+	if err := require(f, "data", "project", "job"); err != nil {
+		return err
+	}
+	res, err := devcli.JobStatus(f["data"], f["project"], f["job"])
+	if err != nil {
+		return err
+	}
+	return devcli.PrintJSON(res)
+}
+
+func cmdJobList(args []string) error {
+	f := flagMap(args)
+	if err := require(f, "data", "project"); err != nil {
+		return err
+	}
+	res, err := devcli.JobList(f["data"], f["project"])
+	if err != nil {
+		return err
+	}
+	return devcli.PrintJSON(res)
+}
+
+func cmdJobCancel(args []string) error {
+	f := flagMap(args)
+	if err := require(f, "data", "project", "job"); err != nil {
+		return err
+	}
+	res, err := devcli.JobCancel(f["data"], f["project"], f["job"])
 	if err != nil {
 		return err
 	}

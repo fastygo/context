@@ -100,6 +100,10 @@ Endpoints:
   POST /v1/search          {"project_id","query","mode?","focus_id?"}
   POST /v1/context-pack    {"project_id","query","focus_id?"}
   POST /v1/agent-run       {"project_id","query","focus_id?"}
+  POST /v1/jobs            {"project_id","query","owner","focus_id?"}
+  GET  /v1/jobs?project_id=
+  GET  /v1/jobs/{id}?project_id=
+  POST /v1/jobs/{id}/cancel
   GET  /v1/trace?project_id=&run_id=
   PUT  /v1/focus           {"project_id","focus":{...}}
   GET  /v1/focus?project_id=&focus_id=

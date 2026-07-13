@@ -274,3 +274,38 @@ type IngestResult struct {
 	Chunks     int    `json:"chunks"`
 	Status     string `json:"status,omitempty"`
 }
+
+// JobStartRequest is POST /v1/jobs.
+type JobStartRequest struct {
+	ProjectID string `json:"project_id"`
+	Query     string `json:"query"`
+	FocusID   string `json:"focus_id,omitempty"`
+	Owner     string `json:"owner"`
+}
+
+// Job is a background AgentRun job record.
+type Job struct {
+	ID        string `json:"id"`
+	ProjectID string `json:"project_id"`
+	Query     string `json:"query"`
+	FocusID   string `json:"focus_id,omitempty"`
+	Owner     string `json:"owner"`
+	Status    string `json:"status"`
+	RunID     string `json:"run_id,omitempty"`
+	PackID    string `json:"pack_id,omitempty"`
+	ModelText string `json:"model_text,omitempty"`
+	VerifyOK  bool   `json:"verify_ok,omitempty"`
+	Error     string `json:"error,omitempty"`
+	CreatedAt string `json:"created_at,omitempty"`
+	UpdatedAt string `json:"updated_at,omitempty"`
+}
+
+// JobStartResult is POST /v1/jobs response.
+type JobStartResult struct {
+	Job Job `json:"job"`
+}
+
+// JobListResult is GET /v1/jobs response.
+type JobListResult struct {
+	Jobs []Job `json:"jobs"`
+}

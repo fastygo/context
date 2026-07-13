@@ -253,3 +253,45 @@ func (c *Client) Ingest(ctx context.Context, req IngestRequest) (IngestResult, e
 	err := c.do(ctx, http.MethodPost, "/v1/ingest", nil, req, &out)
 	return out, err
 }
+
+// JobStart calls POST /v1/jobs.
+func (c *Client) JobStart(ctx context.Context, req JobStartRequest) (JobStartResult, error) {
+	var out JobStartResult
+	err := c.do(ctx, http.MethodPost, "/v1/jobs", nil, req, &out)
+	return out, err
+}
+
+// JobList calls GET /v1/jobs.
+func (c *Client) JobList(ctx context.Context, projectID string) (JobListResult, error) {
+	q := url.Values{}
+	if projectID != "" {
+		q.Set("project_id", projectID)
+	}
+	var out JobListResult
+	err := c.do(ctx, http.MethodGet, "/v1/jobs", q, nil, &out)
+	return out, err
+}
+
+// JobStatus calls GET /v1/jobs/{id}.
+func (c *Client) JobStatus(ctx context.Context, projectID, jobID string) (Job, error) {
+	q := url.Values{}
+	if projectID != "" {
+		q.Set("project_id", projectID)
+	}
+	var out Job
+	err := c.do(ctx, http.MethodGet, "/v1/jobs/"+url.PathEscape(jobID), q, nil, &out)
+	return out, err
+}
+
+// JobCancel calls POST /v1/jobs/{id}/cancel.
+func (c *Client) JobCancel(ctx context.Context, projectID, jobID string) (Job, error) {
+	q := url.Values{}
+	if projectID != "" {
+		q.Set("project_id", projectID)
+	}
+	var out Job
+	err := c.do(ctx, http.MethodPost, "/v1/jobs/"+url.PathEscape(jobID)+"/cancel", q, map[string]string{
+		"project_id": projectID,
+	}, &out)
+	return out, err
+}

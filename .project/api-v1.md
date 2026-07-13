@@ -51,6 +51,19 @@ Env (0/unset = unlimited): `CONTEXT_QUOTA_MAX_CHUNKS`, `CONTEXT_QUOTA_MAX_PACKS`
 - Patterns: bearer tokens, api_key/password/token assignments, email-like addresses.
 - Response fields: `redacted`, optional `redact_count`.
 
+## Background jobs (Chunk 31)
+
+In-process only (no cron/queue). Kind: background `AgentRun`.
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| POST | `/v1/jobs` | `{project_id,query,owner,focus_id?}` → `202` |
+| GET | `/v1/jobs` | list |
+| GET | `/v1/jobs/{id}` | status |
+| POST | `/v1/jobs/{id}/cancel` | cancel pending/running |
+
+`owner` required. Jobs die if the process exits.
+
 ## Compatibility
 
 - Documented JSON fields: do not rename/remove within v1.
