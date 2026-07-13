@@ -1903,8 +1903,8 @@ URL capture and strict limits. Defer broad crawling.
 
 ## Architecture decisions
 
-Normative decisions live under [`.project/decisions/`](decisions/README.md) (14
-ADRs as of 2026-06-17). Phase mapping:
+Normative decisions live under [`.project/decisions/`](decisions/README.md) (21
+ADRs as of 2026-07-11). Phase mapping:
 
 - **Domain and no-service baseline:** ADR-0001–0006 define internal-first
   packages, metadata/artifact/model/trace interfaces, deterministic fakes, and
@@ -1914,22 +1914,14 @@ ADRs as of 2026-06-17). Phase mapping:
   (`source_merkle_root`, `chunk_set_hash`), `IndexSnapshot`, `VectorStore`,
   `VectorNamespace`, `SparseIndexRef`, `ContextRef`, `PathAlias`, and storage
   role separation.
-- **Multilingual language contracts:** add a follow-up ADR before implementation
-  reaches domain model work for token spans, lexeme references, wordforms,
-  morphology feature sets, analyzer/generator interfaces, query expansion, and
-  language adapter repositories.
-- **Lexicographic context contracts:** add a follow-up ADR before implementation
-  reaches domain model work for `Sense`, `Concept`, `Attestation`, `Variant`,
-  `MultiwordExpression`, `Register`, `DialectRegion`, `TimePeriod`, and
-  `LexiconSource`.
-- **2026-06 planning correction:** the first live PoC uses PostgreSQL/pgvector as
-  the initial `VectorStore` adapter and PostgreSQL full-text or fake sparse
-  search for lexical tests. QDrant, Turbopuffer, and `context-sparse` remain
-  explicit future adapters. Add a superseding ADR before implementation reaches
-  the local server chunk.
+- **Foundation Gate (closed):** ADR-0015–0021 lock multilingual linguistic
+  contracts, lexicographic context contracts, PoC backend order (pgvector
+  first), deterministic identity/spans, phase-1 retrieval scoring, ContextPack
+  budget/evidence classes, and snapshot commit failure semantics.
 - **MVP/local-cloud parity:** ADR-0010 and ADR-0012 still require endpoint-style
   parity across metadata, vector, sparse, and artifact stores. Snapshot
-  export/import and local pull are planned after the local CLI proof.
+  export/import and local pull are planned after the local CLI proof. ADR-0017
+  narrows the first live compose to PostgreSQL/pgvector without changing ports.
 - **Future-layer deferrals:** simhash copy-on-write seeding, cross-user Merkle
   proofs, incremental segment sync, broad crawling, production governance, and
   large-scale distributed workers remain in `future-layer.md`.
@@ -1940,27 +1932,16 @@ Draft research notes stay in `.project/.draft/` and are non-normative.
 
 1. ~~Add architecture decision records under `.project/decisions/`.~~ **Done** — see
    [decisions/README.md](decisions/README.md).
-2. Close the foundation gate before runtime code: multilingual and
-   lexicographic contracts, PoC backend order, deterministic identity/span
-   hashing, phase-1 retrieval scoring, `ContextPack` budget behavior, and
-   snapshot commit failure semantics. Do not implement graph traversal,
-   production KV caches, QDrant/Turbopuffer, `context-sparse`, crawlers, or
-   distributed workers at this gate.
-3. Create the internal package skeleton without external dependencies.
-4. Implement domain models and interfaces only, including `IndexSnapshot`,
-   `ManifestNode`, `ContextRef`, `PathAlias`, `VectorNamespace`,
-   `SparseIndexRef`, `PolicySnapshot`, `LanguageCode`, `ScriptCode`,
-   `TokenOccurrence`, `MorphFeatureSet`, `MorphAnalysis`, `QueryExpansion`,
-   `Sense`, `Concept`, `Attestation`, `Variant`, `MultiwordExpression`,
-   `Register`, `DialectRegion`, `TimePeriod`, and `LexiconSource` from the ADR
-   set.
+2. ~~Close the foundation gate before runtime code.~~ **Done** — ADR-0015–0021.
+3. ~~Create the internal package skeleton without external dependencies.~~ **Done** — Chunk 02.
+4. ~~Implement domain models and interfaces only...~~ **Done** — see `internal/`.
 5. Add deterministic unit tests for manifest, chunking, context pack, and tool
    schema behavior.
-6. Implement local artifact store and in-memory metadata store.
-7. Implement one source adapter, one parser, one chunker, dual Merkle manifest,
-   and `IndexSnapshot` commit model.
-8. Implement retrieval interfaces, exact lookup, fake sparse client, and hybrid
-   candidate merge without requiring live services in unit tests.
+6. ~~Implement local artifact store and in-memory metadata store.~~ **Done** — Chunk 03.
+7. ~~Implement one source adapter, one parser, one chunker, dual Merkle manifest,
+   and `IndexSnapshot` commit model.~~ **Done** — Chunk 04.
+8. ~~Implement retrieval interfaces, exact lookup, fake sparse client, and hybrid
+   candidate merge without requiring live services in unit tests.~~ **Done** — Chunk 05.
 9. Add PostgreSQL/pgvector as the first live `VectorStore` adapter after local
    service contracts exist; keep QDrant, Turbopuffer, and `context-sparse` as
    measured later adapters behind the same interfaces.

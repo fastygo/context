@@ -132,21 +132,13 @@ Status: **completed** (2026-06-17)
   (`source_merkle_root` + `chunk_set_hash`), `VectorStore`/`VectorNamespace`,
   `SparseIndexRef`, `ContextRef`/`PathAlias`, storage role separation, and
   local/cloud service parity.
-- **Needs superseding ADR before Chunk 02 implementation:** multilingual
-  linguistic contracts and language adapter boundaries must be recorded so the
-  core can model `TokenOccurrence`, `LexemeID`, `Lemma`, `WordForm`,
-  `MorphFeatureSet`, `MorphAnalysis`, and `QueryExpansion` without importing
-  Russian, German, Spanish, French, Hindi, or Indic implementations.
-- **Needs superseding ADR before Chunk 02 implementation:** lexicographic
-  context contracts must be recorded so the core can model `Sense`, `Concept`,
-  `Attestation`, `Variant`, `MultiwordExpression`, `Register`, `DialectRegion`,
-  `TimePeriod`, and `LexiconSource` without importing TEI/SKOS/dictionary
-  adapters or resource data.
-- **2026-06 planning correction:** the first PoC narrows the live dense-vector
-  backend to PostgreSQL + pgvector behind `VectorStore`. QDrant and Turbopuffer
-  remain explicit later adapters, not first-stack requirements. The existing
-  QDrant-first ADR wording should be superseded by a follow-up ADR before
-  implementation reaches Chunk 09.
+- **Resolved by Foundation Gate (2026-07-11):** multilingual linguistic
+  contracts — [ADR-0015](decisions/0015-multilingual-linguistic-contracts.md).
+- **Resolved by Foundation Gate (2026-07-11):** lexicographic context
+  contracts — [ADR-0016](decisions/0016-lexicographic-context-contracts.md).
+- **Resolved by Foundation Gate (2026-07-11):** PoC backend order (pgvector
+  first) — [ADR-0017](decisions/0017-poc-backend-order.md). QDrant and
+  Turbopuffer remain later adapters, not first-stack requirements.
 - **Sparse path correction:** unit tests may use fake/Bleve-style doubles and
   the first live PoC may use PostgreSQL full-text search or a minimal local
   sparse adapter. `context-sparse` remains a measured replacement when lexical
@@ -158,42 +150,37 @@ Status: **completed** (2026-06-17)
 
 ## Foundation Gate Before Runtime Code
 
-Before starting Chunk 02, close only the decisions that change core domain
-types, adapter ports, trace records, or deterministic tests. Do **not** add
-production infrastructure, graph engines, crawlers, distributed workers,
-advanced rerankers, or embedded KV caches at this gate.
+Status: **completed** (2026-07-11)
 
-Required foundation decisions:
+Closed by ADR-0015–0021 under `.project/decisions/`. Chunk 02 may start. Do
+**not** add production infrastructure, graph engines, crawlers, distributed
+workers, advanced rerankers, or embedded KV caches at this gate.
 
-1. **Multilingual linguistic contracts ADR.** Define language-neutral IDs,
-   token spans, lemmas, wordforms, morphology feature sets, analyzer/generator
-   interfaces, query-expansion reasons, ambiguity reporting, version fields, and
-   the `context-lang-*` adapter boundary.
-2. **Lexicographic context contracts ADR.** Define `Sense`, `Concept`,
-   `Attestation`, `Variant`, `MultiwordExpression`, `Register`,
-   `DialectRegion`, `TimePeriod`, `LexiconSource`, source authority, licensing
-   metadata, and the TEI/SKOS/resource-adapter boundary.
-3. **PoC backend order ADR.** Supersede QDrant/Tantivy-first wording for the
-   live proof: PostgreSQL + pgvector is the first live `VectorStore`, PostgreSQL
-   full-text or fake sparse is the first sparse baseline, and QDrant,
-   Turbopuffer, `context-sparse`, bbolt, and Badger remain later adapters unless
-   a chunk shows measured need.
-4. **Deterministic identity and span spec.** Record canonical path keys,
-   newline/BOM/Unicode normalization policy, byte vs rune span convention,
-   checksum inputs, `chunk_hash`, `source_merkle_root`, and `chunk_set_hash`
-   rules before writing chunker or manifest code.
-5. **Phase-1 retrieval scoring spec.** Record the first deterministic
-   merge/dedup policy, per-retriever score explanation shape, score
-   normalization boundaries, stable tie-breaking, and why model-based reranking
-   is deferred.
-6. **ContextPack budget and evidence class spec.** Record required evidence
-   classes, trust labels, instruction/data separation, citation locking, rejected
-   candidate recording, and deterministic trimming behavior.
-7. **Snapshot commit failure semantics.** Record minimal states and idempotency
-   rules for `building`, `ready`, `failed`, and `superseded` snapshots so partial
-   dense/sparse writes do not become active evidence.
+| # | Topic | ADR |
+| --- | --- | --- |
+| 1 | Multilingual linguistic contracts | [0015](decisions/0015-multilingual-linguistic-contracts.md) |
+| 2 | Lexicographic context contracts | [0016](decisions/0016-lexicographic-context-contracts.md) |
+| 3 | PoC backend order | [0017](decisions/0017-poc-backend-order.md) |
+| 4 | Deterministic identity and spans | [0018](decisions/0018-deterministic-identity-and-spans.md) |
+| 5 | Phase-1 retrieval scoring | [0019](decisions/0019-phase1-retrieval-scoring.md) |
+| 6 | ContextPack budget and evidence | [0020](decisions/0020-contextpack-budget-and-evidence.md) |
+| 7 | Snapshot commit failure semantics | [0021](decisions/0021-snapshot-commit-failure-semantics.md) |
 
-Foundation deferrals:
+### Completion notes (Foundation Gate)
+
+- Linguistic ports and `context-lang-*` boundary are normative; PoC uses
+  no-op/fixture analyzers only.
+- Lexicographic contracts separate sense/concept/attestation from morphology;
+  TEI/SKOS stay in resource adapters.
+- First live stack is PostgreSQL + pgvector (+ Postgres FTS or fake sparse);
+  QDrant / `context-sparse` / embedded KV remain later.
+- Byte-span hashing, path_key, BOM/CRLF/NFC policy locked for Chunk 04 goldens.
+- Phase-1 merge is deterministic weighted scoring; model rerank deferred.
+- ContextPack evidence classes, trust labels, citation locking, and trim order
+  locked for Chunk 06.
+- Snapshot states include `failed`; active pointer flips only after `ready`.
+
+Foundation deferrals (unchanged):
 
 - Graph traversal can stay a future retrieval path until exact/sparse/dense
   retrieval and `ContextPack` replay work.
@@ -210,9 +197,8 @@ Copy-paste prompt:
 
 ```text
 Work in @Context only. Read README.md, .project/roadmap-context-core.md,
-.project/progress.md, .project/decisions/*.md, and the Foundation Gate above.
-First close any missing foundation ADR/spec items that would change domain
-types or adapter ports. Then plan a minimal internal package skeleton for the
+.project/progress.md, .project/decisions/*.md (including ADR-0015–0021).
+Foundation Gate is closed. Plan a minimal internal package skeleton for the
 context core and implement only domain models plus interfaces needed for tests.
 Do not add external services yet.
 
@@ -262,7 +248,19 @@ Acceptance criteria:
   ContextPack budgeting, and snapshot commit failure semantics.
 ```
 
-Status: pending
+Status: **completed** (2026-07-11)
+
+### Completion notes
+
+- Created `internal/` packages: `ids`, `foundation`, `corpus`, `artifacts`,
+  `indexing`, `linguistic`, `lexicon`, `retrieval`, `policy`, `models`, `tools`,
+  `agentruntime`, `tracing`, `storage`, `evals`, `graph`.
+- Domain structs and ports cover Chunk 02 acceptance list; no durable adapters,
+  no provider/language/TEI/SKOS SDKs.
+- `graph` exposes only `NodeRef`/`EdgeRef` extension points (no traversal).
+- Unit tests cover zero-value rejection and key ADR invariants (spans, snapshot
+  ready/failed gates, evidence/instruction separation, factual evidence gate).
+- Verification: `go test ./...` passed (2026-07-11).
 
 ## Plan Chunk 03: Local Artifact Store And In-Memory Metadata
 
@@ -294,7 +292,17 @@ Acceptance criteria:
 - Storage contracts are ready for PostgreSQL adapter later.
 ```
 
-Status: pending
+Status: **completed** (2026-07-11)
+
+### Completion notes
+
+- Added `internal/apperr` with `not_found`, `conflict`, `validation`, `permission`.
+- Added `internal/artifacts/localfs` ArtifactStore: project-scoped paths, SHA-256
+  checksums, traversal rejection, checksum mismatch detection.
+- Added `internal/storage/memory` MetadataStore + ArtifactMetaStore with sorted
+  list ordering, append-only traces, and active-snapshot ready gate.
+- Extended `ArtifactMetaStore` with `ListArtifacts`.
+- Verification: `go test ./...` passed (2026-07-11).
 
 ## Plan Chunk 04: Source Adapter, Parser, Chunker, And Merkle Manifest
 
@@ -338,7 +346,19 @@ Acceptance criteria:
   chunking without changing the core model.
 ```
 
-Status: pending
+Status: **completed** (2026-07-11)
+
+### Completion notes
+
+- Added indexing pipeline packages: `normalize`, `hashing`, `source`, `parse`,
+  `chunk`, `token`, `morph`, `manifest`, `commit`, `pipeline`.
+- Dual Merkle (`source_merkle_v1`, `chunk_set_merkle_v1`) and ADR-0018 path/chunk
+  hashes; BOM/CRLF/NFC normalization via `golang.org/x/text`.
+- Local file source adapter, plaintext + markdown parsers, paragraph + markdown
+  section chunkers, whitespace token spans, noop morph hook.
+- Manifest source/chunk diff; IndexSnapshot building → ready/failed seal.
+- Golden/unit tests: stable re-index hashes, single-file edit diff, spans/tokens.
+- Verification: `go test ./...` passed (2026-07-11).
 
 ## Plan Chunk 05: Retrieval Contracts, Exact Lookup, Sparse Contract, And VectorStore Port
 
@@ -390,7 +410,19 @@ Acceptance criteria:
   truth.
 ```
 
-Status: pending
+Status: **completed** (2026-07-11)
+
+### Completion notes
+
+- Added `retrieval/index`, `exact`, `merge`, `fake`, `hybrid`; `linguistic/simple`;
+  `lexicon/fake`.
+- Exact phrase lookup + fake sparse/vector clients; project_id/snapshot_id required.
+- Phase-1 min-max normalization, dedup merge, explainable score reasons.
+- Filters for sense/concept/attestation/register/region/time/lexicon/authority.
+- Fixture tests: exact phrase, typo-negative, lemma/wordform expand, sense filter,
+  concept/attestation filters, rejected expansion false-positive, citation lookup,
+  vector namespace port, retrieval trace events.
+- Verification: `go test ./...` passed (2026-07-11).
 
 ## Plan Chunk 06: Context Pack Builder And Verifier
 
@@ -427,7 +459,15 @@ Acceptance criteria:
 - Budgeting behavior is deterministic under tests.
 ```
 
-Status: pending
+Status: **completed** (2026-07-11)
+
+### Completion notes
+
+- Added `retrieval/pack` ContextPack builder, checksum, verifier, and replay.
+- Budget trim keeps citation-locked required items; exceeds budget → conflict.
+- Verifier flags unsupported sense/concept/model_inference used as facts.
+- Instruction/data separation enforced; pack checksum stable for replay.
+- Verification: `go test ./...` passed (2026-07-11).
 
 ## Plan Chunk 07: Tool Registry, Fake Model, And Agent Run Loop
 
@@ -461,7 +501,16 @@ Acceptance criteria:
 - Run trace is enough to debug what happened.
 ```
 
-Status: pending
+Status: **completed** (2026-07-11)
+
+### Completion notes
+
+- Added `tools/memory` registry, `tools/fake` read_snippet executor,
+  `policy/eval`, `models/fake` completer, `agentruntime/orchestrator`.
+- Agent loop: pack → model → policy-gated tool → verify; long tool output as
+  artifact; denied tools recorded without model override.
+- Replay via stored AgentRun + trace events.
+- Verification: `go test ./...` passed (2026-07-11).
 
 ## Plan Chunk 08: Developer CLI For Real Local Workflow
 
@@ -494,7 +543,17 @@ Acceptance criteria:
 - Lab can consume the CLI JSON as fixtures without a Go dependency on Context.
 ```
 
-Status: pending
+Status: **completed** (2026-07-11)
+
+### Completion notes
+
+- Added `cmd/context-dev` and `internal/devcli` with JSON workspace state.
+- Commands: init-project, ingest, search, context-pack, agent-run, trace.
+- Localfs artifacts + file `state.json`; stdout JSON for Lab fixtures.
+- Smoke test covers full CLI workflow; manual run verified:
+  `go run ./cmd/context-dev init-project|ingest|search`.
+- Added JSON tags on key DTO fields for stable Lab consumption.
+- Verification: `go test ./...` passed (2026-07-11).
 
 ## Plan Chunk 09: Local Server Environment With PostgreSQL And pgvector
 
@@ -667,6 +726,120 @@ Status: pending
 ## Completion Notes
 
 Use this section after each chunk. Keep notes short and factual.
+
+### 2026-07-11 - Foundation Gate
+
+Result:
+- Accepted ADR-0015–0021 covering linguistic/lexicographic contracts, PoC
+  backend order, identity/spans, phase-1 scoring, ContextPack budgets, and
+  snapshot failure semantics.
+- Updated `decisions/README.md` index and supersedes notes.
+
+Verification:
+- Read-only cross-check against roadmap open decisions, plugin roadmaps, and
+  prior ADR-0004/0008/0009/0010/0011 wording.
+- No runtime Go code added.
+
+Follow-up:
+- Start Plan Chunk 02 (internal package skeleton and domain models).
+
+### 2026-07-11 - Chunk 02
+
+Result:
+- Added internal domain packages and interface-only ports for corpus through
+  evals, plus linguistic/lexicon contracts and graph ID stubs.
+- Validation helpers reject zero-values and enforce ADR-backed invariants.
+
+Verification:
+- `go test ./...` passed.
+
+Follow-up:
+- Plan Chunk 03: localfs ArtifactStore + in-memory MetadataStore.
+
+### 2026-07-11 - Chunk 03
+
+Result:
+- localfs ArtifactStore and in-memory MetadataStore adapters; shared apperr codes.
+
+Verification:
+- `go test ./...` passed (path traversal, checksum mismatch, sorted lists, ready gate).
+
+Follow-up:
+- Plan Chunk 04: source adapter, parser, chunker, Merkle manifest.
+
+### 2026-07-11 - Chunk 04
+
+Result:
+- Deterministic indexing baseline: local sources, parse/chunk, token spans,
+  dual Merkle, snapshot seal, manifest diff.
+
+Verification:
+- `go test ./...` passed.
+
+Follow-up:
+- Plan Chunk 05: exact retrieval, sparse/vector ports and fakes.
+
+### 2026-07-11 - Chunk 05
+
+Result:
+- Exact/sparse retrieval, merge scoring, fake vector/lang/lexicon ports, hybrid
+  search with explainable expansions and traces.
+
+Verification:
+- `go test ./...` passed.
+
+Follow-up:
+- Plan Chunk 06: ContextPack builder and verifier.
+
+### 2026-07-11 - Chunk 05
+
+Result:
+- Exact/sparse retrieval, merge scoring, fake vector/lang/lexicon ports, hybrid
+  search with explainable expansions and traces.
+
+Verification:
+- `go test ./...` passed.
+
+Follow-up:
+- Plan Chunk 06: ContextPack builder and verifier.
+
+### 2026-07-11 - Chunk 06
+
+Result:
+- ContextPack builder with ADR-0020 budgets/evidence classes; verifier and
+  surface replay.
+
+Verification:
+- `go test ./...` passed.
+
+Follow-up:
+- Plan Chunk 07: tool registry, fake model, agent run loop.
+
+### 2026-07-11 - Chunk 07
+
+Result:
+- Tool registry, fake model/tool, policy eval outside model, agent orchestrator
+  with artifact spill and run/trace replay.
+
+Verification:
+- `go test ./...` passed.
+
+Follow-up:
+- Plan Chunk 08: `cmd/context-dev` CLI.
+
+### 2026-07-11 - Chunk 08
+
+Result:
+- `context-dev` CLI for init/ingest/search/context-pack/agent-run/trace with
+  machine-readable JSON output.
+
+Verification:
+- `go test ./...` passed.
+- Manual: `go run ./cmd/context-dev init-project --root … --data … --project demo`
+  then ingest + search for `ContextPack`.
+
+Follow-up:
+- Plan Chunk 09: PostgreSQL/pgvector local compose stack.
 
 ```text
 ### YYYY-MM-DD - Chunk NN

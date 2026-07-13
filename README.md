@@ -68,17 +68,10 @@ Nearest work follows `.project/progress.md` plan chunks:
 
 | Phase | Status | Goal |
 | --- | --- | --- |
-| **0 — Architecture baseline** | ADRs accepted (Chunk 01) | Lock package, storage, index, trace, and adapter boundaries before broad code |
-| **1 — Proof of concept** | Chunks 02–12 pending | Prove ingest → retrieve → `ContextPack` → fake model/tool step → verifier → replayable trace |
+| **0 — Architecture baseline** | Chunk 01 + Foundation Gate done | Lock package, storage, index, trace, linguistic, and scoring boundaries |
+| **1 — Proof of concept** | Chunks 02–08 done; 09–12 pending | Prove ingest → retrieve → `ContextPack` → fake model/tool step → verifier → replayable trace |
 
-Immediate next step: **Chunk 02** — internal package skeleton, neutral domain
-models, and interface-only ports with `go test ./...` and no external services.
-
-Before Chunk 02 runtime code, close only the foundation decisions that would
-change core domain types or deterministic tests: multilingual linguistic
-contracts, lexicographic context contracts, PoC backend order, identity/span
-hashing, phase-1 retrieval scoring, `ContextPack` budget behavior, and snapshot
-commit failure semantics.
+Immediate next step: **Chunk 09** — local PostgreSQL/pgvector compose stack.
 
 PoC storage progression (from accepted ADRs):
 
@@ -459,8 +452,8 @@ Expected first demo corpus: repository docs such as `README.md` and
 | Item | State |
 | --- | --- |
 | Planning baseline | Accepted (`roadmap-context-core.md`) |
-| Architecture decisions | 14 ADRs under `.project/decisions/` (Chunk 01 complete) |
-| Go implementation | Not started; Chunk 02 is next |
+| Architecture decisions | 21 ADRs under `.project/decisions/` (Chunk 01 + Foundation Gate) |
+| Go implementation | Chunks 02–08 complete; Chunk 09 next |
 | Public API | None exported yet; `pkg/contextkit` deferred until proven |
 | Dependencies | `go.mod` intentionally minimal |
 

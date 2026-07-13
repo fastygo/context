@@ -20,33 +20,20 @@ live proof.
 
 ## Foundation decision gate
 
-Before runtime code begins, add or supersede only decisions that affect domain
-types, adapter ports, trace records, deterministic hashes, retrieval scoring, or
-`ContextPack` replay. This keeps the foundation stable without pulling future
-infrastructure into the first PoC.
+Status: **closed** (2026-07-11) — ADR-0015–0021.
 
-Foundation decisions still needed:
+Runtime code (Chunk 02+) may begin. Do not pull future infrastructure into the
+first PoC beyond what those ADRs allow.
 
-- **Multilingual linguistic contracts:** token spans, lexeme/lemma/wordform
-  references, morphology features, ambiguity, query-expansion reasons, analyzer
-  versions, and `context-lang-*` adapter lifecycle.
-- **Lexicographic context contracts:** senses, concepts, attestations, variants,
-  multiword expressions, register/region/time metadata, source authority,
-  licensing metadata, and TEI/SKOS/resource-adapter boundaries.
-- **PoC backend order:** PostgreSQL + pgvector first for dense vectors,
-  PostgreSQL full-text or fake sparse first for lexical tests, later QDrant,
-  Turbopuffer, and `context-sparse` only behind the same ports.
-- **Deterministic identity and spans:** path keys, source/chunk checksum inputs,
-  byte/rune span convention, Unicode/newline normalization, and snapshot hash
-  rules.
-- **Phase-1 retrieval scoring:** merge/dedup, score normalization boundaries,
-  stable tie-breaking, score explanation fields, and deferred model-reranker
-  policy.
-- **ContextPack budget and evidence classes:** source text vs inference,
-  instruction/data separation, trust labels, citation locking, rejected
-  candidates, and deterministic trimming.
-- **Snapshot commit failure semantics:** minimal `building`, `ready`, `failed`,
-  and `superseded` behavior plus idempotent retry rules.
+| Topic | ADR |
+|-------|-----|
+| Multilingual linguistic contracts | [0015](0015-multilingual-linguistic-contracts.md) |
+| Lexicographic context contracts | [0016](0016-lexicographic-context-contracts.md) |
+| PoC backend order | [0017](0017-poc-backend-order.md) |
+| Deterministic identity and spans | [0018](0018-deterministic-identity-and-spans.md) |
+| Phase-1 retrieval scoring | [0019](0019-phase1-retrieval-scoring.md) |
+| ContextPack budget and evidence | [0020](0020-contextpack-budget-and-evidence.md) |
+| Snapshot commit failure semantics | [0021](0021-snapshot-commit-failure-semantics.md) |
 
 Explicitly **not** foundation blockers: graph traversal engines, QDrant,
 Turbopuffer, `context-sparse`, bbolt, Badger, prompt-injection classifiers,
@@ -72,6 +59,13 @@ only when a later chunk or measurement requires them.
 | [0012](0012-index-snapshot-sync-replication.md) | Index snapshot sync and replication | Accepted |
 | [0013](0013-context-ref-and-path-alias.md) | ContextRef and path alias for model context | Accepted |
 | [0014](0014-storage-role-separation.md) | Storage role separation (session vs index) | Accepted |
+| [0015](0015-multilingual-linguistic-contracts.md) | Multilingual linguistic contracts | Accepted |
+| [0016](0016-lexicographic-context-contracts.md) | Lexicographic context contracts | Accepted |
+| [0017](0017-poc-backend-order.md) | PoC backend order | Accepted |
+| [0018](0018-deterministic-identity-and-spans.md) | Deterministic identity and spans | Accepted |
+| [0019](0019-phase1-retrieval-scoring.md) | Phase-1 retrieval scoring | Accepted |
+| [0020](0020-contextpack-budget-and-evidence.md) | ContextPack budget and evidence classes | Accepted |
+| [0021](0021-snapshot-commit-failure-semantics.md) | Snapshot commit failure semantics | Accepted |
 
 ## Adapter progression by plan chunk
 
@@ -172,12 +166,13 @@ before Chunk 03 contracts are proven.
 - Plan Chunk 01 originally suggested an in-memory sparse retriever first.
   **[0009](0009-context-sparse-tantivy-sidecar.md)** replaces that path for the
   long-term sparse engine: Tantivy in Docker; Go talks HTTP/gRPC only.
-- **2026-06 planning correction** (see [progress.md](../progress.md) Chunk 01
-  completion notes and roadmap *Open decisions*): the **first live PoC** uses
-  **PostgreSQL + pgvector** for dense vectors and **PostgreSQL full-text or fake
-  sparse** for lexical tests. QDrant, Turbopuffer, and `context-sparse` remain
-  explicit later adapters. Publish a superseding ADR before changing the default
-  dense or sparse backend for production-shaped deployments.
+- **[0017](0017-poc-backend-order.md)** (2026-07-11) locks the **first live PoC**
+  stack: PostgreSQL + pgvector for dense, PostgreSQL full-text or fake sparse
+  for lexical tests, local filesystem artifacts, in-memory then PostgreSQL
+  metadata. It supersedes PoC ordering implied by ADR-0004/0008/0009/0010;
+  ports and long-term parity remain. QDrant, Turbopuffer, and `context-sparse`
+  stay later adapters until Chunk 12 (or a measured need) plus another
+  superseding ADR.
 
 ## Background drafts (non-normative)
 
