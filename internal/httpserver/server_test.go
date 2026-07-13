@@ -172,6 +172,31 @@ func TestIngestRejectsAbsolutePathKey(t *testing.T) {
 	}
 }
 
+func TestRepairHTTP(t *testing.T) {
+	dataDir := setupWorkspace(t)
+	srv, err := httpserver.New(httpserver.Config{DataDir: dataDir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ := json.Marshal(map[string]string{
+		"project_id": "proj_http",
+		"mode":       "rebuild",
+		"target":     "all",
+	})
+	rr := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(rr, httptest.NewRequest(http.MethodPost, "/v1/repair", bytes.NewReader(body)))
+	if rr.Code != http.StatusOK {
+		t.Fatalf("repair: %d %s", rr.Code, rr.Body.String())
+	}
+	var res map[string]any
+	if err := json.Unmarshal(rr.Body.Bytes(), &res); err != nil {
+		t.Fatal(err)
+	}
+	if res["ok"] != true {
+		t.Fatalf("%#v", res)
+	}
+}
+
 func TestEvalOffline(t *testing.T) {
 	dataDir := setupWorkspace(t)
 	srv, err := httpserver.New(httpserver.Config{DataDir: dataDir})

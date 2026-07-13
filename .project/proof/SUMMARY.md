@@ -42,6 +42,7 @@
 - Client: `pkg/contextkit` HTTP client (Chunk 21); zero `internal/` imports.
 - Ops: append-only eval history + workspace metrics (Chunk 22);
   `ops/eval_history.jsonl` path_key under data dir.
+- Repair: rebuild / retry-failed (Chunk 23, ADR-0021); `last_failed` in state.
 - Multilingual/lexicon proofs use in-memory fixtures with simple-lang adapters; context-lang-* and TEI/SKOS lexicon adapters are not wired.
 
 ## Next decisions

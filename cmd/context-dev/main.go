@@ -44,6 +44,8 @@ func main() {
 		err = cmdMetrics(args)
 	case "eval-history":
 		err = cmdEvalHistory(args)
+	case "repair":
+		err = cmdRepair(args)
 	case "meta-check":
 		err = cmdMetaCheck(args)
 	case "proof-run":
@@ -76,6 +78,7 @@ Usage:
   context-dev eval [--out <.project/proof/eval/report.json>] [--history <jsonl>] [--data <dir>]
   context-dev metrics --data <dir>
   context-dev eval-history [--data <dir>] [--history <jsonl>] [--limit N]
+  context-dev repair --data <dir> --project <id> [--mode rebuild|retry-failed] [--target all|dense|sparse]
   context-dev trace --data <dir> --project <id> --run <id>
   context-dev meta-check [--backend postgres]
   context-dev proof-run [--root <repo>] [--out <.project/proof>]
@@ -84,6 +87,7 @@ Ingest skips paths via defaults + optional .contextignore at corpus root.
 eval runs offline golden retrieval suite (exact/sparse/dense/hybrid + multilingual/lexicon/pack).
 With --data, eval also appends a summary to <data>/ops/eval_history.jsonl (or --history).
 metrics / eval-history expose workspace counters and append-only eval regression history.
+repair rebuilds index payloads for the active ready snapshot, or retries last_failed under a new snapshot_id (ADR-0021).
 Modes dense and hybrid-dense require PostgreSQL/pgvector (see .project/local-server.md).
 Set CONTEXT_ENABLE_DENSE=1 to upsert dense vectors on ingest and include dense in hybrid search.
 Set CONTEXT_DENSE_REBUILD=1 to force search-time vector rebuild (default: prefer ingest commit).
@@ -318,6 +322,18 @@ func cmdEvalHistory(args []string) error {
 	}
 	limit := devcli.ParseLimit(f["limit"], 20)
 	res, err := devcli.EvalHistory(history, limit)
+	if err != nil {
+		return err
+	}
+	return devcli.PrintJSON(res)
+}
+
+func cmdRepair(args []string) error {
+	f := flagMap(args)
+	if err := require(f, "data", "project"); err != nil {
+		return err
+	}
+	res, err := devcli.Repair(f["data"], f["project"], f["mode"], f["target"])
 	if err != nil {
 		return err
 	}

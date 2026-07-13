@@ -106,6 +106,7 @@ Endpoints:
   POST /v1/eval
   GET  /v1/eval/history?limit=
   GET  /v1/metrics?project_id=
+  POST /v1/repair          {"project_id","mode?","target?"}
   POST /v1/ingest          {"project_id","path_key?"}  # relative to corpus only
 
 Auth (optional): Authorization: Bearer <token> or X-Context-Token.

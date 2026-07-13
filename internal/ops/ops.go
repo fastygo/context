@@ -118,4 +118,6 @@ type Metrics struct {
 	EvalHistoryCount   int         `json:"eval_history_count"`
 	LastEval           *EvalRecord `json:"last_eval,omitempty"`
 	EvalHistoryPathKey string      `json:"eval_history_path_key,omitempty"`
+	HasLastFailed      bool        `json:"has_last_failed,omitempty"`
+	LastFailedReason   string      `json:"last_failed_reason,omitempty"`
 }

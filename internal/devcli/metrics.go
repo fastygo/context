@@ -64,6 +64,10 @@ func Metrics(dataDir string) (MetricsResult, error) {
 		last := all[0]
 		m.LastEval = &last
 	}
+	if st.LastFailed != nil {
+		m.HasLastFailed = true
+		m.LastFailedReason = st.LastFailed.Snapshot.FailureReason
+	}
 	return m, nil
 }
 

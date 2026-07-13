@@ -88,6 +88,7 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("POST /v1/eval", s.handleEval)
 	s.mux.HandleFunc("GET /v1/eval/history", s.handleEvalHistory)
 	s.mux.HandleFunc("GET /v1/metrics", s.handleMetrics)
+	s.mux.HandleFunc("POST /v1/repair", s.handleRepair)
 	s.mux.HandleFunc("POST /v1/ingest", s.handleIngest)
 }
 
@@ -319,6 +320,26 @@ func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
 	}
 	if projectQ != "" && res.ProjectID != projectQ {
 		writeErr(w, http.StatusBadRequest, apperr.New(apperr.Validation, "project id mismatch"))
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
+}
+
+type repairRequest struct {
+	ProjectID string `json:"project_id"`
+	Mode      string `json:"mode,omitempty"`
+	Target    string `json:"target,omitempty"`
+}
+
+func (s *Server) handleRepair(w http.ResponseWriter, r *http.Request) {
+	var req repairRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeErr(w, http.StatusBadRequest, err)
+		return
+	}
+	res, err := devcli.Repair(s.cfg.DataDir, req.ProjectID, req.Mode, req.Target)
+	if err != nil {
+		writeAppErr(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, res)

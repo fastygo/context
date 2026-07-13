@@ -118,6 +118,7 @@ func Ingest(dataDir, projectID, path string) (State, error) {
 			st.Project.ActiveSnapshotID = prevActive
 			st.Chunks = prevChunks
 			st.CorpusRoot = absRoot
+			st.LastFailed = &FailedAttempt{Snapshot: failed, Chunks: chunks}
 			_ = ws.Save(st)
 			_ = recordFailedSnapshot(ctx, st.Project, failed)
 			return st, apperr.Wrap(apperr.Internal, "dense write failed", err)
@@ -139,6 +140,7 @@ func Ingest(dataDir, projectID, path string) (State, error) {
 			st.Project.ActiveSnapshotID = prevActive
 			st.Chunks = prevChunks
 			st.CorpusRoot = absRoot
+			st.LastFailed = &FailedAttempt{Snapshot: failed, Chunks: chunks}
 			_ = ws.Save(st)
 			_ = recordFailedSnapshot(ctx, st.Project, failed)
 			return st, apperr.Wrap(apperr.Internal, "sparse fts write failed", err)
@@ -150,6 +152,7 @@ func Ingest(dataDir, projectID, path string) (State, error) {
 	st.Project.ActiveSnapshotID = snap.ID
 	st.Chunks = chunks
 	st.CorpusRoot = absRoot
+	st.LastFailed = nil
 	if err := ws.Save(st); err != nil {
 		return State{}, err
 	}

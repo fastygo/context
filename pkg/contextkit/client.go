@@ -206,6 +206,13 @@ func (c *Client) Metrics(ctx context.Context, projectID string) (MetricsResult, 
 	return out, err
 }
 
+// Repair calls POST /v1/repair.
+func (c *Client) Repair(ctx context.Context, req RepairRequest) (RepairResult, error) {
+	var out RepairResult
+	err := c.do(ctx, http.MethodPost, "/v1/repair", nil, req, &out)
+	return out, err
+}
+
 // Ingest calls POST /v1/ingest.
 func (c *Client) Ingest(ctx context.Context, req IngestRequest) (IngestResult, error) {
 	var out IngestResult

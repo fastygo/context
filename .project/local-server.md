@@ -259,6 +259,24 @@ curl -s 'http://127.0.0.1:8080/v1/eval/history?limit=10'
 
 `pkg/contextkit`: `Metrics`, `EvalHistory` (plus existing `Eval`).
 
+## Index rebuild / repair (Chunk 23)
+
+Idempotent rebuild of dense/sparse payloads for the **active ready** snapshot, or
+ADR-0021 **retry-failed** under a new `snapshot_id` using retained `last_failed`:
+
+```bash
+go run ./cmd/context-dev repair --data /path/to/data --project local --mode rebuild
+go run ./cmd/context-dev repair --data /path/to/data --project local --mode retry-failed
+
+curl -s -X POST http://127.0.0.1:8080/v1/repair \
+  -H 'Content-Type: application/json' \
+  -d '{"project_id":"local","mode":"rebuild","target":"all"}'
+```
+
+Offline (no dense/FTS env): repair still succeeds with `dense_skipped` /
+`sparse_skipped`. Failed ingest retains `last_failed` in `state.json` for retry.
+Metrics exposes `has_last_failed` / `last_failed_reason`.
+
 ## Metadata store (Chunk 11)
 
 Migrations live in `internal/storage/postgres/migrations/` and apply on

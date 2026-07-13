@@ -172,6 +172,35 @@ type MetricsResult struct {
 	EvalHistoryCount   int             `json:"eval_history_count"`
 	LastEval           json.RawMessage `json:"last_eval,omitempty"`
 	EvalHistoryPathKey string          `json:"eval_history_path_key,omitempty"`
+	HasLastFailed      bool            `json:"has_last_failed,omitempty"`
+	LastFailedReason   string          `json:"last_failed_reason,omitempty"`
+}
+
+// RepairRequest is POST /v1/repair.
+type RepairRequest struct {
+	ProjectID string `json:"project_id"`
+	Mode      string `json:"mode,omitempty"`   // rebuild | retry-failed
+	Target    string `json:"target,omitempty"` // all | dense | sparse
+}
+
+// RepairResult is POST /v1/repair response.
+type RepairResult struct {
+	OK                bool   `json:"ok"`
+	Mode              string `json:"mode"`
+	Target            string `json:"target"`
+	ProjectID         string `json:"project_id"`
+	SnapshotID        string `json:"snapshot_id"`
+	ParentSnapshotID  string `json:"parent_snapshot_id,omitempty"`
+	Chunks            int    `json:"chunks"`
+	DenseUpserted     bool   `json:"dense_upserted"`
+	DenseSkipped      bool   `json:"dense_skipped"`
+	DenseSkipReason   string `json:"dense_skip_reason,omitempty"`
+	SparseUpserted    bool   `json:"sparse_upserted"`
+	SparseSkipped     bool   `json:"sparse_skipped"`
+	SparseSkipReason  string `json:"sparse_skip_reason,omitempty"`
+	Activated         bool   `json:"activated"`
+	ClearedLastFailed bool   `json:"cleared_last_failed,omitempty"`
+	Notes             string `json:"notes,omitempty"`
 }
 
 // IngestRequest is POST /v1/ingest (path_key relative to corpus only).

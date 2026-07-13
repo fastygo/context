@@ -52,7 +52,16 @@ type State struct {
 	ToolCalls []tools.ToolCall         `json:"tool_calls"`
 	Traces    []tracing.Event          `json:"traces"`
 	Focuses   []retrieval.FocusProfile `json:"focuses,omitempty"`
+	// LastFailed retains the most recent aborted commit for ADR-0021 repair
+	// (new snapshot_id retry). Cleared after successful retry-failed repair.
+	LastFailed *FailedAttempt `json:"last_failed,omitempty"`
 	UpdatedAt time.Time                `json:"updated_at"`
+}
+
+// FailedAttempt is a non-active commit retained for repair (ADR-0021).
+type FailedAttempt struct {
+	Snapshot indexing.IndexSnapshot `json:"snapshot"`
+	Chunks   []IndexedChunk         `json:"chunks"`
 }
 
 // Workspace roots local CLI storage.

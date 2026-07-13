@@ -39,7 +39,7 @@ Current target is **Phase 3 Reliable Beta** (start):
 ```text
 thin pkg/contextkit HTTP client (Chunk 21)
   -> operational metrics + eval history (Chunk 22)
-  -> index rebuild/repair tools (next)
+  -> index rebuild/repair tools (Chunk 23)
   -> multi-tenant isolation design (later ADR)
 ```
 
@@ -78,7 +78,8 @@ and `pkg/contextkit` client (Chunk 21) shipped.
 | BFF/API consumer | **Chunk 20 done** | Call HTTP client | ADR-0024 |
 | Go client surface | **Chunk 21 done** | Import `pkg/contextkit` only | No `internal/` |
 | Ops metrics / eval history | **Chunk 22 done** | Show metrics + history JSON | path_key only |
-| DSL workbench | After Chunk 22 | Edit FocusProfile / plans / policies | Neutral DTOs only |
+| Index repair | **Chunk 23 done** | Trigger rebuild / retry-failed | ADR-0021 |
+| DSL workbench | After Chunk 23 | Edit FocusProfile / plans / policies | Neutral DTOs only |
 
 ## Plan Chunk 14: PostgreSQL FTS SparseSearchClient
 
@@ -455,6 +456,44 @@ Status: **completed** (2026-07-13)
 - HTTP: `GET /v1/metrics`, `GET /v1/eval/history`; `POST /v1/eval` appends.
 - `pkg/contextkit`: `Metrics`, `EvalHistory`.
 - No host paths in metrics JSON; Lab consumes counts + last_eval summary.
+
+## Plan Chunk 23: Index Rebuild And Repair Tools
+
+Copy-paste prompt:
+
+```text
+Work in @Context only. Add index rebuild/repair so indexing failures are
+recoverable (Phase 3 / ADR-0021). Read ADR-0021, progress, ingest dense/sparse
+commit paths. Do not add QDrant, dashboards, or multi-tenant auth.
+
+Plan and then implement:
+1. Retain last_failed {snapshot, chunks} on dense/sparse ingest write failure;
+   clear on successful commit.
+2. Repair mode=rebuild: idempotent re-upsert dense/sparse for active ready
+   snapshot chunks; skip backends not configured (report skip reasons).
+3. Repair mode=retry-failed: allocate new snapshot_id, remap last_failed chunks,
+   upsert indexes, seal ready, flip active, clear last_failed (never reuse
+   failed id).
+4. CLI repair; HTTP POST /v1/repair; contextkit.Repair.
+5. Metrics: has_last_failed + last_failed_reason.
+6. Offline unit tests; go test ./...; docs + progress notes.
+7. Out of scope: GC of failed vector rows, background schedulers, tenant quotas.
+
+Acceptance criteria:
+- Failed index write leaves last_failed; retry-failed activates a new ready snapshot.
+- Rebuild on ready snapshot does not change active_snapshot_id when writes succeed.
+- Offline go test green without Docker.
+```
+
+Status: **completed** (2026-07-13)
+
+### Completion notes
+
+- `state.LastFailed` retained on dense/sparse ingest failure (ADR-0021).
+- `devcli.Repair`: `rebuild` | `retry-failed`; target `all|dense|sparse`.
+- CLI / `POST /v1/repair` / `contextkit.Repair`.
+- Metrics flags: `has_last_failed`, `last_failed_reason`.
+- Offline: skipped dense/sparse still `ok=true` with skip reasons.
 
 ## Completion Notes
 
