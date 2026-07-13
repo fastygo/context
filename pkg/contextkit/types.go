@@ -204,6 +204,34 @@ type RepairResult struct {
 	Notes             string `json:"notes,omitempty"`
 }
 
+// InspectRequest is POST /v1/inspect.
+type InspectRequest struct {
+	ProjectID string `json:"project_id"`
+	Query     string `json:"query,omitempty"`
+	FocusID   string `json:"focus_id,omitempty"`
+	PackID    string `json:"pack_id,omitempty"`
+}
+
+// InspectResult is POST /v1/inspect (Lab-facing; nested details as raw JSON).
+type InspectResult struct {
+	OK           bool              `json:"ok"`
+	ProjectID    string            `json:"project_id"`
+	SnapshotID   string            `json:"snapshot_id,omitempty"`
+	Query        string            `json:"query,omitempty"`
+	Mode         string            `json:"mode"`
+	FocusID      string            `json:"focus_id,omitempty"`
+	PackID       string            `json:"pack_id,omitempty"`
+	Purpose      string            `json:"purpose,omitempty"`
+	PlanID       string            `json:"retrieval_plan_id,omitempty"`
+	Budget       json.RawMessage   `json:"budget"`
+	Instructions []string          `json:"instructions,omitempty"`
+	Selected     []json.RawMessage `json:"selected"`
+	Rejected     []json.RawMessage `json:"rejected,omitempty"`
+	Candidates   []json.RawMessage `json:"candidates,omitempty"`
+	Checksum     string            `json:"pack_checksum,omitempty"`
+	Notes        []string          `json:"notes,omitempty"`
+}
+
 // IngestRequest is POST /v1/ingest (path_key relative to corpus only).
 type IngestRequest struct {
 	ProjectID string `json:"project_id"`

@@ -22,9 +22,10 @@ Transport: HTTP+JSON (`cmd/context-serve`) and Go client (`pkg/contextkit`).
 | POST | `/v1/eval` | Golden suite (+ history append) |
 | GET | `/v1/eval/history` | Eval history records |
 | POST | `/v1/repair` | Index rebuild / retry-failed |
+| POST | `/v1/inspect` | Explain search/pack (Lab inspector) |
 | POST | `/v1/ingest` | Ingest by relative `path_key` |
 
-Planned under v1 (additive): inspector (Chunk 26), quota status (Chunk 28).
+Planned under v1 (additive): quota status (Chunk 28).
 
 ## Compatibility
 

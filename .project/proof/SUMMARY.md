@@ -45,6 +45,7 @@
 - Repair: rebuild / retry-failed (Chunk 23, ADR-0021); `last_failed` in state.
 - Isolation: ADR-0025 Tenant/Project boundary; leakage contract tests (Chunk 24).
 - API v1 freeze: ADR-0026 + `.project/api-v1.md` (Chunk 25).
+- Inspector: `inspect` / `POST /v1/inspect` Lab JSON (Chunk 26).
 - Multilingual/lexicon proofs use in-memory fixtures with simple-lang adapters; context-lang-* and TEI/SKOS lexicon adapters are not wired.
 
 ## Next decisions

@@ -41,7 +41,7 @@ HTTP/`contextkit` surface as stable for Lab/BFF:
 
 ```text
 API v1 freeze (Chunk 25) ✓
-  -> Context inspector JSON (Chunk 26)
+  -> Context inspector JSON (Chunk 26) ✓
   -> non-fake Completer + provider Embedder path (Chunk 27)
   -> quota soft-limits (Chunk 28)
   -> failure / degraded semantics (Chunk 29)
@@ -71,9 +71,9 @@ ADRs 0001–0023; do not re-implement.
 | 12 | E2E proof — hypothesis **validated** (`.project/proof/`) |
 | 13 | Durable CLI metadata opt-in (`CONTEXT_METADATA_KIND=postgres`) |
 
-Open gaps for Lab-ready Core (Chunks **26–29**): inspector, non-fake
-model/embed path, quota soft-limits, failure/degraded semantics. API v1 freeze
-shipped (Chunk 25 / ADR-0026). Auth and OpenAPI codegen remain deferred.
+Open gaps for Lab-ready Core (Chunks **27–29**): non-fake model/embed path,
+quota soft-limits, failure/degraded semantics. API v1 + inspector shipped
+(Chunks 25–26). Auth and OpenAPI codegen remain deferred.
 
 ## UX / DX / DSL Consumer Track
 
@@ -88,7 +88,7 @@ shipped (Chunk 25 / ADR-0026). Auth and OpenAPI codegen remain deferred.
 | Index repair | **Chunk 23 done** | Trigger rebuild / retry-failed | ADR-0021 |
 | Tenant isolation design | **Chunk 24 done** | Bind project_id; no cross-project | ADR-0025 |
 | API v1 freeze | **Chunk 25 done** | Pin HTTP/contextkit contract | ADR-0026 / api-v1.md |
-| Context inspector | **Chunk 26** | Render inspector JSON | No raw DB |
+| Context inspector | **Chunk 26 done** | Render inspector JSON | No raw DB |
 | Non-fake model/embed | **Chunk 27** | Swap Completer/Embedder via config | Adapter, not Lab |
 | Quota soft-limits | **Chunk 28** | Show deny/ask on over-quota | ADR-0025 follow-up |
 | Failure/degraded | **Chunk 29** | Explicit unavailable errors | No silent empty |
@@ -587,7 +587,15 @@ decisions without raw DB dumps. Read roadmap Context inspector / pack inspector,
 ADR-0020. Wire CLI + HTTP + contextkit. Offline tests. Out of scope: Lab UI.
 ```
 
-Status: pending
+Status: **completed** (2026-07-13)
+
+### Completion notes
+
+- `devcli.Inspect`: query → hybrid search + pack, or existing `pack_id`.
+- Report: budget, selected/rejected (scores, reasons, path_key, span, preview),
+  candidates; no host paths / raw DB.
+- CLI `inspect`; `POST /v1/inspect`; `contextkit.Inspect`.
+- Additive under API v1 (ADR-0026).
 
 ## Plan Chunk 27: Non-Fake Completer And Provider Embedder Path
 

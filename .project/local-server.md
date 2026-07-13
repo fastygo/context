@@ -290,6 +290,18 @@ Metrics exposes `has_last_failed` / `last_failed_reason`.
 Catalog: [api-v1.md](api-v1.md). Health returns `api_version=v1`; responses set
 `X-Context-API-Version: v1`. `pkg/contextkit.APIVersion` matches.
 
+## Context inspector (Chunk 26)
+
+```bash
+go run ./cmd/context-dev inspect --data /path/to/data --project local --query 'ZEBRA42'
+curl -s -X POST http://127.0.0.1:8080/v1/inspect \
+  -H 'Content-Type: application/json' \
+  -d '{"project_id":"local","query":"ZEBRA42"}'
+```
+
+Returns budget, selected/rejected evidence (scores, reasons, path_key, spans,
+surface_preview), and candidates — no host paths.
+
 ## Metadata store (Chunk 11)
 
 Migrations live in `internal/storage/postgres/migrations/` and apply on

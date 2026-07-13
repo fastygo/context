@@ -46,6 +46,8 @@ func main() {
 		err = cmdEvalHistory(args)
 	case "repair":
 		err = cmdRepair(args)
+	case "inspect":
+		err = cmdInspect(args)
 	case "meta-check":
 		err = cmdMetaCheck(args)
 	case "proof-run":
@@ -79,6 +81,7 @@ Usage:
   context-dev metrics --data <dir>
   context-dev eval-history [--data <dir>] [--history <jsonl>] [--limit N]
   context-dev repair --data <dir> --project <id> [--mode rebuild|retry-failed] [--target all|dense|sparse]
+  context-dev inspect --data <dir> --project <id> (--query <text> | --pack <id>) [--focus <id>]
   context-dev trace --data <dir> --project <id> --run <id>
   context-dev meta-check [--backend postgres]
   context-dev proof-run [--root <repo>] [--out <.project/proof>]
@@ -88,6 +91,7 @@ eval runs offline golden retrieval suite (exact/sparse/dense/hybrid + multilingu
 With --data, eval also appends a summary to <data>/ops/eval_history.jsonl (or --history).
 metrics / eval-history expose workspace counters and append-only eval regression history.
 repair rebuilds index payloads for the active ready snapshot, or retries last_failed under a new snapshot_id (ADR-0021).
+inspect explains search/pack decisions for Lab (budget, selected/rejected, scores) without host paths.
 Modes dense and hybrid-dense require PostgreSQL/pgvector (see .project/local-server.md).
 Set CONTEXT_ENABLE_DENSE=1 to upsert dense vectors on ingest and include dense in hybrid search.
 Set CONTEXT_DENSE_REBUILD=1 to force search-time vector rebuild (default: prefer ingest commit).
@@ -334,6 +338,21 @@ func cmdRepair(args []string) error {
 		return err
 	}
 	res, err := devcli.Repair(f["data"], f["project"], f["mode"], f["target"])
+	if err != nil {
+		return err
+	}
+	return devcli.PrintJSON(res)
+}
+
+func cmdInspect(args []string) error {
+	f := flagMap(args)
+	if err := require(f, "data", "project"); err != nil {
+		return err
+	}
+	if f["query"] == "" && f["pack"] == "" {
+		return fmt.Errorf("missing --query or --pack")
+	}
+	res, err := devcli.Inspect(f["data"], f["project"], f["query"], f["focus"], f["pack"])
 	if err != nil {
 		return err
 	}

@@ -91,6 +91,7 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /v1/eval/history", s.handleEvalHistory)
 	s.mux.HandleFunc("GET /v1/metrics", s.handleMetrics)
 	s.mux.HandleFunc("POST /v1/repair", s.handleRepair)
+	s.mux.HandleFunc("POST /v1/inspect", s.handleInspect)
 	s.mux.HandleFunc("POST /v1/ingest", s.handleIngest)
 }
 
@@ -341,6 +342,27 @@ func (s *Server) handleRepair(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	res, err := devcli.Repair(s.cfg.DataDir, req.ProjectID, req.Mode, req.Target)
+	if err != nil {
+		writeAppErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
+}
+
+type inspectRequest struct {
+	ProjectID string `json:"project_id"`
+	Query     string `json:"query,omitempty"`
+	FocusID   string `json:"focus_id,omitempty"`
+	PackID    string `json:"pack_id,omitempty"`
+}
+
+func (s *Server) handleInspect(w http.ResponseWriter, r *http.Request) {
+	var req inspectRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeErr(w, http.StatusBadRequest, err)
+		return
+	}
+	res, err := devcli.Inspect(s.cfg.DataDir, req.ProjectID, req.Query, req.FocusID, req.PackID)
 	if err != nil {
 		writeAppErr(w, err)
 		return

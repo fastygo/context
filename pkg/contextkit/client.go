@@ -218,6 +218,13 @@ func (c *Client) Repair(ctx context.Context, req RepairRequest) (RepairResult, e
 	return out, err
 }
 
+// Inspect calls POST /v1/inspect.
+func (c *Client) Inspect(ctx context.Context, req InspectRequest) (InspectResult, error) {
+	var out InspectResult
+	err := c.do(ctx, http.MethodPost, "/v1/inspect", nil, req, &out)
+	return out, err
+}
+
 // Ingest calls POST /v1/ingest.
 func (c *Client) Ingest(ctx context.Context, req IngestRequest) (IngestResult, error) {
 	var out IngestResult

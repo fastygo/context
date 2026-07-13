@@ -195,6 +195,37 @@ func TestIngestRejectsAbsolutePathKey(t *testing.T) {
 	}
 }
 
+func TestInspectHTTP(t *testing.T) {
+	dataDir := setupWorkspace(t)
+	srv, err := httpserver.New(httpserver.Config{DataDir: dataDir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ := json.Marshal(map[string]string{
+		"project_id": "proj_http",
+		"query":      "ZEBRA42",
+	})
+	rr := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(rr, httptest.NewRequest(http.MethodPost, "/v1/inspect", bytes.NewReader(body)))
+	if rr.Code != http.StatusOK {
+		t.Fatalf("inspect: %d %s", rr.Code, rr.Body.String())
+	}
+	var res map[string]any
+	if err := json.Unmarshal(rr.Body.Bytes(), &res); err != nil {
+		t.Fatal(err)
+	}
+	if res["ok"] != true {
+		t.Fatalf("%#v", res)
+	}
+	selected, _ := res["selected"].([]any)
+	if len(selected) < 1 {
+		t.Fatalf("want selected: %#v", res)
+	}
+	if _, has := res["corpus_root"]; has {
+		t.Fatal("must not leak corpus_root")
+	}
+}
+
 func TestRepairHTTP(t *testing.T) {
 	dataDir := setupWorkspace(t)
 	srv, err := httpserver.New(httpserver.Config{DataDir: dataDir})
