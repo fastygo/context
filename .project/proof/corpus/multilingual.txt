@@ -1,0 +1,9 @@
+# Multilingual Fixture
+
+EN: Runners run in the park every morning.
+RU: Бегуны бегают в парке каждое утро.
+DE: Läufer laufen jeden Morgen im Park.
+
+Token spans must preserve original surfaces. Lemma/wordform expansions are
+adapter-owned and must appear in retrieval contributions and query-expansion
+trace events without replacing source text.

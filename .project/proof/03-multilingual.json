@@ -1,0 +1,150 @@
+{
+  "analyzer": "simple-v1",
+  "candidates": [
+    {
+      "chunk_id": "c-en",
+      "source_ref": {
+        "project_id": "p1",
+        "source_id": "s-en",
+        "chunk_id": "c-en",
+        "span": {
+          "start": 4,
+          "end": 11
+        },
+        "checksum": "h-en"
+      },
+      "merged_score": 1,
+      "contributions": [
+        {
+          "retriever_id": "exact",
+          "raw_score": 1,
+          "normalized_score": 1,
+          "weight": 1,
+          "reasons": [
+            "exact_phrase"
+          ],
+          "explanation": "exact phrase match in chunk text",
+          "snapshot_id": "snap1",
+          "project_id": "p1"
+        },
+        {
+          "retriever_id": "dense",
+          "raw_score": 0.6980570184376896,
+          "normalized_score": 0,
+          "weight": 0.55,
+          "reasons": [
+            "dense_similarity"
+          ],
+          "explanation": "dense vector similarity",
+          "snapshot_id": "snap1",
+          "project_id": "p1",
+          "analyzer_version": "simple-v1",
+          "embed_version": "fake-hash-v1"
+        },
+        {
+          "retriever_id": "dense",
+          "raw_score": 0.9668302100489475,
+          "normalized_score": 0,
+          "weight": 0.55,
+          "reasons": [
+            "dense_similarity",
+            "wordform_expand"
+          ],
+          "explanation": "dense vector similarity",
+          "snapshot_id": "snap1",
+          "project_id": "p1",
+          "expansion_ids": [
+            "exp:runners"
+          ],
+          "analyzer_version": "simple-v1",
+          "embed_version": "fake-hash-v1"
+        }
+      ],
+      "trust_level": "project",
+      "text_checksum": "h-en"
+    }
+  ],
+  "events": [
+    {
+      "ID": "q-multi:query",
+      "ProjectID": "p1",
+      "RunID": "q-multi",
+      "Type": "retrieval_query",
+      "Timestamp": "2026-07-13T12:00:12.7764205Z",
+      "Payload": {
+        "query": "run",
+        "snapshot_id": "snap1"
+      },
+      "AnalyzerVersion": "",
+      "DictionaryVersion": "",
+      "FeatureScheme": "",
+      "QueryExpansionVer": "",
+      "SenseMappingVersion": "",
+      "ConceptMappingVer": "",
+      "AttestationVersion": "",
+      "SnapshotID": "snap1"
+    },
+    {
+      "ID": "q-multi:wf:runners",
+      "ProjectID": "p1",
+      "RunID": "q-multi",
+      "Type": "query_expansion",
+      "Timestamp": "2026-07-13T12:00:12.7764205Z",
+      "Payload": {
+        "expanded": "runners",
+        "original": "run",
+        "reason": "simple wordform map",
+        "type": "wordform"
+      },
+      "AnalyzerVersion": "",
+      "DictionaryVersion": "",
+      "FeatureScheme": "",
+      "QueryExpansionVer": "simple-v1",
+      "SenseMappingVersion": "",
+      "ConceptMappingVer": "",
+      "AttestationVersion": "",
+      "SnapshotID": "snap1"
+    },
+    {
+      "ID": "q-multi:candidates",
+      "ProjectID": "p1",
+      "RunID": "q-multi",
+      "Type": "retrieval_candidates",
+      "Timestamp": "2026-07-13T12:00:12.7764205Z",
+      "Payload": {
+        "count": "1"
+      },
+      "AnalyzerVersion": "",
+      "DictionaryVersion": "",
+      "FeatureScheme": "",
+      "QueryExpansionVer": "",
+      "SenseMappingVersion": "",
+      "ConceptMappingVer": "",
+      "AttestationVersion": "",
+      "SnapshotID": "snap1"
+    }
+  ],
+  "expansions": [
+    {
+      "ID": "q-multi:wf:runners",
+      "QueryID": "q-multi",
+      "Language": "en",
+      "OriginalTerm": "run",
+      "ExpandedTerm": "runners",
+      "Type": "wordform",
+      "Features": {
+        "Scheme": "",
+        "Features": null,
+        "RawScheme": "",
+        "RawFeatures": null
+      },
+      "Confidence": 0.6,
+      "Reason": "simple wordform map",
+      "AdapterID": "simple-lang",
+      "AdapterVersion": "simple-v1"
+    }
+  ],
+  "language_filter": "en",
+  "note": "RU chunk excluded by language filter; expansion traced",
+  "ok": true
+}

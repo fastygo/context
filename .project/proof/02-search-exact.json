@@ -1,0 +1,68 @@
+{
+  "project_id": "proof",
+  "snapshot_id": "snap_1",
+  "query": "ContextPack",
+  "mode": "exact",
+  "candidates": [
+    {
+      "chunk_id": "chk_proof_15410c078c35bc98",
+      "source_ref": {
+        "project_id": "proof",
+        "source_id": "079de33fede69aa8",
+        "chunk_id": "chk_proof_15410c078c35bc98",
+        "span": {
+          "start": 34,
+          "end": 438
+        },
+        "checksum": "8a0fbb2e784cc539e164abd31af3a7135b75078a05976a0c20f8d049e0c2501f"
+      },
+      "merged_score": 1,
+      "contributions": [
+        {
+          "retriever_id": "exact",
+          "raw_score": 1,
+          "normalized_score": 1,
+          "weight": 1,
+          "reasons": [
+            "exact_phrase"
+          ],
+          "explanation": "exact phrase match in chunk text",
+          "snapshot_id": "snap_1",
+          "project_id": "proof"
+        }
+      ],
+      "trust_level": "project",
+      "text_checksum": "8a0fbb2e784cc539e164abd31af3a7135b75078a05976a0c20f8d049e0c2501f"
+    },
+    {
+      "chunk_id": "chk_proof_8b2a727031ed2990",
+      "source_ref": {
+        "project_id": "proof",
+        "source_id": "e4a486fc8ad28a52",
+        "chunk_id": "chk_proof_8b2a727031ed2990",
+        "span": {
+          "start": 31,
+          "end": 237
+        },
+        "checksum": "d7e40d6d09aa0beb39a752cd78761cf291fd61603e0f56df0e5ce9fa6c8fc457"
+      },
+      "merged_score": 1,
+      "contributions": [
+        {
+          "retriever_id": "exact",
+          "raw_score": 1,
+          "normalized_score": 1,
+          "weight": 1,
+          "reasons": [
+            "exact_phrase"
+          ],
+          "explanation": "exact phrase match in chunk text",
+          "snapshot_id": "snap_1",
+          "project_id": "proof"
+        }
+      ],
+      "trust_level": "project",
+      "text_checksum": "d7e40d6d09aa0beb39a752cd78761cf291fd61603e0f56df0e5ce9fa6c8fc457"
+    }
+  ]
+}

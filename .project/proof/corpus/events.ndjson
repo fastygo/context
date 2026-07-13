@@ -1,0 +1,3 @@
+{"event_id":"evt-001","occurred_start":"2026-07-13T10:00:00Z","occurred_end":"2026-07-13T10:00:01Z","ingested_at":"2026-07-13T10:05:00Z","message":"index snapshot committed","trust":"project"}
+{"event_id":"evt-002","occurred_start":"2026-07-13T11:00:00Z","occurred_end":"2026-07-13T11:00:01Z","ingested_at":"2026-07-13T11:05:00Z","message":"dense vectors upserted","trust":"project"}
+{"event_id":"evt-003","occurred_start":"2026-07-13T12:00:00Z","occurred_end":"2026-07-13T12:00:01Z","ingested_at":"2026-07-13T12:05:00Z","message":"context pack built","trust":"project"}

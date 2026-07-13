@@ -1,0 +1,113 @@
+{
+  "hypothesis": "ingest → hybrid/dense retrieve → ContextPack → fake agent → verifier → replayable trace, with pgvector + postgres metadata",
+  "status": "validated",
+  "checked_at": "2026-07-13T12:00:12.6524645Z",
+  "project_id": "proof",
+  "snapshot_id": "snap_1",
+  "steps": [
+    {
+      "id": "init-project",
+      "ok": true,
+      "detail": "project=proof"
+    },
+    {
+      "id": "ingest",
+      "ok": true,
+      "detail": "chunks=9",
+      "artifact": "01-ingest.json"
+    },
+    {
+      "id": "search-exact",
+      "ok": true,
+      "detail": "candidates=2 backend=",
+      "artifact": "02-search-exact.json"
+    },
+    {
+      "id": "search-sparse",
+      "ok": true,
+      "detail": "candidates=2 backend=",
+      "artifact": "02-search-sparse.json"
+    },
+    {
+      "id": "search-hybrid",
+      "ok": true,
+      "detail": "candidates=2 backend=",
+      "artifact": "02-search-hybrid.json"
+    },
+    {
+      "id": "search-dense",
+      "ok": true,
+      "detail": "candidates=9 backend=postgres_pgvector",
+      "artifact": "02-search-dense.json"
+    },
+    {
+      "id": "search-hybrid-dense",
+      "ok": true,
+      "detail": "candidates=9 backend=postgres_pgvector",
+      "artifact": "02-search-hybrid-dense.json"
+    },
+    {
+      "id": "multilingual",
+      "ok": true,
+      "detail": "language+expansion+token_span",
+      "artifact": "03-multilingual.json"
+    },
+    {
+      "id": "lexicon",
+      "ok": true,
+      "detail": "sense/concept/attestation/register/region/time/authority",
+      "artifact": "04-lexicon.json"
+    },
+    {
+      "id": "context-pack",
+      "ok": true,
+      "detail": "pack=pack_snap_1",
+      "artifact": "05-context-pack.json"
+    },
+    {
+      "id": "agent-run",
+      "ok": true,
+      "detail": "run=run_pack_snap_1 verify_ok=true",
+      "artifact": "06-agent-run.json"
+    },
+    {
+      "id": "trace",
+      "ok": true,
+      "detail": "events=7",
+      "artifact": "07-trace.json"
+    },
+    {
+      "id": "events-lineage-temporal",
+      "ok": true,
+      "detail": "temporal filter + lineage ≠ runtime trace",
+      "artifact": "08-events-lineage-temporal.json"
+    }
+  ],
+  "gaps": [
+    "CLI ingest still persists workspace state.json; postgres metadata is proven via meta path / proof helpers, not yet the default ingest backend.",
+    "Sparse path remains fake term-overlap; Postgres FTS and context-sparse are not required for this proof.",
+    "Dense embeddings use fake-hash-v1 dim=8; live embedding providers are deferred.",
+    "Multilingual/lexicon proofs use in-memory fixtures with simple-lang adapters; context-lang-* and TEI/SKOS lexicon adapters are not wired."
+  ],
+  "next_decisions": [
+    "Decide when ingest/agent-run should default MetadataStore to postgres (CONTEXT_METADATA_KIND=postgres).",
+    "Before QDrant/Turbopuffer: keep BackendCapabilities contract tests against pgvector + candidate.",
+    "Before context-sparse: measure Postgres FTS / fake sparse lexical limits on a larger corpus.",
+    "Before context-lang-*: pin analyzer_version/dictionary_version on chunk rows during ingest.",
+    "Before TEI/SKOS lexicon adapters: promote DocumentStore sense/concept/attestation payloads into typed lexicon ports only after schema stability."
+  ],
+  "artifacts": {
+    "01-ingest.json": ".project\\proof\\01-ingest.json",
+    "02-search-dense.json": ".project\\proof\\02-search-dense.json",
+    "02-search-exact.json": ".project\\proof\\02-search-exact.json",
+    "02-search-hybrid-dense.json": ".project\\proof\\02-search-hybrid-dense.json",
+    "02-search-hybrid.json": ".project\\proof\\02-search-hybrid.json",
+    "02-search-sparse.json": ".project\\proof\\02-search-sparse.json",
+    "03-multilingual.json": ".project\\proof\\03-multilingual.json",
+    "04-lexicon.json": ".project\\proof\\04-lexicon.json",
+    "05-context-pack.json": ".project\\proof\\05-context-pack.json",
+    "06-agent-run.json": ".project\\proof\\06-agent-run.json",
+    "07-trace.json": ".project\\proof\\07-trace.json",
+    "08-events-lineage-temporal.json": ".project\\proof\\08-events-lineage-temporal.json"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "run": {
+    "id": "run_pack_snap_1",
+    "project_id": "proof",
+    "task_id": "cli-task",
+    "mode": "foreground",
+    "status": "completed",
+    "policy_id": "cli-policy",
+    "pack_id": "pack_snap_1",
+    "owner": "cli",
+    "created_at": "2026-07-13T12:00:12.8108492Z",
+    "updated_at": "2026-07-13T12:00:12.8128476Z"
+  },
+  "pack_id": "pack_snap_1",
+  "model_text": "fake-answer:pack_snap_1:\nThe Context Runtime core targets deterministic project memory, precise\nindexing, hybrid retrieval, source-backed ContextPack objects, typed tool and\nmodel steps, verification, and replayable traces.\n\nNearest PoC path: PostgreSQL + pgvector for dense vectors, PostgreSQL metadata\nfor durable project/source/chunk/lineage rows, local filesystem artifacts, and\nfake model/tool adapters until measured need.|\nThis file is ingested by Chunk 12 end-to-end proof. It mirrors the public\nREADME focus: project-scoped memory, hybrid retrieval, ContextPack evidence,\nand replayable traces without becoming a chat product.|Token spans must preserve original surfaces. Lemma/wordform expansions are\nadapter-owned and must appear in retrieval contributions and query-expansion\ntrace events without replacing source text.|",
+  "tool_call": {
+    "ID": "run_pack_snap_1:tool:read_snippet",
+    "ProjectID": "proof",
+    "RunID": "run_pack_snap_1",
+    "ToolName": "read_snippet",
+    "InputArtifactID": "",
+    "OutputArtifactID": "run_pack_snap_1_tool_read_snippet_out",
+    "Status": "completed",
+    "Decision": "allow",
+    "RiskLevel": "low",
+    "Error": ""
+  },
+  "verify_ok": true
+}

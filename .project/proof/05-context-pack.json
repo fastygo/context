@@ -1,0 +1,163 @@
+{
+  "context_pack": {
+    "id": "pack_snap_1",
+    "project_id": "proof",
+    "task_id": "cli-task",
+    "retrieval_plan_id": "cli-plan",
+    "purpose": "cli-context-pack",
+    "budget": {
+      "MaxItems": 8,
+      "MaxChars": 4000,
+      "MaxTokensEstimate": 0,
+      "ReserveForInstructions": 0,
+      "BudgetEstimatorVersion": "chars-div4-v1",
+      "RejectScoreFloor": 0.3,
+      "AllowSpanTruncate": false
+    },
+    "instructions": [
+      "Answer using cited evidence only."
+    ],
+    "evidence_items": [
+      {
+        "id": "chk_proof_15410c078c35bc98",
+        "class": "source_text",
+        "trust_level": "project",
+        "source_ref": {
+          "project_id": "proof",
+          "source_id": "079de33fede69aa8",
+          "chunk_id": "chk_proof_15410c078c35bc98",
+          "span": {
+            "start": 34,
+            "end": 438
+          },
+          "checksum": "8a0fbb2e784cc539e164abd31af3a7135b75078a05976a0c20f8d049e0c2501f"
+        },
+        "surface": "\nThe Context Runtime core targets deterministic project memory, precise\nindexing, hybrid retrieval, source-backed ContextPack objects, typed tool and\nmodel steps, verification, and replayable traces.\n\nNearest PoC path: PostgreSQL + pgvector for dense vectors, PostgreSQL metadata\nfor durable project/source/chunk/lineage rows, local filesystem artifacts, and\nfake model/tool adapters until measured need.",
+        "candidate": {
+          "chunk_id": "chk_proof_15410c078c35bc98",
+          "source_ref": {
+            "project_id": "proof",
+            "source_id": "079de33fede69aa8",
+            "chunk_id": "chk_proof_15410c078c35bc98",
+            "span": {
+              "start": 34,
+              "end": 438
+            },
+            "checksum": "8a0fbb2e784cc539e164abd31af3a7135b75078a05976a0c20f8d049e0c2501f"
+          },
+          "merged_score": 0.75,
+          "contributions": [
+            {
+              "retriever_id": "sparse",
+              "raw_score": 3,
+              "normalized_score": 1,
+              "weight": 0.75,
+              "reasons": [
+                "sparse_term"
+              ],
+              "explanation": "fake sparse term overlap",
+              "snapshot_id": "snap_1",
+              "project_id": "proof"
+            }
+          ],
+          "trust_level": "project",
+          "text_checksum": "8a0fbb2e784cc539e164abd31af3a7135b75078a05976a0c20f8d049e0c2501f"
+        }
+      },
+      {
+        "id": "chk_proof_8b2a727031ed2990",
+        "class": "source_text",
+        "trust_level": "project",
+        "source_ref": {
+          "project_id": "proof",
+          "source_id": "e4a486fc8ad28a52",
+          "chunk_id": "chk_proof_8b2a727031ed2990",
+          "span": {
+            "start": 31,
+            "end": 237
+          },
+          "checksum": "d7e40d6d09aa0beb39a752cd78761cf291fd61603e0f56df0e5ce9fa6c8fc457"
+        },
+        "surface": "\nThis file is ingested by Chunk 12 end-to-end proof. It mirrors the public\nREADME focus: project-scoped memory, hybrid retrieval, ContextPack evidence,\nand replayable traces without becoming a chat product.",
+        "candidate": {
+          "chunk_id": "chk_proof_8b2a727031ed2990",
+          "source_ref": {
+            "project_id": "proof",
+            "source_id": "e4a486fc8ad28a52",
+            "chunk_id": "chk_proof_8b2a727031ed2990",
+            "span": {
+              "start": 31,
+              "end": 237
+            },
+            "checksum": "d7e40d6d09aa0beb39a752cd78761cf291fd61603e0f56df0e5ce9fa6c8fc457"
+          },
+          "merged_score": 0.75,
+          "contributions": [
+            {
+              "retriever_id": "sparse",
+              "raw_score": 3,
+              "normalized_score": 1,
+              "weight": 0.75,
+              "reasons": [
+                "sparse_term"
+              ],
+              "explanation": "fake sparse term overlap",
+              "snapshot_id": "snap_1",
+              "project_id": "proof"
+            }
+          ],
+          "trust_level": "project",
+          "text_checksum": "d7e40d6d09aa0beb39a752cd78761cf291fd61603e0f56df0e5ce9fa6c8fc457"
+        }
+      },
+      {
+        "id": "chk_proof_b5db35daa02aea94",
+        "class": "source_text",
+        "trust_level": "project",
+        "source_ref": {
+          "project_id": "proof",
+          "source_id": "bf2d302d5f0e2cd3",
+          "chunk_id": "chk_proof_b5db35daa02aea94",
+          "span": {
+            "start": 176,
+            "end": 371
+          },
+          "checksum": "a801b1bdf0ebe8a776a23c010517364a2df66b6b6938518397bfd6fd69ab6c90"
+        },
+        "surface": "Token spans must preserve original surfaces. Lemma/wordform expansions are\nadapter-owned and must appear in retrieval contributions and query-expansion\ntrace events without replacing source text.",
+        "candidate": {
+          "chunk_id": "chk_proof_b5db35daa02aea94",
+          "source_ref": {
+            "project_id": "proof",
+            "source_id": "bf2d302d5f0e2cd3",
+            "chunk_id": "chk_proof_b5db35daa02aea94",
+            "span": {
+              "start": 176,
+              "end": 371
+            },
+            "checksum": "a801b1bdf0ebe8a776a23c010517364a2df66b6b6938518397bfd6fd69ab6c90"
+          },
+          "merged_score": 0,
+          "contributions": [
+            {
+              "retriever_id": "sparse",
+              "raw_score": 1,
+              "normalized_score": 0,
+              "weight": 0.75,
+              "reasons": [
+                "sparse_term"
+              ],
+              "explanation": "fake sparse term overlap",
+              "snapshot_id": "snap_1",
+              "project_id": "proof"
+            }
+          ],
+          "trust_level": "project",
+          "text_checksum": "a801b1bdf0ebe8a776a23c010517364a2df66b6b6938518397bfd6fd69ab6c90"
+        }
+      }
+    ],
+    "checksum": "9ac39561a5dfda764705f40df3fcf0194715ed5e90fe3e9f87d7ad7b570caf34",
+    "budget_estimator_version": "chars-div4-v1"
+  }
+}

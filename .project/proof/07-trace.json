@@ -1,0 +1,151 @@
+{
+  "run": {
+    "id": "run_pack_snap_1",
+    "project_id": "proof",
+    "task_id": "cli-task",
+    "mode": "foreground",
+    "status": "completed",
+    "policy_id": "cli-policy",
+    "pack_id": "pack_snap_1",
+    "owner": "cli",
+    "created_at": "2026-07-13T12:00:12.8108492Z",
+    "updated_at": "2026-07-13T12:00:12.8128476Z"
+  },
+  "events": [
+    {
+      "ID": "run_pack_snap_1:started",
+      "ProjectID": "proof",
+      "RunID": "run_pack_snap_1",
+      "Type": "run_started",
+      "Timestamp": "2026-07-13T12:00:12.8108492Z",
+      "Payload": {
+        "pack_id": "pack_snap_1"
+      },
+      "AnalyzerVersion": "",
+      "DictionaryVersion": "",
+      "FeatureScheme": "",
+      "QueryExpansionVer": "",
+      "SenseMappingVersion": "",
+      "ConceptMappingVer": "",
+      "AttestationVersion": "",
+      "SnapshotID": ""
+    },
+    {
+      "ID": "mc_ee6348f99462a2aa",
+      "ProjectID": "proof",
+      "RunID": "run_pack_snap_1",
+      "Type": "model_call",
+      "Timestamp": "2026-07-13T12:00:12.8108492Z",
+      "Payload": {
+        "provider": "fake",
+        "status": "completed",
+        "version": "fake-v1"
+      },
+      "AnalyzerVersion": "",
+      "DictionaryVersion": "",
+      "FeatureScheme": "",
+      "QueryExpansionVer": "",
+      "SenseMappingVersion": "",
+      "ConceptMappingVer": "",
+      "AttestationVersion": "",
+      "SnapshotID": ""
+    },
+    {
+      "ID": "run_pack_snap_1:tool_reg:read_snippet",
+      "ProjectID": "proof",
+      "RunID": "run_pack_snap_1",
+      "Type": "tool_decision",
+      "Timestamp": "2026-07-13T12:00:12.8108492Z",
+      "Payload": {
+        "phase": "registered_lookup",
+        "tool": "read_snippet"
+      },
+      "AnalyzerVersion": "",
+      "DictionaryVersion": "",
+      "FeatureScheme": "",
+      "QueryExpansionVer": "",
+      "SenseMappingVersion": "",
+      "ConceptMappingVer": "",
+      "AttestationVersion": "",
+      "SnapshotID": ""
+    },
+    {
+      "ID": "run_pack_snap_1:tool:read_snippet:decision",
+      "ProjectID": "proof",
+      "RunID": "run_pack_snap_1",
+      "Type": "policy_decision",
+      "Timestamp": "2026-07-13T12:00:12.8108492Z",
+      "Payload": {
+        "decision": "allow",
+        "tool": "read_snippet"
+      },
+      "AnalyzerVersion": "",
+      "DictionaryVersion": "",
+      "FeatureScheme": "",
+      "QueryExpansionVer": "",
+      "SenseMappingVersion": "",
+      "ConceptMappingVer": "",
+      "AttestationVersion": "",
+      "SnapshotID": ""
+    },
+    {
+      "ID": "run_pack_snap_1:tool:read_snippet:executed",
+      "ProjectID": "proof",
+      "RunID": "run_pack_snap_1",
+      "Type": "tool_executed",
+      "Timestamp": "2026-07-13T12:00:12.8128476Z",
+      "Payload": {
+        "bytes": "453",
+        "output_artifact": "run_pack_snap_1_tool_read_snippet_out",
+        "status": "completed",
+        "tool": "read_snippet"
+      },
+      "AnalyzerVersion": "",
+      "DictionaryVersion": "",
+      "FeatureScheme": "",
+      "QueryExpansionVer": "",
+      "SenseMappingVersion": "",
+      "ConceptMappingVer": "",
+      "AttestationVersion": "",
+      "SnapshotID": ""
+    },
+    {
+      "ID": "pack_snap_1:verified",
+      "ProjectID": "proof",
+      "RunID": "run_pack_snap_1",
+      "Type": "context_pack_verified",
+      "Timestamp": "2026-07-13T12:00:12.8128476Z",
+      "Payload": {
+        "flags": "0",
+        "pack_id": "pack_snap_1",
+        "status": "ok"
+      },
+      "AnalyzerVersion": "",
+      "DictionaryVersion": "",
+      "FeatureScheme": "",
+      "QueryExpansionVer": "",
+      "SenseMappingVersion": "",
+      "ConceptMappingVer": "",
+      "AttestationVersion": "",
+      "SnapshotID": ""
+    },
+    {
+      "ID": "run_pack_snap_1:finished",
+      "ProjectID": "proof",
+      "RunID": "run_pack_snap_1",
+      "Type": "run_finished",
+      "Timestamp": "2026-07-13T12:00:12.8128476Z",
+      "Payload": {
+        "status": "completed"
+      },
+      "AnalyzerVersion": "",
+      "DictionaryVersion": "",
+      "FeatureScheme": "",
+      "QueryExpansionVer": "",
+      "SenseMappingVersion": "",
+      "ConceptMappingVer": "",
+      "AttestationVersion": "",
+      "SnapshotID": ""
+    }
+  ]
+}

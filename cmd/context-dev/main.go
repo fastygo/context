@@ -30,6 +30,8 @@ func main() {
 		err = cmdTrace(args)
 	case "meta-check":
 		err = cmdMetaCheck(args)
+	case "proof-run":
+		err = cmdProofRun(args)
 	case "help", "-h", "--help":
 		usage()
 	default:
@@ -54,10 +56,12 @@ Usage:
   context-dev agent-run --data <dir> --project <id> --query <text>
   context-dev trace --data <dir> --project <id> --run <id>
   context-dev meta-check [--backend postgres]
+  context-dev proof-run [--root <repo>] [--out <.project/proof>]
 
 Modes dense and hybrid-dense require PostgreSQL/pgvector (see .project/local-server.md).
 Set CONTEXT_ENABLE_DENSE=1 to include dense in hybrid when Postgres is up.
 meta-check verifies durable metadata (schema_id, lineage, temporal, documents).
+proof-run executes Chunk 12 end-to-end proof and writes JSON under --out.
 Outputs stable JSON on stdout for Lab/fixture consumption.
 `)
 }
@@ -66,6 +70,21 @@ func cmdMetaCheck(args []string) error {
 	f := flagMap(args)
 	res, err := devcli.MetaCheck(f["backend"])
 	if err != nil {
+		return err
+	}
+	return devcli.PrintJSON(res)
+}
+
+func cmdProofRun(args []string) error {
+	f := flagMap(args)
+	root := f["root"]
+	if root == "" {
+		root = "."
+	}
+	out := f["out"]
+	res, err := devcli.RunProof(root, out)
+	if err != nil {
+		_ = devcli.PrintJSON(res)
 		return err
 	}
 	return devcli.PrintJSON(res)

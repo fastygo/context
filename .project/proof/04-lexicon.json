@@ -1,0 +1,55 @@
+{
+  "candidates": [
+    {
+      "chunk_id": "c-lex",
+      "source_ref": {
+        "project_id": "p1",
+        "source_id": "s-lex",
+        "chunk_id": "c-lex",
+        "span": {
+          "start": 0,
+          "end": 7
+        },
+        "checksum": "h-lex"
+      },
+      "merged_score": 1,
+      "contributions": [
+        {
+          "retriever_id": "exact",
+          "raw_score": 1,
+          "normalized_score": 1,
+          "weight": 1,
+          "reasons": [
+            "exact_phrase",
+            "sense_filter",
+            "concept_filter",
+            "attestation_filter"
+          ],
+          "explanation": "exact phrase match in chunk text",
+          "snapshot_id": "snap1",
+          "project_id": "p1",
+          "sense_id": "sense-run-sport",
+          "concept_id": "concept-running",
+          "attestation_id": "att-runners-1"
+        }
+      ],
+      "trust_level": "project",
+      "text_checksum": "h-lex"
+    }
+  ],
+  "filters": {
+    "SenseID": "sense-run-sport",
+    "ConceptID": "concept-running",
+    "AttestationID": "att-runners-1",
+    "Register": "sport",
+    "DialectRegion": "us",
+    "TimePeriod": "2020s",
+    "LexiconSourceID": "lex-proof-1",
+    "SourceAuthority": "proof-fixture",
+    "Language": "",
+    "TemporalRange": null,
+    "GraphNodeID": ""
+  },
+  "ok": true,
+  "original_text": "runners"
+}

@@ -1,0 +1,336 @@
+{
+  "project_id": "proof",
+  "snapshot_id": "snap_1",
+  "query": "ContextPack",
+  "mode": "hybrid-dense",
+  "candidates": [
+    {
+      "chunk_id": "chk_proof_15410c078c35bc98",
+      "source_ref": {
+        "project_id": "proof",
+        "source_id": "079de33fede69aa8",
+        "chunk_id": "chk_proof_15410c078c35bc98",
+        "span": {
+          "start": 34,
+          "end": 438
+        },
+        "checksum": "8a0fbb2e784cc539e164abd31af3a7135b75078a05976a0c20f8d049e0c2501f"
+      },
+      "merged_score": 1.4477160155645838,
+      "contributions": [
+        {
+          "retriever_id": "exact",
+          "raw_score": 1,
+          "normalized_score": 1,
+          "weight": 1,
+          "reasons": [
+            "exact_phrase"
+          ],
+          "explanation": "exact phrase match in chunk text",
+          "snapshot_id": "snap_1",
+          "project_id": "proof"
+        },
+        {
+          "retriever_id": "sparse",
+          "raw_score": 1,
+          "normalized_score": 0,
+          "weight": 0.75,
+          "reasons": [
+            "sparse_term"
+          ],
+          "explanation": "fake sparse term overlap",
+          "snapshot_id": "snap_1",
+          "project_id": "proof"
+        },
+        {
+          "retriever_id": "dense",
+          "raw_score": 0.9446026357066971,
+          "normalized_score": 0.8140291192083342,
+          "weight": 0.55,
+          "reasons": [
+            "dense_similarity"
+          ],
+          "explanation": "dense vector similarity",
+          "snapshot_id": "snap_1",
+          "project_id": "proof",
+          "embed_version": "fake-hash-v1"
+        }
+      ],
+      "trust_level": "project",
+      "text_checksum": "8a0fbb2e784cc539e164abd31af3a7135b75078a05976a0c20f8d049e0c2501f"
+    },
+    {
+      "chunk_id": "chk_proof_8b2a727031ed2990",
+      "source_ref": {
+        "project_id": "proof",
+        "source_id": "e4a486fc8ad28a52",
+        "chunk_id": "chk_proof_8b2a727031ed2990",
+        "span": {
+          "start": 31,
+          "end": 237
+        },
+        "checksum": "d7e40d6d09aa0beb39a752cd78761cf291fd61603e0f56df0e5ce9fa6c8fc457"
+      },
+      "merged_score": 1.2082204876519058,
+      "contributions": [
+        {
+          "retriever_id": "exact",
+          "raw_score": 1,
+          "normalized_score": 1,
+          "weight": 1,
+          "reasons": [
+            "exact_phrase"
+          ],
+          "explanation": "exact phrase match in chunk text",
+          "snapshot_id": "snap_1",
+          "project_id": "proof"
+        },
+        {
+          "retriever_id": "sparse",
+          "raw_score": 1,
+          "normalized_score": 0,
+          "weight": 0.75,
+          "reasons": [
+            "sparse_term"
+          ],
+          "explanation": "fake sparse term overlap",
+          "snapshot_id": "snap_1",
+          "project_id": "proof"
+        },
+        {
+          "retriever_id": "dense",
+          "raw_score": 0.8883821541979667,
+          "normalized_score": 0.378582704821647,
+          "weight": 0.55,
+          "reasons": [
+            "dense_similarity"
+          ],
+          "explanation": "dense vector similarity",
+          "snapshot_id": "snap_1",
+          "project_id": "proof",
+          "embed_version": "fake-hash-v1"
+        }
+      ],
+      "trust_level": "project",
+      "text_checksum": "d7e40d6d09aa0beb39a752cd78761cf291fd61603e0f56df0e5ce9fa6c8fc457"
+    },
+    {
+      "chunk_id": "chk_proof_2c0020e3661a67be",
+      "source_ref": {
+        "project_id": "proof",
+        "source_id": "81a2f0760ad0afd3",
+        "chunk_id": "chk_proof_2c0020e3661a67be",
+        "span": {
+          "start": 31,
+          "end": 92
+        },
+        "checksum": "73c141ca821f21da0c7f05d8403bdfec1aba57a7ab93e273b77b36d31a83d4c1"
+      },
+      "merged_score": 0.55,
+      "contributions": [
+        {
+          "retriever_id": "dense",
+          "raw_score": 0.9686133339677822,
+          "normalized_score": 1,
+          "weight": 0.55,
+          "reasons": [
+            "dense_similarity"
+          ],
+          "explanation": "dense vector similarity",
+          "snapshot_id": "snap_1",
+          "project_id": "proof",
+          "embed_version": "fake-hash-v1"
+        }
+      ],
+      "trust_level": "project",
+      "text_checksum": "73c141ca821f21da0c7f05d8403bdfec1aba57a7ab93e273b77b36d31a83d4c1"
+    },
+    {
+      "chunk_id": "chk_proof_b5db35daa02aea94",
+      "source_ref": {
+        "project_id": "proof",
+        "source_id": "bf2d302d5f0e2cd3",
+        "chunk_id": "chk_proof_b5db35daa02aea94",
+        "span": {
+          "start": 176,
+          "end": 371
+        },
+        "checksum": "a801b1bdf0ebe8a776a23c010517364a2df66b6b6938518397bfd6fd69ab6c90"
+      },
+      "merged_score": 0.4418959245473026,
+      "contributions": [
+        {
+          "retriever_id": "dense",
+          "raw_score": 0.9432363959181383,
+          "normalized_score": 0.8034471355405501,
+          "weight": 0.55,
+          "reasons": [
+            "dense_similarity"
+          ],
+          "explanation": "dense vector similarity",
+          "snapshot_id": "snap_1",
+          "project_id": "proof",
+          "embed_version": "fake-hash-v1"
+        }
+      ],
+      "trust_level": "project",
+      "text_checksum": "a801b1bdf0ebe8a776a23c010517364a2df66b6b6938518397bfd6fd69ab6c90"
+    },
+    {
+      "chunk_id": "chk_proof_3bfe5eeb1e59490c",
+      "source_ref": {
+        "project_id": "proof",
+        "source_id": "81a2f0760ad0afd3",
+        "chunk_id": "chk_proof_3bfe5eeb1e59490c",
+        "span": {
+          "start": 94,
+          "end": 348
+        },
+        "checksum": "963eecf81fe9924c980bea2ec276537782d87e34cf5a3aecf9d611b04fe2425d"
+      },
+      "merged_score": 0.4089421795067686,
+      "contributions": [
+        {
+          "retriever_id": "dense",
+          "raw_score": 0.9355006547548618,
+          "normalized_score": 0.743531235466852,
+          "weight": 0.55,
+          "reasons": [
+            "dense_similarity"
+          ],
+          "explanation": "dense vector similarity",
+          "snapshot_id": "snap_1",
+          "project_id": "proof",
+          "embed_version": "fake-hash-v1"
+        }
+      ],
+      "trust_level": "project",
+      "text_checksum": "963eecf81fe9924c980bea2ec276537782d87e34cf5a3aecf9d611b04fe2425d"
+    },
+    {
+      "chunk_id": "chk_proof_47b7a44a5f47214f",
+      "source_ref": {
+        "project_id": "proof",
+        "source_id": "81a2f0760ad0afd3",
+        "chunk_id": "chk_proof_47b7a44a5f47214f",
+        "span": {
+          "start": 350,
+          "end": 426
+        },
+        "checksum": "1009dd37279e996ec69c6edaf4579a701af0a99071679f6997787397abe84340"
+      },
+      "merged_score": 0.3735055237151535,
+      "contributions": [
+        {
+          "retriever_id": "dense",
+          "raw_score": 0.9271820616311098,
+          "normalized_score": 0.67910095220937,
+          "weight": 0.55,
+          "reasons": [
+            "dense_similarity"
+          ],
+          "explanation": "dense vector similarity",
+          "snapshot_id": "snap_1",
+          "project_id": "proof",
+          "embed_version": "fake-hash-v1"
+        }
+      ],
+      "trust_level": "project",
+      "text_checksum": "1009dd37279e996ec69c6edaf4579a701af0a99071679f6997787397abe84340"
+    },
+    {
+      "chunk_id": "chk_proof_2222b92d01f55df7",
+      "source_ref": {
+        "project_id": "proof",
+        "source_id": "bf2d302d5f0e2cd3",
+        "chunk_id": "chk_proof_2222b92d01f55df7",
+        "span": {
+          "start": 24,
+          "end": 174
+        },
+        "checksum": "509be051d2cc23e79a6d994880992374bf821a7609da1f9ccafa5e4de008ec08"
+      },
+      "merged_score": 0.3159069701468517,
+      "contributions": [
+        {
+          "retriever_id": "dense",
+          "raw_score": 0.9136610642077383,
+          "normalized_score": 0.5743763093579122,
+          "weight": 0.55,
+          "reasons": [
+            "dense_similarity"
+          ],
+          "explanation": "dense vector similarity",
+          "snapshot_id": "snap_1",
+          "project_id": "proof",
+          "embed_version": "fake-hash-v1"
+        }
+      ],
+      "trust_level": "project",
+      "text_checksum": "509be051d2cc23e79a6d994880992374bf821a7609da1f9ccafa5e4de008ec08"
+    },
+    {
+      "chunk_id": "chk_proof_f3920ea0f59ca247",
+      "source_ref": {
+        "project_id": "proof",
+        "source_id": "bf2d302d5f0e2cd3",
+        "chunk_id": "chk_proof_f3920ea0f59ca247",
+        "span": {
+          "start": 0,
+          "end": 22
+        },
+        "checksum": "ad33a2af1de7de6968b85fcb8faa63fef65a16b0dc9cf09992275288b599f48c"
+      },
+      "merged_score": 0.2737509508328818,
+      "contributions": [
+        {
+          "retriever_id": "dense",
+          "raw_score": 0.9037651311814362,
+          "normalized_score": 0.4977290015143305,
+          "weight": 0.55,
+          "reasons": [
+            "dense_similarity"
+          ],
+          "explanation": "dense vector similarity",
+          "snapshot_id": "snap_1",
+          "project_id": "proof",
+          "embed_version": "fake-hash-v1"
+        }
+      ],
+      "trust_level": "project",
+      "text_checksum": "ad33a2af1de7de6968b85fcb8faa63fef65a16b0dc9cf09992275288b599f48c"
+    },
+    {
+      "chunk_id": "chk_proof_0790c1677d994a31",
+      "source_ref": {
+        "project_id": "proof",
+        "source_id": "81a2f0760ad0afd3",
+        "chunk_id": "chk_proof_0790c1677d994a31",
+        "span": {
+          "start": 0,
+          "end": 29
+        },
+        "checksum": "68e2f817234b48741055b93a62ba7877e54abb2675858a1a20cb32bc587d64ae"
+      },
+      "merged_score": 0,
+      "contributions": [
+        {
+          "retriever_id": "dense",
+          "raw_score": 0.8395033455713564,
+          "normalized_score": 0,
+          "weight": 0.55,
+          "reasons": [
+            "dense_similarity"
+          ],
+          "explanation": "dense vector similarity",
+          "snapshot_id": "snap_1",
+          "project_id": "proof",
+          "embed_version": "fake-hash-v1"
+        }
+      ],
+      "trust_level": "project",
+      "text_checksum": "68e2f817234b48741055b93a62ba7877e54abb2675858a1a20cb32bc587d64ae"
+    }
+  ],
+  "dense_backend": "postgres_pgvector"
+}

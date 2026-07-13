@@ -861,7 +861,25 @@ Acceptance criteria:
   ContextPack, FocusProfile, AgentRun, and trace views.
 ```
 
-Status: pending
+Status: **completed** (2026-07-13) — hypothesis **validated** (with recorded gaps)
+
+### Completion notes
+
+- Added `context-dev proof-run` + `scripts/proof-e2e.sh`; corpus fixtures under
+  `.project/proof/corpus/`; Lab-replay JSON in `.project/proof/`
+  (`SUMMARY.md` / `SUMMARY.json` + steps 01–08).
+- Exercised exact/sparse/hybrid + dense/hybrid-dense (`postgres_pgvector`),
+  ContextPack, fake agent + verifier (`verify_ok=true`), runtime trace,
+  multilingual language filter + expansion events, lexicon filter metadata,
+  event-window temporal overlap, derived structured artifact lineage separate
+  from AgentRun trace events.
+- Commands:
+  `./scripts/dev.sh up`
+  `CONTEXT_PG_DSN=... ./scripts/proof-e2e.sh`
+  `go test ./...` (offline)
+- Known gaps / next decisions recorded in `.project/proof/SUMMARY.md`
+  (state.json ingest default, fake sparse, fake-hash embeddings, simple-lang /
+  DocumentStore lexicon path before dedicated adapters).
 
 ## Completion Notes
 

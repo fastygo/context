@@ -1,0 +1,15 @@
+# Lexicon Attestation Fixture
+
+Original attestation text: "runners" as a sport sense of run.
+
+Required metadata for proof:
+- sense_id: sense-run-sport
+- concept_id: concept-running
+- attestation span over the word runners
+- register: sport
+- dialect_region: us
+- time_period: 2020s
+- lexicon_source_id: lex-proof-1
+- source_authority: proof-fixture
+
+The surface form must remain "runners"; normalization must not overwrite it.
