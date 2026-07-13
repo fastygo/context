@@ -285,6 +285,11 @@ Metrics exposes `has_last_failed` / `last_failed_reason`.
 - Auth and quota enforcement remain deferred; mismatch on `project_id` → HTTP 403.
 - Contract tests: memory/index leakage + `policy/isolation` helpers.
 
+## API v1 freeze (Chunk 25 / ADR-0026)
+
+Catalog: [api-v1.md](api-v1.md). Health returns `api_version=v1`; responses set
+`X-Context-API-Version: v1`. `pkg/contextkit.APIVersion` matches.
+
 ## Metadata store (Chunk 11)
 
 Migrations live in `internal/storage/postgres/migrations/` and apply on

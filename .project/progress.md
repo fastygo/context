@@ -34,19 +34,26 @@ consumer surface is HTTP (Chunk 20) plus a thin `pkg/contextkit` client
 
 Phase 1 (Chunks 01–13) and Phase 2 (Chunks 14–20) are **complete**.
 
-Current target is **Phase 3 Reliable Beta** (start):
+Current target is **Phase 3 Reliable Beta** — Lab-ready stability track
+(roadmap Phase 3 + Phase 2 leftovers needed before external labs freeze on the
+contract). Chunks **21–24** done; **25–29** are the minimum before treating the
+HTTP/`contextkit` surface as stable for Lab/BFF:
 
 ```text
-thin pkg/contextkit HTTP client (Chunk 21)
-  -> operational metrics + eval history (Chunk 22)
-  -> index rebuild/repair tools (Chunk 23)
-  -> multi-tenant isolation design (Chunk 24 / ADR-0025)
+API v1 freeze (Chunk 25) ✓
+  -> Context inspector JSON (Chunk 26)
+  -> non-fake Completer + provider Embedder path (Chunk 27)
+  -> quota soft-limits (Chunk 28)
+  -> failure / degraded semantics (Chunk 29)
 ```
+
+Later Phase 3 (after 29): redaction/PII hooks, background scheduling/cancellation,
+trigram/fuzzy only if measured. Lang/UI/codegen stay outside core.
 
 QDrant, Turbopuffer, `context-sparse`, and full `context-lang-*` / TEI adapters
 remain deferred ([ADR-0017](decisions/0017-poc-backend-order.md),
 [adapters-backlog.md](adapters-backlog.md)). Full multi-tenant auth and
-production SDK generation remain deferred.
+OpenAPI codegen remain deferred.
 
 ## Phase 1 Archive (Chunks 01–13)
 
@@ -64,9 +71,9 @@ ADRs 0001–0023; do not re-implement.
 | 12 | E2E proof — hypothesis **validated** (`.project/proof/`) |
 | 13 | Durable CLI metadata opt-in (`CONTEXT_METADATA_KIND=postgres`) |
 
-Open gaps after Phase 2: semantic/provider Embedder still deferred; full SDK /
-OpenAPI generation deferred; multi-tenant **auth** and quota **enforcement**
-deferred (isolation design ADR-0025 shipped in Chunk 24).
+Open gaps for Lab-ready Core (Chunks **26–29**): inspector, non-fake
+model/embed path, quota soft-limits, failure/degraded semantics. API v1 freeze
+shipped (Chunk 25 / ADR-0026). Auth and OpenAPI codegen remain deferred.
 
 ## UX / DX / DSL Consumer Track
 
@@ -80,7 +87,13 @@ deferred (isolation design ADR-0025 shipped in Chunk 24).
 | Ops metrics / eval history | **Chunk 22 done** | Show metrics + history JSON | path_key only |
 | Index repair | **Chunk 23 done** | Trigger rebuild / retry-failed | ADR-0021 |
 | Tenant isolation design | **Chunk 24 done** | Bind project_id; no cross-project | ADR-0025 |
-| DSL workbench | After Chunk 24 | Edit FocusProfile / plans / policies | Neutral DTOs only |
+| API v1 freeze | **Chunk 25 done** | Pin HTTP/contextkit contract | ADR-0026 / api-v1.md |
+| Context inspector | **Chunk 26** | Render inspector JSON | No raw DB |
+| Non-fake model/embed | **Chunk 27** | Swap Completer/Embedder via config | Adapter, not Lab |
+| Quota soft-limits | **Chunk 28** | Show deny/ask on over-quota | ADR-0025 follow-up |
+| Failure/degraded | **Chunk 29** | Explicit unavailable errors | No silent empty |
+| DSL workbench | After Chunk 29 | Edit FocusProfile / plans / policies | Neutral DTOs only |
+| Redaction / background runs | After Chunk 29 | Later Phase 3 | future-layer |
 
 ## Plan Chunk 14: PostgreSQL FTS SparseSearchClient
 
@@ -531,6 +544,89 @@ Status: **completed** (2026-07-13)
 - `corpus.Project.TenantID`; migration `004_project_tenant_id.sql`.
 - `policy/isolation` helpers; HTTP mismatch → 403.
 - Leakage tests: memory metadata, in-memory index, HTTP status.
+
+## Plan Chunk 25: Public API v1 Freeze
+
+Copy-paste prompt:
+
+```text
+Work in @Context only. Freeze the Lab/BFF-facing HTTP + contextkit contract as
+API v1. Read ADR-0001, ADR-0024, progress Lab-ready track. Do not add OpenAPI
+codegen, gRPC, or auth.
+
+Plan and then implement:
+1. ADR for compatibility: /v1 routes + contextkit are the supported surface;
+   breaking JSON field renames require major bump; additive fields OK.
+2. Publish api_version=v1 on /health and response header X-Context-API-Version.
+3. pkg/contextkit exports APIVersion constant; client sends Accept and reads header.
+4. Document frozen endpoints in .project/api-v1.md (mirror local-server).
+5. Tests for health version; go test ./...; progress notes.
+6. Out of scope: inspector, quotas, provider LLM, redaction.
+
+Acceptance criteria:
+- Downstream Lab can pin api_version=v1 and detect mismatch.
+- No internal/ import required.
+```
+
+Status: **completed** (2026-07-13)
+
+### Completion notes
+
+- ADR-0026: v1 compatibility rules; `/v1` + contextkit are the freeze surface.
+- Catalog: `.project/api-v1.md`.
+- `api_version=v1` on `/health`; header `X-Context-API-Version` on all responses.
+- `contextkit.APIVersion` + `Client.LastAPIVersion`.
+
+## Plan Chunk 26: Context Inspector JSON
+
+Copy-paste prompt:
+
+```text
+Work in @Context only. Add Lab-facing inspector output explaining search/pack
+decisions without raw DB dumps. Read roadmap Context inspector / pack inspector,
+ADR-0020. Wire CLI + HTTP + contextkit. Offline tests. Out of scope: Lab UI.
+```
+
+Status: pending
+
+## Plan Chunk 27: Non-Fake Completer And Provider Embedder Path
+
+Copy-paste prompt:
+
+```text
+Work in @Context only. Keep fake defaults for offline tests. Add a measurable
+non-fake Completer path (e.g. local echo/script or HTTP provider behind
+models.Completer) and document provider Embedder selection beyond local_hash.
+Config via env; agent-run must be swappable without code edits. Out of scope:
+Lang adapters, Lab UI, billing.
+```
+
+Status: pending
+
+## Plan Chunk 28: Quota Soft-Limits
+
+Copy-paste prompt:
+
+```text
+Work in @Context only. Soft project quotas (chunks/packs/runs) using ops metrics
+counts; deny or ask outside the model (policy). ADR-0025 follow-up. CLI/HTTP
+surface quota status. No billing. Offline tests.
+```
+
+Status: pending
+
+## Plan Chunk 29: Failure And Degraded Semantics
+
+Copy-paste prompt:
+
+```text
+Work in @Context only. When VectorStore/metadata/sparse/embedder is unavailable,
+return typed unavailable/degraded errors (not empty success). Health/metrics
+expose backend readiness. Roadmap Failure Injection subset. Offline fakes +
+gated live tests. Out of scope: dashboards, QDrant.
+```
+
+Status: pending
 
 ## Completion Notes
 

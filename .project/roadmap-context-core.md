@@ -1521,6 +1521,12 @@ Exit criteria:
 
 Goal: support external users with controlled reliability.
 
+**Lab-ready subset (progress Chunks 25–29):** before freezing Lab/BFF on the
+public contract, ship API v1 freeze, Context inspector JSON, a non-fake
+Completer/provider Embedder config path, quota soft-limits, and explicit
+failure/degraded semantics. Redaction, background scheduling, and fuzzy/trigram
+remain later Phase 3 items. See `.project/progress.md`.
+
 Scope:
 
 - Multi-tenant isolation design.

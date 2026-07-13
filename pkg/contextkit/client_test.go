@@ -13,7 +13,10 @@ import (
 func TestClientAgainstMockServer(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, _ *http.Request) {
-		_ = json.NewEncoder(w).Encode(map[string]any{"ok": true, "service": "context-serve"})
+		w.Header().Set(contextkit.APIVersionHeader, contextkit.APIVersion)
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"ok": true, "service": "context-serve", "api_version": contextkit.APIVersion,
+		})
 	})
 	mux.HandleFunc("GET /v1/status", func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Authorization") != "Bearer secret" {
@@ -45,6 +48,12 @@ func TestClientAgainstMockServer(t *testing.T) {
 	h, err := cli.Health(ctx)
 	if err != nil || !h.OK {
 		t.Fatalf("health: %+v %v", h, err)
+	}
+	if h.APIVersion != contextkit.APIVersion {
+		t.Fatalf("api_version body: %q", h.APIVersion)
+	}
+	if cli.LastAPIVersion != contextkit.APIVersion {
+		t.Fatalf("LastAPIVersion: %q", cli.LastAPIVersion)
 	}
 	st, err := cli.Status(ctx, "p1")
 	if err != nil || st.Chunks != 2 {

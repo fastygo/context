@@ -50,9 +50,10 @@ func New(cfg Config) (*Server, error) {
 	return s, nil
 }
 
-// Handler returns the root HTTP handler (auth + routes).
+// Handler returns the root HTTP handler (auth + routes + API version header).
 func (s *Server) Handler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set(APIVersionHeader, APIVersion)
 		if r.URL.Path == "/health" {
 			s.handleHealth(w, r)
 			return
@@ -95,9 +96,10 @@ func (s *Server) routes() {
 
 func (s *Server) handleHealth(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
-		"ok":      true,
-		"service": "context-serve",
-		"time":    time.Now().UTC().Format(time.RFC3339),
+		"ok":          true,
+		"service":     "context-serve",
+		"api_version": APIVersion,
+		"time":        time.Now().UTC().Format(time.RFC3339),
 	})
 }
 

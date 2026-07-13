@@ -70,6 +70,7 @@ only when a later chunk or measurement requires them.
 | [0023](0023-derived-artifact-lineage-temporal-source-metadata.md) | Derived artifact lineage and temporal source metadata | Accepted |
 | [0024](0024-thin-http-service-boundary.md) | Thin HTTP service boundary | Accepted |
 | [0025](0025-multi-tenant-isolation.md) | Multi-tenant isolation boundary | Accepted |
+| [0026](0026-public-api-v1-freeze.md) | Public API v1 compatibility freeze | Accepted |
 
 ## Adapter progression by plan chunk
 

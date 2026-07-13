@@ -47,6 +47,16 @@ func TestHealthAndSearchPackTrace(t *testing.T) {
 	if rr.Code != http.StatusOK {
 		t.Fatalf("health: %d %s", rr.Code, rr.Body.String())
 	}
+	if rr.Header().Get("X-Context-API-Version") != "v1" {
+		t.Fatalf("api version header: %q", rr.Header().Get("X-Context-API-Version"))
+	}
+	var health map[string]any
+	if err := json.Unmarshal(rr.Body.Bytes(), &health); err != nil {
+		t.Fatal(err)
+	}
+	if health["api_version"] != "v1" {
+		t.Fatalf("health api_version: %#v", health)
+	}
 
 	rr = httptest.NewRecorder()
 	h.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/v1/status?project_id=proj_http", nil))

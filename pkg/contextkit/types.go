@@ -18,9 +18,10 @@ func (e APIError) Error() string {
 
 // HealthResponse is GET /health.
 type HealthResponse struct {
-	OK      bool   `json:"ok"`
-	Service string `json:"service"`
-	Time    string `json:"time,omitempty"`
+	OK         bool   `json:"ok"`
+	Service    string `json:"service"`
+	APIVersion string `json:"api_version,omitempty"`
+	Time       string `json:"time,omitempty"`
 }
 
 // StatusResponse is GET /v1/status (no host filesystem paths).

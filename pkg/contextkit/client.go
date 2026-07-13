@@ -12,12 +12,14 @@ import (
 	"time"
 )
 
-// Client talks to context-serve over HTTP+JSON (ADR-0024).
+// Client talks to context-serve over HTTP+JSON (ADR-0024 / ADR-0026).
 type Client struct {
 	BaseURL    string
 	Token      string
 	HTTPClient *http.Client
 	UserAgent  string
+	// LastAPIVersion is the X-Context-API-Version from the most recent response.
+	LastAPIVersion string
 }
 
 func (c *Client) http() *http.Client {
@@ -76,6 +78,9 @@ func (c *Client) do(ctx context.Context, method, path string, query url.Values, 
 		return err
 	}
 	defer res.Body.Close()
+	if v := res.Header.Get(APIVersionHeader); v != "" {
+		c.LastAPIVersion = v
+	}
 	raw, err := io.ReadAll(res.Body)
 	if err != nil {
 		return err
