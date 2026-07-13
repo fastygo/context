@@ -122,6 +122,29 @@ CONTEXT_PG_DSN='postgres://context:context@127.0.0.1:5432/context?sslmode=disabl
 
 Without `CONTEXT_PG_DSN`, those tests skip and `go test ./...` stays green.
 
+## Sparse FTS (Chunk 14)
+
+With the stack up:
+
+```bash
+export CONTEXT_PG_DSN='postgres://context:context@127.0.0.1:5432/context?sslmode=disable'
+export CONTEXT_SPARSE_KIND=postgres_fts
+go run ./cmd/context-dev ingest --data <dir> --project <id>
+go run ./cmd/context-dev search --data <dir> --project <id> --query '...' --mode sparse
+# hybrid / hybrid-dense also use FTS when CONTEXT_SPARSE_KIND=postgres_fts
+```
+
+Integration tests:
+
+```bash
+CONTEXT_PG_DSN='postgres://context:context@127.0.0.1:5432/context?sslmode=disable' \
+  go test ./internal/retrieval/sparse/postgresfts/ ./internal/devcli/ -run FTS -count=1
+```
+
+Default `CONTEXT_SPARSE_KIND` (unset/memory) keeps offline fake term-overlap.
+FTS uses PostgreSQL `simple` text config + `ts_rank_cd` (no morphology; gate for
+`context-sparse` / lang adapters).
+
 ## Metadata store (Chunk 11)
 
 Migrations live in `internal/storage/postgres/migrations/` and apply on

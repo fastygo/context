@@ -1,1086 +1,317 @@
 # Context Core Progress
 
 Status: active planning tracker  
-Scope: implementation path from repository baseline to hypothesis validation and
-proof of concept for a scalable project-scoped context engine.
+Scope: Phase 2 MVP path from validated PoC (Chunks 01–13) to a thin HTTP/gRPC
+service contract that Lab/BFF consumers can call without importing `internal/`.
 
 This file is intentionally written as copy-paste Plan chunks. Each chunk should
 fit one agent planning session and stay small enough for controlled execution.
 
 The `.project` folder is intentionally self-contained with this tracker,
 `roadmap-context-core.md`, `future-layer.md`, and deferred plugin roadmaps under
-`.project/plugins/`. Future agents should not need deleted brainstorming
-references. If more durable decisions are created, they should live under
-`.project/decisions/` and be referenced by the relevant chunk.
+`.project/plugins/`. Durable decisions live under `.project/decisions/`.
 
 ## Operating Rules
 
 - Keep the core brand-neutral: no product, mascot, or companion identity in
   core packages, comments, examples, or public APIs.
-- Keep concrete scenarios as adapters/plugins/downstream products. Do not move
-  message catalogs, timelines, CRM flows, calendars, dashboards, or methodology
-  runtimes into neutral core packages.
-- Keep source/observation events separate from runtime trace events. Device,
-  profile, session, and interpretation schemas belong in adapters/plugins;
-  Context stores their source artifacts, temporal metadata, lineage, evidence,
-  and replayable processing trace.
-- Do not map `Project` to a person in core contracts. Products choose whether a
-  project represents a workspace, case, corpus, organization, or another
-  isolation unit.
-- Prefer `internal` packages until interfaces prove stable.
-- Start with deterministic behavior and in-memory/local adapters before adding
-  infrastructure.
+- Keep concrete scenarios as adapters/plugins/downstream products.
+- Keep source/observation events separate from runtime trace events.
+- Do not map `Project` to a person in core contracts.
+- Prefer `internal` packages until interfaces prove stable; public service
+  surface arrives only in Chunk 20 as an explicit boundary.
 - Add external dependencies only when the current chunk needs them.
-- Keep the core multilingual by contract: language-specific dictionaries,
-  grammar rules, morphology engines, and query expansion must live in language
-  adapters/plugins, not core domain models.
-- Keep lexicographic resources evidence-first: senses, concepts, attestations,
-  variants, registers, regions, time periods, and lexicon sources are neutral
-  contracts; real dictionaries, thesauri, slang lists, regional vocabularies, and
-  historical corpora stay in adapters/resources.
-- Every runtime behavior that can affect a model or tool decision must become
+- Language-specific and lexicographic content stay in adapters/resources.
+- Every runtime behavior that can affect a model or tool decision must be
   traceable.
-- Do not build a chat app. Build the context engine that chat, browser
-  assistants, background agents, and downstream products can use.
-- Treat `Lab` as the first downstream UX/DX/DSL laboratory shell. `Lab` may
-  consume CLI JSON, service APIs, SDKs, and exported traces, but `Context` must
-  not import or depend on `Lab`.
-- For each implementation chunk, update this file with completion notes only
-  after tests or manual verification have run.
+- Do not build a chat app. Build the context engine.
+- Treat `Lab` as a downstream UX/DX shell only. Context must not import Lab.
+- Do not implement `.project/future-layer.md` items unless a chunk is blocked.
+- Update this file with completion notes only after verification.
 
 ## Phase Target
 
-The current target is hypothesis validation:
+Phase 1 (Chunks 01–13) is **complete**: hypothesis validated; durable CLI
+opt-in via `CONTEXT_METADATA_KIND=postgres`; proof artifacts in
+`.project/proof/`.
+
+Current target is **Phase 2 MVP**:
 
 ```text
-local project corpus
-  -> deterministic indexing
-  -> PostgreSQL + pgvector-backed metadata/vector search path
-  -> real CLI ingestion and retrieval
-  -> context pack creation
-  -> fake model/tool agent run
-  -> source-backed verification trace
+Postgres FTS sparse path
+  -> version-pinned ingest + dense upsert on snapshot commit
+  -> real (or measurable) Embedder adapter
+  -> ignore patterns + FocusProfile persistence
+  -> lang/lexicon contract-test harnesses (fixtures only)
+  -> eval golden harness (exact/sparse/dense/hybrid)
+  -> thin HTTP or gRPC service over stable CLI contracts
 ```
 
-The proof is not a polished product. The proof is a working CLI loop that shows
-the architecture can index project sources, retrieve relevant evidence, build a
-context pack, execute a typed tool/model step, and replay/debug what happened.
+Expected Phase 2 exit: a Lab/BFF can call Context through a service contract
+without depending on `internal/` packages. QDrant, Turbopuffer, `context-sparse`,
+and full `context-lang-*` / TEI adapters remain deferred until measurements and
+a superseding ADR ([ADR-0017](decisions/0017-poc-backend-order.md),
+[adapters-backlog.md](adapters-backlog.md)).
+
+## Phase 1 Archive (Chunks 01–13)
+
+Completed 2026-06-17 … 2026-07-13. Details lived in prior progress revisions and
+ADRs 0001–0023; do not re-implement.
+
+| Chunk | Result |
+| --- | --- |
+| 01 + Foundation Gate | ADRs, package/storage/index/linguistic/scoring boundaries |
+| 02–03 | Domain ports; localfs artifacts; memory metadata |
+| 04–05 | Indexing pipeline; exact/sparse/vector ports + fakes |
+| 06–08 | ContextPack + verifier; tools/fake model/agent; `context-dev` CLI |
+| 08A | Lineage + temporal contracts (ADR-0023) |
+| 09–11 | Compose pgvector; VectorStore adapter; Postgres MetadataStore |
+| 12 | E2E proof — hypothesis **validated** (`.project/proof/`) |
+| 13 | Durable CLI metadata opt-in (`CONTEXT_METADATA_KIND=postgres`) |
+
+Open gaps carried into Phase 2: fake-hash embeddings; version pins
+not applied on ingest commit; lang/lexicon only fixture-level; no service API.
+Sparse FTS is live behind `CONTEXT_SPARSE_KIND=postgres_fts` (Chunk 14).
 
 ## UX / DX / DSL Consumer Track
 
-`Lab` is the practical downstream workspace for checking whether the core is
-usable by humans and product BFFs. Keep this as a consumer track, not a core
-dependency.
-
 | Stage | Context progress | Lab responsibility | Boundary |
 | --- | --- | --- | --- |
-| UX fixtures | Chunks 02-05 | Mock project corpus, search results, evidence snippets, FocusProfile, ContextPack, trace screens | Fixtures only; no Context import |
-| DX CLI bridge | Chunk 08 | Read `context-dev` JSON output and render it in a browser shell | Lab consumes CLI artifacts; Context stays CLI-first |
-| Local stack dashboard | Chunks 09-12 | Show PostgreSQL/pgvector, active snapshot, source/chunk/vector counts, optional vector backend capability, and trace status | Lab reads health/status contracts |
-| BFF/API consumer | After CLI proof | Call a `context-core` HTTP/gRPC service through a thin client | Service contract before Go SDK |
-| DSL workbench | After ContextPack/FocusProfile stabilize | Edit/visualize FocusProfile, RetrievalPlan, ContextPackTemplate, ToolPolicy, AgentRunPolicy | DSL objects belong to Context contracts |
+| Proof fixtures | Chunks 08–12 | Render `.project/proof/*.json` | No Context import |
+| Durable local stack | Chunk 13 | Show postgres-backed project/snapshot/trace | Env-configured CLI |
+| Eval / golden UX | Chunk 19 | Display eval reports | Lab consumes JSON reports |
+| BFF/API consumer | **Chunk 20** | Call HTTP/gRPC client | Service contract before Go SDK |
+| DSL workbench | After Chunk 20 | Edit FocusProfile / plans / policies | Neutral DTOs only |
 
-Do not add Lab-specific package names, screens, widgets, or workflows to
-`Context`. Any UX requirement discovered in Lab should become a neutral DTO,
-trace field, API contract, or ADR only when it benefits more than that one
-consumer.
-
-## Plan Chunk 01: Architecture Baseline And Decisions
+## Plan Chunk 14: PostgreSQL FTS SparseSearchClient
 
 Copy-paste prompt:
 
 ```text
-Work in @Context only. Read README.md, .project/roadmap-context-core.md, and
-.project/progress.md. Do not rely on deleted brainstorming references. Create
-the initial architecture decision records needed before implementation, without
-adding runtime code.
+Work in @Context only. Replace fake term-overlap sparse retrieval with a live
+PostgreSQL full-text SparseSearchClient behind the existing port. Read
+ADR-0017, ADR-0008, adapters-backlog.md, progress.md, and local-server.md.
+Do not add context-sparse/Tantivy. Do not change domain models.
 
 Plan and then implement:
-1. Create .project/decisions/ if missing.
-2. Add ADR for package boundary: internal-first, pkg/contextkit later.
-3. Add ADR for metadata store path: memory first, PostgreSQL by PoC.
-4. Add ADR for artifact store path: local filesystem first, object storage later.
-5. Add ADR for `VectorStore` abstraction: hide pgvector, QDrant, Turbopuffer,
-   and collection/namespace strategy behind a stable port.
-6. Add ADR for sparse search path: deterministic/fake or PostgreSQL full-text
-   first, measured `context-sparse` replacement later.
-7. Add ADR for multilingual linguistic contracts and language adapter boundary:
-   token spans, lexeme references, wordforms, morphology features, analyzer
-   versions, query expansion, and `context-lang-*` repositories.
-8. Add ADR for sense/concept/attestation and lexicon resource interoperability:
-   neutral contracts for senses, concepts, attestations, variants, multiword
-   expressions, registers, dialect/region, time periods, and lexicon sources.
-9. Add ADR for model adapters: fake deterministic provider first, real providers
-   behind interface later.
-10. Add ADR for trace/event model: append-only events and replayability.
-11. Keep language brand-neutral and compatible with the MIT library boundary.
-12. Update .project/progress.md completion notes, run a read-only sanity check of
-   changed markdown, and report blockers only if
-   they block the next chunk.
+1. Add Postgres FTS schema/migration for chunk text indexed by project_id +
+   snapshot_id (and language if already on chunk rows).
+2. Implement SparseSearchClient under internal/retrieval/sparse/postgresfts
+   (or equivalent), requiring project_id and snapshot_id on every search.
+3. Wire ingest PersistIngest / dense path to upsert FTS rows when
+   CONTEXT_SPARSE_KIND=postgres_fts (default remains fake/memory for offline).
+4. CLI search modes sparse|hybrid|hybrid-dense use FTS when configured.
+5. BackendCapabilities: declare what FTS can/cannot filter server-side.
+6. Integration tests gated by CONTEXT_PG_DSN; unit tests offline.
+7. Record measured lexical limits vs fake sparse in .project/proof/ or
+   progress completion notes (gate for later context-sparse).
+8. Run go test ./... and update progress completion notes.
 
 Acceptance criteria:
-- ADR files exist and are concise.
-- No product-specific companion naming is introduced.
-- The next implementation chunk can start from stable decisions.
-```
-
-Status: **completed** (2026-06-17)
-
-### Completion notes
-
-- Created `.project/decisions/` with 14 accepted ADRs (see
-  [decisions/README.md](decisions/README.md)).
-- **Domain/interface baseline for Plan Chunks 02–04:** ADR-0001–0006 define
-  internal-first packages, metadata/artifact store interfaces, `VectorNamespace`,
-  fake model adapters, append-only `AgentRun`/`ContextPack` replay, and the first
-  no-service test path.
-- **Index architecture for Plan Chunks 04, 09, 10, and 12:** ADR-0007–0014 make
-  the hybrid index shape normative: `IndexSnapshot` manifest, dual Merkle
-  (`source_merkle_root` + `chunk_set_hash`), `VectorStore`/`VectorNamespace`,
-  `SparseIndexRef`, `ContextRef`/`PathAlias`, storage role separation, and
-  local/cloud service parity.
-- **Resolved by Foundation Gate (2026-07-11):** multilingual linguistic
-  contracts — [ADR-0015](decisions/0015-multilingual-linguistic-contracts.md).
-- **Resolved by Foundation Gate (2026-07-11):** lexicographic context
-  contracts — [ADR-0016](decisions/0016-lexicographic-context-contracts.md).
-- **Resolved by Foundation Gate (2026-07-11):** PoC backend order (pgvector
-  first) — [ADR-0017](decisions/0017-poc-backend-order.md). QDrant and
-  Turbopuffer remain later adapters, not first-stack requirements.
-- **Sparse path correction:** unit tests may use fake/Bleve-style doubles and
-  the first live PoC may use PostgreSQL full-text search or a minimal local
-  sparse adapter. `context-sparse` remains a measured replacement when lexical
-  scale or morphology requirements justify another service.
-- **Future-layer deferrals:** simhash copy-on-write seeding, cross-user Merkle
-  proofs, incremental segment sync, production multi-tenant governance, and
-  broad web crawling stay in `future-layer.md` until after the CLI proof works.
-- Background drafts remain non-normative under `.project/.draft/`.
-
-## Foundation Gate Before Runtime Code
-
-Status: **completed** (2026-07-11)
-
-Closed by ADR-0015–0021 under `.project/decisions/`. Chunk 02 may start. Do
-**not** add production infrastructure, graph engines, crawlers, distributed
-workers, advanced rerankers, or embedded KV caches at this gate.
-
-| # | Topic | ADR |
-| --- | --- | --- |
-| 1 | Multilingual linguistic contracts | [0015](decisions/0015-multilingual-linguistic-contracts.md) |
-| 2 | Lexicographic context contracts | [0016](decisions/0016-lexicographic-context-contracts.md) |
-| 3 | PoC backend order | [0017](decisions/0017-poc-backend-order.md) |
-| 4 | Deterministic identity and spans | [0018](decisions/0018-deterministic-identity-and-spans.md) |
-| 5 | Phase-1 retrieval scoring | [0019](decisions/0019-phase1-retrieval-scoring.md) |
-| 6 | ContextPack budget and evidence | [0020](decisions/0020-contextpack-budget-and-evidence.md) |
-| 7 | Snapshot commit failure semantics | [0021](decisions/0021-snapshot-commit-failure-semantics.md) |
-
-### Completion notes (Foundation Gate)
-
-- Linguistic ports and `context-lang-*` boundary are normative; PoC uses
-  no-op/fixture analyzers only.
-- Lexicographic contracts separate sense/concept/attestation from morphology;
-  TEI/SKOS stay in resource adapters.
-- First live stack is PostgreSQL + pgvector (+ Postgres FTS or fake sparse);
-  QDrant / `context-sparse` / embedded KV remain later.
-- Byte-span hashing, path_key, BOM/CRLF/NFC policy locked for Chunk 04 goldens.
-- Phase-1 merge is deterministic weighted scoring; model rerank deferred.
-- ContextPack evidence classes, trust labels, citation locking, and trim order
-  locked for Chunk 06.
-- Snapshot states include `failed`; active pointer flips only after `ready`.
-
-Foundation deferrals (unchanged):
-
-- Graph traversal can stay a future retrieval path until exact/sparse/dense
-  retrieval and `ContextPack` replay work.
-- Embedded KV adapters are cache optimizations only; do not add bbolt or Badger
-  before in-memory/local contracts are proven.
-- Prompt-injection classifiers, fine-grained ACLs, distributed jobs, broad web
-  capture, multimodal parsing, and production retention policies remain in
-  `future-layer.md`. Keep only the data fields needed to label source trust and
-  preserve provenance.
-
-## Plan Chunk 02: Internal Package Skeleton And Domain Models
-
-Copy-paste prompt:
-
-```text
-Work in @Context only. Read README.md, .project/roadmap-context-core.md,
-.project/progress.md, .project/decisions/*.md (including ADR-0015–0021).
-Foundation Gate is closed. Plan a minimal internal package skeleton for the
-context core and implement only domain models plus interfaces needed for tests.
-Do not add external services yet.
-
-Plan and then implement:
-1. Create internal package folders for corpus, artifacts, indexing, retrieval,
-   tools, agentruntime, models, policy, tracing, storage, and evals.
-2. Define core domain structs: Project, Source, Artifact, Chunk, SourceRef,
-   EvidenceItem, FocusProfile, RetrievalPlan, ContextPack, AgentRun, ToolCall,
-   Evaluation.
-3. Define indexing/sync structs from ADRs: IndexSnapshot, ManifestNode,
-   ChunkAlias, ContextRef, PathAlias, VectorNamespace, SparseIndexRef,
-   PolicySnapshot, ModelCall.
-4. Define neutral linguistic structs: LanguageCode, ScriptCode,
-   TokenOccurrence, LexemeID, Lemma, WordForm, MorphFeatureSet, MorphAnalysis,
-   QueryExpansion, AnalyzerVersion, DictionaryVersion.
-5. Define neutral lexicographic structs: Sense, Concept, Attestation, Variant,
-   MultiwordExpression, Register, DialectRegion, TimePeriod, and LexiconSource.
-6. Use explicit IDs as typed strings or small value types.
-7. Add validation methods only where invariants are obvious.
-8. Define store interfaces but provide no durable database adapter yet.
-9. Define model, embedding, reranker, morphology analyzer/generator, lexical
-   normalizer, and query expander interfaces without provider or language
-   dependencies.
-10. Define lexicon resource and attestation source interfaces without TEI,
-   SKOS, dictionary, thesaurus, or corpus dependencies.
-11. Define tool registry schema types and trace event type/recorder interface,
-   including fields for analyzer, dictionary, feature-schema,
-   query-expansion, sense/concept mapping, and attestation versions.
-12. Define foundation enums/value types for source trust labels, evidence class,
-   instruction-vs-data separation, retriever score explanations, snapshot
-   states, and deterministic ID/checksum/span conventions.
-13. Define only graph-related IDs or extension points needed by existing
-   retrieval contracts; do not implement graph traversal or graph storage.
-14. Add unit tests for basic invariants and zero-value rejection; run go test
-   ./... and update .project/progress.md completion notes.
-
-Acceptance criteria:
-- go test ./... passes.
-- Domain types compile without external infrastructure.
-- Linguistic contracts compile without importing language-specific adapters.
-- Lexicographic contracts compile without importing dictionary/thesaurus/corpus
-  adapters.
-- No implementation package imports downstream products.
-- No package imports PostgreSQL, pgvector, QDrant, Turbopuffer, bbolt, Badger,
-  Tantivy, TEI, SKOS, or provider SDKs.
-- Foundation specs exist for identity/span hashing, phase-1 retrieval scoring,
-  ContextPack budgeting, and snapshot commit failure semantics.
-```
-
-Status: **completed** (2026-07-11)
-
-### Completion notes
-
-- Created `internal/` packages: `ids`, `foundation`, `corpus`, `artifacts`,
-  `indexing`, `linguistic`, `lexicon`, `retrieval`, `policy`, `models`, `tools`,
-  `agentruntime`, `tracing`, `storage`, `evals`, `graph`.
-- Domain structs and ports cover Chunk 02 acceptance list; no durable adapters,
-  no provider/language/TEI/SKOS SDKs.
-- `graph` exposes only `NodeRef`/`EdgeRef` extension points (no traversal).
-- Unit tests cover zero-value rejection and key ADR invariants (spans, snapshot
-  ready/failed gates, evidence/instruction separation, factual evidence gate).
-- Verification: `go test ./...` passed (2026-07-11).
-
-## Plan Chunk 03: Local Artifact Store And In-Memory Metadata
-
-Copy-paste prompt:
-
-```text
-Work in @Context only. Read current internal packages and roadmap/progress docs.
-Implement local development storage needed for a real CLI PoC, but keep it
-replaceable.
-
-Plan and then implement:
-1. Add local filesystem ArtifactStore adapter under internal/artifacts/localfs.
-2. Add in-memory metadata store under internal/storage/memory.
-3. Support create/read/list for projects, sources, artifacts, chunks, context
-   packs, agent runs, tool calls, and trace events as needed.
-4. Preserve checksums and media types for stored artifacts.
-5. Ensure paths are project-scoped and cannot escape the configured root.
-6. Add tests for path traversal rejection.
-7. Add tests for artifact checksum verification.
-8. Add tests for in-memory store deterministic ordering where needed.
-9. Add simple error types for not found, conflict, validation, and permission.
-10. Avoid Postgres until the in-memory path proves the contracts.
-11. Run go test ./...
-12. Update progress completion notes.
-
-Acceptance criteria:
-- Local artifacts can be persisted and read back.
-- Metadata store tests prove the core can run without external services.
-- Storage contracts are ready for PostgreSQL adapter later.
-```
-
-Status: **completed** (2026-07-11)
-
-### Completion notes
-
-- Added `internal/apperr` with `not_found`, `conflict`, `validation`, `permission`.
-- Added `internal/artifacts/localfs` ArtifactStore: project-scoped paths, SHA-256
-  checksums, traversal rejection, checksum mismatch detection.
-- Added `internal/storage/memory` MetadataStore + ArtifactMetaStore with sorted
-  list ordering, append-only traces, and active-snapshot ready gate.
-- Extended `ArtifactMetaStore` with `ListArtifacts`.
-- Verification: `go test ./...` passed (2026-07-11).
-
-## Plan Chunk 04: Source Adapter, Parser, Chunker, And Merkle Manifest
-
-Copy-paste prompt:
-
-```text
-Work in @Context only. Build the deterministic indexing baseline for local files
-and stored artifacts. Read roadmap/progress and current indexing/corpus/storage
-packages before planning.
-
-Plan and then implement:
-1. Define SourceAdapter, Parser, Chunker, Enricher, and ManifestBuilder
-   interfaces if not already present.
-2. Implement local file source adapter with ignore-pattern support placeholder.
-3. Implement plaintext parser.
-4. Implement Markdown parser that preserves heading ancestry at a basic level.
-5. Implement paragraph-aware text chunker with span_start/span_end checksums.
-6. Implement Markdown section-aware chunker.
-7. Implement neutral token-span capture for chunks, preserving original surface
-   text and byte/rune offset mapping for snippets and citations.
-8. Add no-op/simple language adapter hooks that record tokenizer, normalizer,
-   analyzer, dictionary, and feature-schema versions without full morphology.
-9. Preserve paragraph, sentence, citation, dictionary-entry, sense, and
-   attestation boundary metadata where detected or provided by fixtures.
-10. Implement dual Merkle baseline: source tree hash and chunk set hash.
-11. Implement manifest diff for added, removed, changed, unchanged sources and
-   changed chunks.
-12. Implement minimal IndexSnapshot commit model with parser/chunker/embed/morph
-   and lexicon-resource version fields; add golden tests for stable chunks,
-   token spans, boundaries, manifest hashes, and snapshot IDs; run go test ./...
-   and update progress notes.
-
-Acceptance criteria:
-- Re-running indexing over unchanged files produces stable hashes.
-- Editing one file marks only that branch/source as changed.
-- Chunk spans, checksums, dual Merkle roots, and IndexSnapshot fields are
-  test-covered.
-- Token spans remain stable enough for snippets, highlighting, citations, and
-  morphology traces.
-- Boundary metadata can later support dictionary-entry, sense, and attestation
-  chunking without changing the core model.
-```
-
-Status: **completed** (2026-07-11)
-
-### Completion notes
-
-- Added indexing pipeline packages: `normalize`, `hashing`, `source`, `parse`,
-  `chunk`, `token`, `morph`, `manifest`, `commit`, `pipeline`.
-- Dual Merkle (`source_merkle_v1`, `chunk_set_merkle_v1`) and ADR-0018 path/chunk
-  hashes; BOM/CRLF/NFC normalization via `golang.org/x/text`.
-- Local file source adapter, plaintext + markdown parsers, paragraph + markdown
-  section chunkers, whitespace token spans, noop morph hook.
-- Manifest source/chunk diff; IndexSnapshot building → ready/failed seal.
-- Golden/unit tests: stable re-index hashes, single-file edit diff, spans/tokens.
-- Verification: `go test ./...` passed (2026-07-11).
-
-## Plan Chunk 05: Retrieval Contracts, Exact Lookup, Sparse Contract, And VectorStore Port
-
-Copy-paste prompt:
-
-```text
-Work in @Context only. Implement retrieval contracts and the deterministic exact
-lookup path, then define sparse-search and VectorStore ports without choosing
-live infrastructure yet. Do not bind domain models to PostgreSQL, QDrant,
-Turbopuffer, or `context-sparse`.
-
-Plan and then implement:
-1. Define Retriever interface and Candidate model.
-2. Implement exact source/span lookup retriever.
-3. Define SparseSearchClient interface with project_id and snapshot_id required
-   on every query.
-4. Define VectorStore interface for embedding upsert/search with project_id,
-   snapshot_id, embedding_version, and vector_namespace required on every call.
-5. Define MorphAnalyzer, MorphGenerator, LexicalNormalizer, and QueryExpander
-   contracts with no-op/simple implementations for tests only.
-6. Add basic Unicode normalization hooks but avoid complex morphology for now.
-7. Implement candidate score normalization for exact and sparse results.
-8. Implement candidate deduplication by chunk_id/source/span/checksum.
-9. Preserve score explanation fields, snapshot_id, analyzer versions, and
-   query-expansion reasons.
-10. Define retrieval filters for sense_id, concept_id, attestation_id, register,
-   dialect_region, time_period, lexicon_source, and source_authority.
-11. Add fake sparse, fake vector, fake language adapter, and fake lexicon
-   resource clients for deterministic unit tests.
-12. Add golden tests for exact phrase, keyword, lemma-vs-wordform,
-   ambiguous-wordform, sense disambiguation, concept label, attestation
-   date/region/register, typo-negative, query-expansion false positive, and
-   citation-like lookup if fixtures exist; add retrieval trace events for query,
-   expansions, sense/concept mappings, attestations, candidates, snapshot, and
-   selected results; run go test ./... and update progress completion notes.
-
-Acceptance criteria:
-- A local corpus can be searched without vectors through exact lookup and a fake
-  sparse client.
-- Vector retrieval can be planned without importing any concrete vector backend.
-- Morphology-aware retrieval can be planned without importing any language
-  adapter repository.
-- Candidate explanations are inspectable.
-- Exact retrieval remains deterministic and source-backed.
-- Sparse and vector backends remain replaceable through interfaces.
-- Query expansions are explainable and can be rejected without changing source
-  truth.
-- Sense/concept/attestation filters are explainable and do not replace source
-  truth.
-```
-
-Status: **completed** (2026-07-11)
-
-### Completion notes
-
-- Added `retrieval/index`, `exact`, `merge`, `fake`, `hybrid`; `linguistic/simple`;
-  `lexicon/fake`.
-- Exact phrase lookup + fake sparse/vector clients; project_id/snapshot_id required.
-- Phase-1 min-max normalization, dedup merge, explainable score reasons.
-- Filters for sense/concept/attestation/register/region/time/lexicon/authority.
-- Fixture tests: exact phrase, typo-negative, lemma/wordform expand, sense filter,
-  concept/attestation filters, rejected expansion false-positive, citation lookup,
-  vector namespace port, retrieval trace events.
-- Verification: `go test ./...` passed (2026-07-11).
-
-## Plan Chunk 06: Context Pack Builder And Verifier
-
-Copy-paste prompt:
-
-```text
-Work in @Context only. Implement ContextPack construction as the central runtime
-handoff object. Keep it independent from real LLM providers.
-
-Plan and then implement:
-1. Define FocusProfile and RetrievalPlan models with task summary, scope,
-   strategies, budgets, and verification requirements.
-2. Implement candidate merge and ranking pipeline.
-3. Implement ContextPackBuilder with token/character budget estimates.
-4. Include evidence, source refs, rank signals, rejected candidates, and next
-   step instructions.
-5. Distinguish original source text, lexical analysis, sense claim, concept
-   mapping, attestation evidence, and model inference in evidence items.
-6. Add ContextPack checksum and replay metadata.
-7. Implement baseline Verifier that checks each factual evidence item has a
-   valid source reference and checksum.
-8. Add tests for budget trimming without losing required citations or
-   attestations.
-9. Add tests for rejected unsupported evidence and unsupported sense/concept
-   mappings.
-10. Add tests for replaying a context pack from stored IDs.
-11. Emit trace events for context pack creation and verification.
-12. Run go test ./... and update progress completion notes.
-
-Acceptance criteria:
-- ContextPack is inspectable and replayable.
-- Unsupported factual evidence is rejected or flagged.
-- Unsupported sense, concept, or attestation claims are rejected or flagged.
-- Budgeting behavior is deterministic under tests.
-```
-
-Status: **completed** (2026-07-11)
-
-### Completion notes
-
-- Added `retrieval/pack` ContextPack builder, checksum, verifier, and replay.
-- Budget trim keeps citation-locked required items; exceeds budget → conflict.
-- Verifier flags unsupported sense/concept/model_inference used as facts.
-- Instruction/data separation enforced; pack checksum stable for replay.
-- Verification: `go test ./...` passed (2026-07-11).
-
-## Plan Chunk 07: Tool Registry, Fake Model, And Agent Run Loop
-
-Copy-paste prompt:
-
-```text
-Work in @Context only. Implement the smallest agent runtime loop with typed
-tools and a deterministic fake model. This is not a chat UI.
-
-Plan and then implement:
-1. Implement ToolRegistry with typed metadata, input/output schema versions,
-   risk level, timeout, and permission requirements.
-2. Implement fake read-only tool that returns structured output and optional
-   artifact references.
-3. Implement Policy decision model: allow, ask, deny.
-4. Implement fake deterministic LLM provider for tests.
-5. Implement AgentRun orchestrator for one task:
-   retrieval plan -> context pack -> fake model/tool step -> verification.
-6. Persist ToolCall and AgentRun status transitions.
-7. Store long tool output as artifact rather than inline trace.
-8. Add trace events for tool registration, policy decision, execution, and
-   result.
-9. Add tests for denied tool calls.
-10. Add tests for replaying a completed agent run.
-11. Run go test ./...
-12. Update progress completion notes.
-
-Acceptance criteria:
-- A complete fake agent run can execute locally.
-- Tool permissions are enforced outside the model.
-- Run trace is enough to debug what happened.
-```
-
-Status: **completed** (2026-07-11)
-
-### Completion notes
-
-- Added `tools/memory` registry, `tools/fake` read_snippet executor,
-  `policy/eval`, `models/fake` completer, `agentruntime/orchestrator`.
-- Agent loop: pack → model → policy-gated tool → verify; long tool output as
-  artifact; denied tools recorded without model override.
-- Replay via stored AgentRun + trace events.
-- Verification: `go test ./...` passed (2026-07-11).
-
-## Plan Chunk 08: Developer CLI For Real Local Workflow
-
-Copy-paste prompt:
-
-```text
-Work in @Context only. Add a small developer CLI to exercise the real engine
-from the terminal. Keep it for development and hypothesis validation, not as a
-finished product interface.
-
-Plan and then implement:
-1. Create cmd/context-dev.
-2. Add command: init-project --root <dir> --data <dir>.
-3. Add command: ingest --project <id> --path <dir-or-file>.
-4. Add command: search --project <id> --query <text> --mode sparse|exact|hybrid.
-5. Add command: context-pack --project <id> --query <text>.
-6. Add command: agent-run --project <id> --query <text> using fake model/tool.
-7. Add command: trace --run <id>.
-8. Use local artifact store and in-memory or file-backed metadata only if ready.
-9. Print stable machine-readable JSON for key outputs so Lab can consume it
-   without importing Context internals.
-10. Add CLI smoke tests where practical.
-11. Run go test ./... and manually run at least one CLI command.
-12. Update progress completion notes with exact commands used.
-
-Acceptance criteria:
-- A developer can ingest sample docs and search them from CLI.
-- ContextPack JSON can be inspected without a UI.
-- A fake agent run can be launched and traced from CLI.
-- Lab can consume the CLI JSON as fixtures without a Go dependency on Context.
-```
-
-Status: **completed** (2026-07-11)
-
-### Completion notes
-
-- Added `cmd/context-dev` and `internal/devcli` with JSON workspace state.
-- Commands: init-project, ingest, search, context-pack, agent-run, trace.
-- Localfs artifacts + file `state.json`; stdout JSON for Lab fixtures.
-- Smoke test covers full CLI workflow; manual run verified:
-  `go run ./cmd/context-dev init-project|ingest|search`.
-- Added JSON tags on key DTO fields for stable Lab consumption.
-- Verification: `go test ./...` passed (2026-07-11).
-
-## Plan Chunk 08A: Derived Artifact Lineage And Temporal Source Contracts
-
-Priority: **next contract gate; complete before Chunk 11 PostgreSQL migrations**.
-It may be implemented before or alongside Chunk 09 because Chunk 09 is
-infrastructure-only.
-
-Copy-paste prompt:
-
-```text
-Work in @Context only. Read ADR-0003, ADR-0006, ADR-0014, ADR-0020,
-ADR-0022, roadmap-context-core.md, progress.md, future-layer.md, and
-.project/plugins/observation-event-adapters.md.
-
-Add only neutral contracts required by unrelated derived-artifact and
-event-window use cases. Do not add device, accessibility, clinical, reaction,
-capability-profile, room, session, or product UI entities to the core.
-
-Plan and then implement:
-1. Add ADR-0023 for derived artifact lineage and neutral temporal source
-   metadata. Record that corpus events are not tracing.Event runtime records.
-2. Define ArtifactLineage (or equivalently narrow relation types) with output
-   artifact id, input artifact ids, source refs, optional ContextPack/AgentRun/
-   ToolCall refs, generator id/version, transformation kind, and created_at.
-3. Keep Artifact.SourceID as the optional immediate origin; do not overload it
-   as many-to-many derivation lineage.
-4. Define a neutral TemporalRange for source/chunk metadata with start/end,
-   time basis (occurred/observed/effective), and ingested_at.
-5. Add optional generic temporal bounds to RetrievalFilters. Do not reuse the
-   lexicographic TimePeriod type for event/log time.
-6. Define event-source compatibility requirements at the SourceAdapter
-   boundary: stable event identity, schema/producer version, occurred and
-   ingested times, trust, idempotent ingest, deterministic batch/window
-   checksums, and handling for late/out-of-order events.
-7. Implement in-memory lineage metadata storage and deterministic ordering only
-   if the accepted ADR requires it before PostgreSQL. Keep raw event schemas in
-   adapters and store event batches as normal source/artifact bytes.
-8. Add tests for lineage validation, temporal range validation/filtering,
-   duplicate/idempotent fixture ingest, and strict separation between source
-   events and runtime trace events.
-9. Run go test ./... and update completion notes only after verification.
-
-Acceptance criteria:
-- A structured derived artifact can be traced to multiple inputs without
-  parsing an AgentRun trace.
-- A source/chunk can carry neutral event-time bounds and retrieval can express
-  a deterministic time window.
-- Runtime tracing remains operational replay; it is not a domain event store.
-- Existing file/document ingestion and ContextPack tests remain unchanged.
-- Product-specific observation schemas can be added as plugins without changing
-  core domain entities.
+- Sparse/hybrid can use Postgres FTS without Docker-required unit tests.
+- Fake sparse remains available when CONTEXT_SPARSE_KIND is unset/memory.
+- No Tantivy/QDrant code.
 ```
 
 Status: **completed** (2026-07-13)
 
 ### Completion notes
 
-- Accepted [ADR-0023](decisions/0023-derived-artifact-lineage-temporal-source-metadata.md):
-  immutable multi-input `ArtifactLineage`, half-open same-basis temporal overlap,
-  and strict corpus-event/runtime-trace separation.
-- Added optional `TemporalMetadata` to sources/chunks and generic temporal
-  retrieval filters without reusing lexicographic `TimePeriod`.
-- Added event-source compatibility descriptor and deterministic duplicate event
-  identity/batch checksum contracts; payload schemas remain adapter-owned.
-- Added in-memory lineage persistence with immutable records and deterministic
-  output-artifact ordering.
-- Verification: `go test ./...` passed (2026-07-13).
+- Package: `internal/retrieval/sparse/postgresfts` (`Open` / `EnsureSchema` /
+  `Upsert` / `Search` / `Capabilities`); table `context_sparse_fts` with
+  generated `tsvector('simple')` + GIN.
+- Generic `internal/retrieval/sparse.Retriever` maps hits through chunk index
+  (language/temporal filters stay client-side).
+- CLI: ingest upserts FTS when `CONTEXT_SPARSE_KIND=postgres_fts`; search modes
+  `sparse|hybrid|hybrid-dense` report `sparse_backend=postgres_fts`.
+- Default sparse remains fake/memory; no Tantivy/QDrant.
+- Lexical limits vs fake (gate for later `context-sparse`):
+  - FTS uses `simple` config (no stemming/morphology; multilingual tokenization
+    only by whitespace/punctuation).
+  - Ranking is `ts_rank_cd` + `plainto_tsquery` (no phrase/proximity operator
+    surface yet; no BM25-style tunable term weights).
+  - Fake term-overlap still useful offline and for fixture determinism; FTS is
+    the live lexical path for compose Postgres.
+- Tests: offline `go test ./internal/retrieval/sparse/`; gated
+  `CONTEXT_PG_DSN=... go test ./internal/retrieval/sparse/postgresfts/ ./internal/devcli/ -run FTS`.
 
-## Plan Chunk 09: Local Server Environment With PostgreSQL And pgvector
+## Plan Chunk 15: Ingest Version Pins And Dense Upsert On Snapshot Commit
 
 Copy-paste prompt:
 
 ```text
-Work in @Context only. Prepare real local infrastructure for the hypothesis
-validation path. Read the accepted Chunk 08A/ADR-0023 contract if available;
-do not invent a PostgreSQL schema before it. Do not otherwise rewrite core
-contracts. Prefer Docker
-Compose or clear shell scripts if the repository already uses that style.
+Work in @Context only. Close the gap where dense vectors are built lazily at
+CLI search time and chunk rows lack stable analyzer/embed version pins.
+Read ADR-0011, ADR-0018, ADR-0021, progress.md Chunk 10/13 notes.
 
 Plan and then implement:
-1. Add local development compose/config for PostgreSQL with the pgvector
-   extension enabled.
-2. Add .env.example or documented environment variables if needed.
-3. Add Makefile or scripts for dev-up, dev-down, dev-reset, dev-logs, dev-ps if
-   appropriate.
-4. Add health-check documentation for PostgreSQL and pgvector extension checks.
-5. Add storage configuration structs for metadata, vector, sparse, and artifact
-   stores without hardcoding the vector backend.
-6. Keep secrets out of git.
-7. Add README or .project note for local server setup commands.
-8. Verify containers start locally.
-9. Verify PostgreSQL connection.
-10. Verify `CREATE EXTENSION IF NOT EXISTS vector` succeeds.
-11. Verify vector dimension compatibility for the first embedding model.
-12. Run go test ./... and update progress completion notes with exact setup and
-   verification commands.
+1. On ingest/snapshot commit, persist embedding_version, chunker_version,
+   morph/analyzer_version (and dictionary_version when present) on chunk
+   metadata rows.
+2. When VectorStore is configured (postgres_pgvector), upsert dense points for
+   the new snapshot_id during commit (same embedding_version as config).
+3. Keep snapshot failure semantics (ADR-0021): failed dense upsert must not
+   leave a Ready snapshot without recorded failure_reason.
+4. Search must prefer already-upserted vectors; optional rebuild flag only.
+5. Tests: offline fake VectorStore commit path; gated postgres integration.
+6. Update progress completion notes.
 
 Acceptance criteria:
-- A new developer can start the PostgreSQL/pgvector local stack with one Docker
-  service.
-- Health checks are documented.
-- Core still runs tests without services unless integration tests are requested.
+- A ready snapshot implies version pins on chunks and dense rows for that
+  snapshot when dense is enabled.
+- Lazy search-time upsert is no longer the primary path.
 ```
 
-Status: **completed** (2026-07-13)
+Status: pending
 
-### Completion notes
-
-- Added `docker-compose.yml` with one `pgvector/pgvector:pg16` service and
-  `deploy/postgres/init/01-extensions.sql` (`CREATE EXTENSION vector` only;
-  no domain DDL).
-- Added `.env.example`, `Makefile`, `scripts/dev.sh` (`up` / `down` /
-  `reset` / `logs` / `ps` / `wait` / `health`), and
-  [local-server.md](local-server.md).
-- Added `internal/config` storage endpoint structs (`metadata` / `vector` /
-  `sparse` / `artifact`) with env overlay; vector kind defaults to
-  `postgres_pgvector` without locking domain code to a vendor SDK.
-- PoC embedding contract locked for health smoke: `fake-hash-v1`, dimension
-  `8`, metric `cosine`, collection `context_dense_v1`.
-- Verified: `./scripts/dev.sh up`, `./scripts/dev.sh health` (connection +
-  extension + `vector(8)` dims), `go test ./...` offline.
-- Secrets: `.env` remains gitignored; only `.env.example` is committed.
-
-## Plan Chunk 10: PostgreSQL VectorStore Adapter And Hybrid Retrieval
+## Plan Chunk 16: Embedder Adapter Beyond Fake-Hash
 
 Copy-paste prompt:
 
 ```text
-Work in @Context only. Implement the first live VectorStore adapter with
-PostgreSQL/pgvector and keep QDrant, Turbopuffer, and `context-sparse` as later
-replaceable adapters behind interfaces. Keep tests isolated and skip integration
-tests unless PostgreSQL is available.
+Work in @Context only. Introduce a replaceable Embedder suitable for measurable
+dense retrieval while keeping models/fake for unit tests. Read ADR-0005,
+ADR-0017, config VectorStore defaults, adapters-backlog.md.
 
 Plan and then implement:
-1. Add PostgreSQL/pgvector dependency or SQL access only if needed.
-2. Define VectorStore, VectorNamespace, SparseSearchClient, and HybridRetriever
-   interfaces if not already stable.
-3. Implement pgvector adapter under internal/retrieval/dense/postgresvector.
-4. Require project_id and snapshot_id filters on dense and sparse search.
-   Preserve optional neutral temporal bounds and declare whether the backend can
-   enforce temporal/metadata filters server-side.
-5. Record embedding_version, chunker_version, morph_version, context_ref, and
-   snapshot_id in vector rows/results.
-6. Add a backend capability model so QDrant and Turbopuffer can later declare
-   filter, namespace, dimension, metric, and managed-service behavior.
-7. Add fake embedding provider, fake vector store, and fake sparse client for
-   deterministic tests.
-8. Add fake/simple language adapter fixtures to prove dense/hybrid retrieval can
-   carry language, token-span, analyzer-version, and query-expansion metadata.
-9. Add integration tests gated by PostgreSQL environment variables.
-10. Add CLI mode that uses dense/hybrid retrieval when PostgreSQL is configured.
-11. Add a short adapter backlog for QDrant, Turbopuffer, `context-sparse`, and
-   `context-lang-*` language repositories.
-12. Run unit tests and, if services are up, integration tests; update progress
-   completion notes with commands and results.
+1. Keep models.Embedder port; fake-hash remains default for tests.
+2. Add one live-or-local adapter selectable by config (e.g. env
+   CONTEXT_EMBEDDER_KIND / model id). Prefer a deterministic local option if a
+   remote provider is not justified yet; document dimension + embedding_version.
+3. Changing dimension requires a new embedding_version; do not silently rewrite
+   old vector rows.
+4. Wire Chunk 15 commit path and CLI dense modes through the selected Embedder.
+5. Contract/unit tests for dimension mismatch rejection.
+6. Gated integration if the chosen adapter needs network/files; otherwise
+   fully offline.
+7. Update local-server.md and progress notes with exact version/dim.
 
 Acceptance criteria:
-- Dense and sparse retrieval work through interfaces.
-- PostgreSQL/pgvector works as the first live VectorStore.
-- QDrant, Turbopuffer, and `context-sparse` can be added without changing domain
-  models.
-- Language adapters can be added without changing domain models or vector
-  adapters.
-- Integration tests do not fail when services are absent.
+- Dense path is no longer hard-bound to HashEmbed dim=8 only.
+- Fake embedder still powers go test ./... offline.
 ```
 
-Status: **completed** (2026-07-13)
+Status: pending
 
-### Completion notes
-
-- Extended `VectorPoint` / `VectorHit` with `chunker_version`, `morph_version`,
-  `context_ref`, `language`, and echoed snapshot/embedding provenance on hits.
-- Added `retrieval.BackendCapabilities` + `CapabilityReporter`; pgvector reports
-  project/snapshot filters server-side and temporal/metadata filters as
-  client-side only.
-- Implemented `internal/retrieval/dense` Retriever and
-  `internal/retrieval/dense/postgresvector` live `VectorStore` (table
-  `context_dense_vectors`, dim from config, cosine default).
-- Fake `models/fake.Embedder` (`fake-hash-v1`, dim 8); hybrid Engine accepts
-  Dense; language filter + analyzer/embed versions proven in dense unit tests.
-- CLI modes: `dense`, `hybrid-dense`; optional `CONTEXT_ENABLE_DENSE=1` for
-  hybrid. Adapter backlog: [adapters-backlog.md](adapters-backlog.md).
-- Verified: `go test ./...` offline (integration skipped without
-  `CONTEXT_PG_DSN`); with DSN, postgresvector integration + CLI
-  `--mode dense` returned `dense_backend=postgres_pgvector`.
-
-## Plan Chunk 11: PostgreSQL Metadata Adapter
+## Plan Chunk 17: Ignore Patterns And FocusProfile Persistence
 
 Copy-paste prompt:
 
 ```text
-Work in @Context only. Implement PostgreSQL metadata persistence behind the
-existing store interfaces. Keep migrations explicit and tests gated.
+Work in @Context only. Make real repositories ingestible and focus lenses
+durable. Read roadmap Phase 2 (ignore patterns, FocusProfile), corpus/retrieval
+FocusProfile types, Postgres metadata store.
 
 Plan and then implement:
-1. Add PostgreSQL driver and migration approach only if needed.
-2. Create schema for projects, sources, artifacts (`artifact_type`, `schema_id`),
-   artifact lineage/provenance, optional source/chunk temporal ranges,
-   index_snapshots, manifest_nodes, chunk_aliases, embeddings/vector rows,
-   context packs, agent runs, tool calls, evaluations, trace events, token
-   occurrences, morphology analyses, query expansions, senses, concepts,
-   attestations, variants, multiword expressions, registers, dialect regions,
-   time periods, and lexicon sources.
-3. Add migration files under an internal or migrations folder.
-4. Implement PostgreSQL store adapter behind existing interfaces.
-5. Preserve transaction boundaries for indexing and agent run updates.
-6. Add indexes for project_id, source_id, chunk_id, snapshot_id, context_ref,
-   run_id, language, lexeme_id, analyzer_version, dictionary_version, and
-   timestamps where needed; add filters for sense_id, concept_id, region,
-   register, time_period, lexicon_source, source_authority, artifact schema,
-   lineage inputs, and neutral temporal bounds where needed.
-7. Add integration tests gated by environment variable.
-8. Add CLI option to use PostgreSQL metadata store.
-9. Verify rollback/reset workflow for local development.
-10. Run unit tests and, if services are up, integration tests.
-11. Document exact commands.
-12. Update progress completion notes.
+1. Add project-scoped ignore patterns (e.g. .contextignore or config list) used
+   by LocalFiles / ingest to skip paths deterministically.
+2. Persist FocusProfile in MetadataStore (memory + postgres) with list/get/put.
+3. CLI: manage focus (put/list/get) and pass --focus on search/context-pack/
+   agent-run when provided.
+4. Tests for ignore matching and focus round-trip (postgres gated).
+5. Update progress notes.
 
 Acceptance criteria:
-- Metadata survives process restart.
-- Store interface remains implementation-neutral.
-- Linguistic metadata survives process restart without requiring language
-  adapter dependencies in the storage adapter.
-- Lexicographic metadata survives process restart without requiring
-  dictionary/thesaurus/corpus adapter dependencies in the storage adapter.
-- Structured artifact schema identity, derivation lineage, and temporal bounds
-  survive restart without importing a consumer event/spec schema.
-- Tests can run without PostgreSQL unless integration mode is enabled.
+- Ingest of a typical repo can exclude build/vendor dirs via patterns.
+- FocusProfile survives restart when CONTEXT_METADATA_KIND=postgres.
 ```
 
-Status: **completed** (2026-07-13)
+Status: pending
 
-### Completion notes
-
-- Added `internal/storage/postgres` MetadataStore + ArtifactMetaStore +
-  DocumentStore + TxRunner; migrations in
-  `internal/storage/postgres/migrations/001_metadata.sql`.
-- Schema covers projects/sources/chunks (temporal columns), artifacts_meta
-  (`artifact_type`, `schema_id`), artifact_lineage, index_snapshots,
-  manifest_nodes, chunk_aliases, context_packs, agent_runs, tool_calls,
-  trace_events, evaluations, and filterable `meta_documents` for
-  linguistic/lexicographic JSON.
-- `SetActiveSnapshot` uses a SQL transaction (supersede previous ready
-  snapshot). Reset local DB via `./scripts/dev.sh reset`.
-- CLI: `context-dev meta-check --backend postgres`.
-- Verified: offline `go test ./...`; with `CONTEXT_PG_DSN`, postgres
-  integration + `meta-check` (`schema_id`, lineage, temporal, sense document).
-
-## Plan Chunk 12: End-To-End Hypothesis Validation
+## Plan Chunk 18: Language And Lexicon Contract-Test Harnesses
 
 Copy-paste prompt:
 
 ```text
-Work in @Context only. Run and harden the first real end-to-end CLI proof using
-local infrastructure. The goal is evidence that the architecture works, not a
-polished UX.
-
-Plan and then implement/fix only what is needed:
-1. Start PostgreSQL/pgvector locally.
-2. Initialize a demo project through the CLI.
-3. Ingest README.md and .project/*.md as the first project corpus.
-4. Build dense pgvector rows and any available exact/sparse indexes for a
-   committed IndexSnapshot.
-5. Run exact, PostgreSQL full-text or fake sparse, dense, and hybrid search
-   queries.
-6. Run at least one multilingual fixture query that proves token spans,
-   language code, lemma/wordform metadata, and query-expansion trace shape.
-7. Run at least one lexicon fixture query that proves original text,
-   sense/concept metadata, attestation span, register/region/time metadata, and
-   source authority are preserved.
-8. Generate a ContextPack for a roadmap-related query.
-9. Run fake-model agent flow using the ContextPack.
-10. Run verifier and inspect trace output.
-11. Ingest one neutral event/log fixture with stable event ids and occurred/
-   ingested times, build deterministic event-window chunks, then create one
-   schema-identified derived artifact with lineage to multiple inputs.
-12. Prove one temporal retrieval window and show that source events remain
-   separate from AgentRun trace events.
-13. Capture command outputs, JSON fixtures, or summaries in .project/proof/ if
-   appropriate so Lab can replay the UX without hitting live services.
-14. Fix only blocking bugs discovered by the proof. Record known gaps and next
-   decisions in progress.md, then report whether the
-   hypothesis is validated, partially validated, or failed.
-
-Acceptance criteria:
-- Real CLI commands prove ingest -> search -> context pack -> agent run -> trace.
-- PostgreSQL/pgvector is exercised as the first live metadata/vector stack.
-- The proof identifies what must change before adding QDrant, Turbopuffer, or
-  `context-sparse` adapters.
-- The proof identifies what must change before adding `context-lang-*` language
-  adapters.
-- The proof identifies what must change before adding TEI/SKOS/dictionary,
-  thesaurus, historical, regional, or slang lexicon adapters.
-- The proof produces enough artifacts to debug failure or demonstrate success.
-- The proof replays a derived artifact's lineage independently from runtime
-  trace and deterministically filters an event-window source by time.
-- The proof exports enough neutral JSON for Lab to render project corpus, search,
-  ContextPack, FocusProfile, AgentRun, and trace views.
-```
-
-Status: **completed** (2026-07-13) — hypothesis **validated** (with recorded gaps)
-
-### Completion notes
-
-- Added `context-dev proof-run` + `scripts/proof-e2e.sh`; corpus fixtures under
-  `.project/proof/corpus/`; Lab-replay JSON in `.project/proof/`
-  (`SUMMARY.md` / `SUMMARY.json` + steps 01–08).
-- Exercised exact/sparse/hybrid + dense/hybrid-dense (`postgres_pgvector`),
-  ContextPack, fake agent + verifier (`verify_ok=true`), runtime trace,
-  multilingual language filter + expansion events, lexicon filter metadata,
-  event-window temporal overlap, derived structured artifact lineage separate
-  from AgentRun trace events.
-- Commands:
-  `./scripts/dev.sh up`
-  `CONTEXT_PG_DSN=... ./scripts/proof-e2e.sh`
-  `go test ./...` (offline)
-- Known gaps / next decisions recorded in `.project/proof/SUMMARY.md`
-  (state.json ingest default, fake sparse, fake-hash embeddings, simple-lang /
-  DocumentStore lexicon path before dedicated adapters).
-
-## Plan Chunk 13: Durable CLI Postgres Metadata
-
-Copy-paste prompt:
-
-```text
-Work in @Context only. Close the Chunk 12 gap where CLI ingest/agent/trace only
-use state.json / memory.MetadataStore while Postgres MetadataStore already exists.
-Opt-in via CONTEXT_METADATA_KIND=postgres; offline default unchanged.
+Work in @Context only. Add fixture harnesses that prove language and lexicon
+adapters can plug in without changing vector/metadata adapters. Do not
+implement production context-lang-* or TEI/SKOS dictionaries in this repo.
+Read ADR-0015, ADR-0016, future-layer 05A/05B (contracts only), proof
+multilingual/lexicon JSON.
 
 Plan and then implement:
-1. Add openMetadata helper from config.LoadStorageConfigFromEnv /
-   postgres.OpenFromConfig.
-2. After successful ingest, when kind=postgres: PutProject, PutSource, PutChunk,
-   PutSnapshot, SetActiveSnapshot (tx), optional PutArtifactMeta; fail on error.
-3. Keep state.json as local cache for search.
-4. Wire AgentRun to openMetadata instead of hard-coded memory; PutPack/PutRun/
-   traces via store.
-5. Trace CLI: prefer ListTrace from postgres when configured, else state.json.
-6. Gated integration tests with CONTEXT_PG_DSN; unit tests offline.
-7. Update local-server.md and progress completion notes.
+1. Contract-test harness for MorphAnalyzer / QueryExpander / Normalizer using
+   simple fixtures (en + one additional language surface).
+2. Contract-test harness for lexicon Sense/Concept/Attestation/LexiconSource
+   fixtures via DocumentStore or typed ports already in internal/lexicon.
+3. Golden assertions: token spans preserved; analyzer_version pinned;
+   original surface not overwritten; sense/concept filters explainable.
+4. No network; no large dictionary corpora in-repo.
+5. Document how an external context-lang-* or TEI adapter would satisfy the
+   harness in adapters-backlog.md.
+6. Update progress notes.
 
 Acceptance criteria:
-- CONTEXT_METADATA_KIND=postgres makes ingest/agent durable across process restart.
-- Without the env, CLI behavior and go test ./... stay offline-green.
-- Domain ports unchanged; no QDrant/FTS/lang adapters in this chunk.
+- Harnesses fail if an adapter breaks span/version/original-text invariants.
+- Core still has no product-specific language packs.
 ```
 
-Status: **completed** (2026-07-13)
+Status: pending
 
-### Completion notes
+## Plan Chunk 19: Eval Golden Harness
 
-- `OpenMetadata` / `PersistIngest` wire CLI to Postgres when
-  `CONTEXT_METADATA_KIND=postgres`; state.json remains search cache.
-- Ingest persists project, sources, artifact meta, chunks, snapshot + active
-  pointer (tx). AgentRun uses opened MetadataStore (PutPack/run/trace);
-  `trace` prefers `ListTrace` from Postgres.
-- Verified: `go test ./...` offline; `CONTEXT_PG_DSN=... go test ./internal/devcli/
-  -run Durable` restart survival for chunks/snapshot/trace.
+Copy-paste prompt:
+
+```text
+Work in @Context only. Add a deterministic eval harness with a small golden
+set covering exact, sparse, dense, and hybrid retrieval plus one pack/verify
+check. Read internal/evals ports, proof corpus, Chunk 14–16 adapters.
+
+Plan and then implement:
+1. Define golden cases under testdata or .project/proof/eval/ (neutral fixtures).
+2. Runner executes retrieval modes and records pass/fail + scores/reasons.
+3. Include at least one multilingual and one lexicon-filter golden from Chunk 18
+   fixtures if available.
+4. CLI or go test entrypoint: context-dev eval or go test ./internal/evals/...
+5. Offline by default; optional postgres-gated denser path.
+6. Emit JSON report suitable for Lab.
+7. Update progress notes with commands.
+
+Acceptance criteria:
+- go test or documented command fails on retrieval regressions.
+- Report is machine-readable for Lab without importing internal packages.
+```
+
+Status: pending
+
+## Plan Chunk 20: Thin HTTP Or gRPC Service Contract
+
+Copy-paste prompt:
+
+```text
+Work in @Context only. Expose a thin service API over existing CLI/domain
+contracts so Lab/BFF can operate without importing internal/. Prefer HTTP+JSON
+first unless an accepted ADR requires gRPC. Read roadmap Phase 2 service/SDK
+notes, progress consumer track, brand-neutral-core rule.
+
+Plan and then implement:
+1. Add ADR for service boundary: endpoints mirror proven CLI operations
+   (health, init/ingest status, search, context-pack, agent-run, trace, focus,
+   eval report fetch); auth deferred or minimal shared-secret for local only.
+2. Implement server under cmd/ or internal/httpserver (or grpc) wiring the same
+   stores/config as context-dev.
+3. Stable request/response JSON (or protobuf) aligned with existing CLI DTO
+   field names where possible.
+4. Do not leak host filesystem paths; use path_key / context_ref (ADR-0013).
+5. Integration test: httptest or grpc test against memory or gated postgres.
+6. Document curl/grpcurl examples in .project/local-server.md or api.md.
+7. Explicitly out of scope: full SDK, multi-tenant auth, Lab UI, QDrant.
+8. Run go test ./... and update progress completion notes.
+
+Acceptance criteria:
+- A downstream client can search + build a ContextPack + fetch a trace over the
+  network API using only the public contract.
+- Unit tests remain offline-green.
+- Context still does not import Lab.
+```
+
+Status: pending
 
 ## Completion Notes
 
-Use this section after each chunk. Keep notes short and factual.
+Use this section after each Phase 2 chunk. Keep notes short and factual.
 
-### 2026-07-11 - Foundation Gate
+### Phase 1 closed (2026-07-13)
 
-Result:
-- Accepted ADR-0015–0021 covering linguistic/lexicographic contracts, PoC
-  backend order, identity/spans, phase-1 scoring, ContextPack budgets, and
-  snapshot failure semantics.
-- Updated `decisions/README.md` index and supersedes notes.
-
-Verification:
-- Read-only cross-check against roadmap open decisions, plugin roadmaps, and
-  prior ADR-0004/0008/0009/0010/0011 wording.
-- No runtime Go code added.
-
-Follow-up:
-- Start Plan Chunk 02 (internal package skeleton and domain models).
-
-### 2026-07-11 - Chunk 02
-
-Result:
-- Added internal domain packages and interface-only ports for corpus through
-  evals, plus linguistic/lexicon contracts and graph ID stubs.
-- Validation helpers reject zero-values and enforce ADR-backed invariants.
-
-Verification:
-- `go test ./...` passed.
-
-Follow-up:
-- Plan Chunk 03: localfs ArtifactStore + in-memory MetadataStore.
-
-### 2026-07-11 - Chunk 03
-
-Result:
-- localfs ArtifactStore and in-memory MetadataStore adapters; shared apperr codes.
-
-Verification:
-- `go test ./...` passed (path traversal, checksum mismatch, sorted lists, ready gate).
-
-Follow-up:
-- Plan Chunk 04: source adapter, parser, chunker, Merkle manifest.
-
-### 2026-07-11 - Chunk 04
-
-Result:
-- Deterministic indexing baseline: local sources, parse/chunk, token spans,
-  dual Merkle, snapshot seal, manifest diff.
-
-Verification:
-- `go test ./...` passed.
-
-Follow-up:
-- Plan Chunk 05: exact retrieval, sparse/vector ports and fakes.
-
-### 2026-07-11 - Chunk 05
-
-Result:
-- Exact/sparse retrieval, merge scoring, fake vector/lang/lexicon ports, hybrid
-  search with explainable expansions and traces.
-
-Verification:
-- `go test ./...` passed.
-
-Follow-up:
-- Plan Chunk 06: ContextPack builder and verifier.
-
-### 2026-07-11 - Chunk 05
-
-Result:
-- Exact/sparse retrieval, merge scoring, fake vector/lang/lexicon ports, hybrid
-  search with explainable expansions and traces.
-
-Verification:
-- `go test ./...` passed.
-
-Follow-up:
-- Plan Chunk 06: ContextPack builder and verifier.
-
-### 2026-07-11 - Chunk 06
-
-Result:
-- ContextPack builder with ADR-0020 budgets/evidence classes; verifier and
-  surface replay.
-
-Verification:
-- `go test ./...` passed.
-
-Follow-up:
-- Plan Chunk 07: tool registry, fake model, agent run loop.
-
-### 2026-07-11 - Chunk 07
-
-Result:
-- Tool registry, fake model/tool, policy eval outside model, agent orchestrator
-  with artifact spill and run/trace replay.
-
-Verification:
-- `go test ./...` passed.
-
-Follow-up:
-- Plan Chunk 08: `cmd/context-dev` CLI.
-
-### 2026-07-11 - Chunk 08
-
-Result:
-- `context-dev` CLI for init/ingest/search/context-pack/agent-run/trace with
-  machine-readable JSON output.
-
-Verification:
-- `go test ./...` passed.
-- Manual: `go run ./cmd/context-dev init-project --root … --data … --project demo`
-  then ingest + search for `ContextPack`.
-
-Follow-up:
-- Plan Chunk 08A contract addendum, then Chunk 09 PostgreSQL/pgvector compose.
-
-### 2026-07-13 - ADR-0022 Structured Artifact Schema Identity
-
-Result:
-- Accepted [ADR-0022](decisions/0022-structured-artifact-schema-id.md):
-  `Artifact.SchemaID`, closed `artifact_type` vocabulary, `PutOptions` on
-  `ArtifactStore.Put`.
-- localfs meta persists `artifact_type` / `schema_id` / `source_id`; structured
-  artifacts require `schema_id`.
-- Tool spill marks `artifact_type=tool_output`.
-
-Verification:
-- `go test ./...` passed.
-
-Follow-up:
-- Plan Chunk 08A: add generic derivation lineage and temporal source contracts.
-- Chunk 11: persist `schema_id`, `artifact_type`, lineage, and temporal metadata.
-- Plan Chunk 09 may proceed after or alongside the 08A contract work.
-- Downstream: register schema-bound draft tools in builders (not core).
-
-### 2026-07-13 - Chunk 08A
-
-Result:
-- Accepted ADR-0023 and added neutral artifact-lineage, temporal source/chunk,
-  temporal retrieval, and event-source compatibility contracts.
-- In-memory metadata can replay multi-input lineage independently from runtime
-  traces; event identities deduplicate deterministically by stable id/checksum.
-
-Verification:
-- `go test ./...` passed.
-
-Follow-up:
-- Plan Chunk 09: PostgreSQL/pgvector local compose stack.
-- Plan Chunk 11: persist accepted lineage and temporal contracts.
-
-```text
-### YYYY-MM-DD - Chunk NN
-
-Result:
-- ...
-
-Verification:
-- ...
-
-Follow-up:
-- ...
-```
+- Chunks 01–13 completed; proof hypothesis validated; durable CLI opt-in.
+- See `.project/proof/SUMMARY.md` and ADRs 0001–0023.

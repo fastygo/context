@@ -92,6 +92,17 @@ func Ingest(dataDir, projectID, path string) (State, error) {
 			return State{}, apperr.Wrap(apperr.Internal, "persist ingest metadata", err)
 		}
 	}
+
+	sparseH, err := OpenSparse(ctx, nil)
+	if err != nil {
+		return State{}, err
+	}
+	defer sparseH.Closer()
+	if sparseH.UsesFTS {
+		if err := sparseH.UpsertChunks(ctx, st.Project.ID, chunks); err != nil {
+			return State{}, apperr.Wrap(apperr.Internal, "persist ingest sparse fts", err)
+		}
+	}
 	return st, nil
 }
 

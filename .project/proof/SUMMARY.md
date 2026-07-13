@@ -26,7 +26,9 @@
 - ~~CLI ingest still persists workspace state.json only~~ **Closed in Chunk 13:**
   opt-in `CONTEXT_METADATA_KIND=postgres` persists ingest/agent/trace; state.json
   remains an offline cache.
-- Sparse path remains fake term-overlap; Postgres FTS and context-sparse are not required for this proof.
+- ~~Sparse path remains fake term-overlap~~ **Closed in Chunk 14:**
+  `CONTEXT_SPARSE_KIND=postgres_fts` live FTS; fake remains default offline.
+  Lexical limits: [14-sparse-fts-limits.md](14-sparse-fts-limits.md).
 - Dense embeddings use fake-hash-v1 dim=8; live embedding providers are deferred.
 - Multilingual/lexicon proofs use in-memory fixtures with simple-lang adapters; context-lang-* and TEI/SKOS lexicon adapters are not wired.
 

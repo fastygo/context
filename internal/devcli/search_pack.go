@@ -15,21 +15,22 @@ import (
 	"github.com/fastygo/context/internal/retrieval/dense"
 	"github.com/fastygo/context/internal/retrieval/dense/postgresvector"
 	"github.com/fastygo/context/internal/retrieval/exact"
-	"github.com/fastygo/context/internal/retrieval/fake"
 	"github.com/fastygo/context/internal/retrieval/hybrid"
 	"github.com/fastygo/context/internal/retrieval/index"
 	"github.com/fastygo/context/internal/retrieval/merge"
 	"github.com/fastygo/context/internal/retrieval/pack"
+	"github.com/fastygo/context/internal/retrieval/sparse/postgresfts"
 )
 
 // SearchResult is CLI JSON for search.
 type SearchResult struct {
-	ProjectID  ids.ProjectID         `json:"project_id"`
-	SnapshotID ids.SnapshotID        `json:"snapshot_id"`
-	Query      string                `json:"query"`
-	Mode       string                `json:"mode"`
-	Candidates []retrieval.Candidate `json:"candidates"`
-	Backend    string                `json:"dense_backend,omitempty"`
+	ProjectID     ids.ProjectID         `json:"project_id"`
+	SnapshotID    ids.SnapshotID        `json:"snapshot_id"`
+	Query         string                `json:"query"`
+	Mode          string                `json:"mode"`
+	Candidates    []retrieval.Candidate `json:"candidates"`
+	Backend       string                `json:"dense_backend,omitempty"`
+	SparseBackend string                `json:"sparse_backend,omitempty"`
 }
 
 func loadIndex(st State) (*index.Memory, ids.SnapshotID, error) {
@@ -82,20 +83,35 @@ func Search(dataDir, projectID, query, mode string) (SearchResult, error) {
 		Strategies: []retrieval.RetrieverStrategy{},
 	}
 
+	ctx := context.Background()
+	sparseH, err := OpenSparse(ctx, idx)
+	if err != nil {
+		return SearchResult{}, err
+	}
+	defer sparseH.Closer()
+	if sparseH.UsesFTS {
+		if client, ok := sparseH.Client.(*postgresfts.Client); ok {
+			if err := EnsureFTSFromIndex(ctx, client, idx, st.Project.ID, snap); err != nil {
+				return SearchResult{}, err
+			}
+		}
+	}
+
 	eng := hybrid.Engine{
 		Exact:  exact.Retriever{Index: idx},
-		Sparse: fake.SparseRetriever{Client: fake.SparseClient{Index: idx}, Index: idx},
+		Sparse: sparseH.Retriever(idx),
 	}
 	backend := ""
+	sparseBackend := sparseH.BackendID
 
 	wantDense := mode == "dense" || mode == "hybrid-dense" || (mode == "hybrid" && denseEnabledByEnv())
 	if wantDense {
-		store, ns, emb, err := openDenseStore(context.Background())
+		store, ns, emb, err := openDenseStore(ctx)
 		if err != nil {
 			return SearchResult{}, err
 		}
 		defer store.Close()
-		if err := ensureDenseIndex(context.Background(), store, ns, emb, idx, st.Project.ID, snap); err != nil {
+		if err := ensureDenseIndex(ctx, store, ns, emb, idx, st.Project.ID, snap); err != nil {
 			return SearchResult{}, err
 		}
 		eng.Dense = dense.Retriever{
@@ -129,18 +145,19 @@ func Search(dataDir, projectID, query, mode string) (SearchResult, error) {
 		return SearchResult{}, apperr.New(apperr.Validation, "mode must be exact|sparse|hybrid|dense|hybrid-dense")
 	}
 
-	res, err := eng.Search(context.Background(), plan, "cli-q", query)
+	res, err := eng.Search(ctx, plan, "cli-q", query)
 	if err != nil {
 		return SearchResult{}, err
 	}
 	cands := merge.DedupAndMerge(res.Candidates)
 	return SearchResult{
-		ProjectID:  st.Project.ID,
-		SnapshotID: snap,
-		Query:      query,
-		Mode:       mode,
-		Candidates: cands,
-		Backend:    backend,
+		ProjectID:     st.Project.ID,
+		SnapshotID:    snap,
+		Query:         query,
+		Mode:          mode,
+		Candidates:    cands,
+		Backend:       backend,
+		SparseBackend: sparseBackend,
 	}, nil
 }
 

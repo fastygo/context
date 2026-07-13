@@ -69,18 +69,19 @@ Nearest work follows `.project/progress.md` plan chunks:
 | Phase | Status | Goal |
 | --- | --- | --- |
 | **0 — Architecture baseline** | Chunk 01 + Foundation Gate done | Lock package, storage, index, trace, linguistic, and scoring boundaries |
-| **1 — Proof of concept** | Chunks 02–12 done | Prove ingest → retrieve → `ContextPack` → fake model/tool step → verifier → replayable trace |
-| **2 — Durable CLI** | Chunk 13 done | Opt-in Postgres MetadataStore for ingest/agent/trace |
+| **1 — Proof of concept** | Chunks 02–13 done | CLI loop + pgvector/Postgres + durable metadata opt-in; proof validated |
+| **2 — MVP toward service API** | Chunk **14** done; **15–20** pending | FTS live → versioned dense commit → embedder → ignore/focus → lang/lex harness → eval → **HTTP/gRPC** |
 
-Immediate next step: remaining proof gaps (Postgres FTS / version pins /
-lang-lex adapters) as measured need. Durable CLI:
+Immediate next step: **Chunk 15** — ingest version pins + dense upsert on snapshot commit.
 
-`CONTEXT_METADATA_KIND=postgres` + `CONTEXT_PG_DSN=...`
+Phase 2 exit: thin HTTP (preferred) or gRPC service so Lab/BFF call Context
+without importing `internal/`. See `.project/progress.md`.
 
 Local stack: `./scripts/dev.sh up` then `./scripts/dev.sh health`.
-Dense CLI modes: `--mode dense` / `--mode hybrid-dense`.
-Metadata smoke: `context-dev meta-check --backend postgres`.
-E2E proof artifacts: [`.project/proof/`](.project/proof/).
+Durable CLI: `CONTEXT_METADATA_KIND=postgres` + `CONTEXT_PG_DSN=...`.
+Sparse FTS: `CONTEXT_SPARSE_KIND=postgres_fts` + `CONTEXT_PG_DSN=...`.
+Dense modes: `--mode dense` / `--mode hybrid-dense`.
+Proof artifacts: [`.project/proof/`](.project/proof/).
 See [`.project/local-server.md`](.project/local-server.md).
 
 PoC storage progression (from accepted ADRs):
