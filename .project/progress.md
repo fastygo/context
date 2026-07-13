@@ -665,7 +665,24 @@ Acceptance criteria:
 - Core still runs tests without services unless integration tests are requested.
 ```
 
-Status: pending
+Status: **completed** (2026-07-13)
+
+### Completion notes
+
+- Added `docker-compose.yml` with one `pgvector/pgvector:pg16` service and
+  `deploy/postgres/init/01-extensions.sql` (`CREATE EXTENSION vector` only;
+  no domain DDL).
+- Added `.env.example`, `Makefile`, `scripts/dev.sh` (`up` / `down` /
+  `reset` / `logs` / `ps` / `wait` / `health`), and
+  [local-server.md](local-server.md).
+- Added `internal/config` storage endpoint structs (`metadata` / `vector` /
+  `sparse` / `artifact`) with env overlay; vector kind defaults to
+  `postgres_pgvector` without locking domain code to a vendor SDK.
+- PoC embedding contract locked for health smoke: `fake-hash-v1`, dimension
+  `8`, metric `cosine`, collection `context_dense_v1`.
+- Verified: `./scripts/dev.sh up`, `./scripts/dev.sh health` (connection +
+  extension + `vector(8)` dims), `go test ./...` offline.
+- Secrets: `.env` remains gitignored; only `.env.example` is committed.
 
 ## Plan Chunk 10: PostgreSQL VectorStore Adapter And Hybrid Retrieval
 

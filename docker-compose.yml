@@ -1,0 +1,31 @@
+# Local PoC stack: one PostgreSQL service with pgvector (ADR-0017).
+# Metadata and dense vectors share this instance in Chunks 09–12.
+# Domain packages must not import this file or vendor SDKs.
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: context-postgres
+    restart: unless-stopped
+    ports:
+      - "${CONTEXT_PG_PORT:-5432}:5432"
+    environment:
+      POSTGRES_USER: "${CONTEXT_PG_USER:-context}"
+      POSTGRES_PASSWORD: "${CONTEXT_PG_PASSWORD:-context}"
+      POSTGRES_DB: "${CONTEXT_PG_DATABASE:-context}"
+    volumes:
+      - context_pgdata:/var/lib/postgresql/data
+      - ./deploy/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\"",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  context_pgdata:
