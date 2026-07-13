@@ -33,7 +33,7 @@ func TestSparseFTSIngestSearchIntegration(t *testing.T) {
 		t.Fatal("expected snapshot")
 	}
 
-	res, err := Search(data, string(st.Project.ID), "ContextPack hybrid", "sparse")
+	res, err := Search(data, string(st.Project.ID), "ContextPack hybrid", "sparse", "")
 	if err != nil {
 		t.Fatalf("Search: %v", err)
 	}

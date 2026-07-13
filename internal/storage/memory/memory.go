@@ -4,6 +4,7 @@ package memory
 import (
 	"context"
 	"sort"
+	"strings"
 	"sync"
 
 	"github.com/fastygo/context/internal/agentruntime"
@@ -28,6 +29,7 @@ type Store struct {
 	chunks    map[string]corpus.Chunk
 	snapshots map[string]indexing.IndexSnapshot
 	packs     map[string]retrieval.ContextPack
+	focuses   map[string]retrieval.FocusProfile
 	runs      map[string]agentruntime.AgentRun
 	toolCalls map[string]tools.ToolCall
 	traces    map[string][]tracing.Event // key: projectID|runID
@@ -43,6 +45,7 @@ func New() *Store {
 		chunks:    make(map[string]corpus.Chunk),
 		snapshots: make(map[string]indexing.IndexSnapshot),
 		packs:     make(map[string]retrieval.ContextPack),
+		focuses:   make(map[string]retrieval.FocusProfile),
 		runs:      make(map[string]agentruntime.AgentRun),
 		toolCalls: make(map[string]tools.ToolCall),
 		traces:    make(map[string][]tracing.Event),
@@ -269,6 +272,52 @@ func (s *Store) GetPack(ctx context.Context, projectID ids.ProjectID, packID ids
 		return retrieval.ContextPack{}, apperr.New(apperr.NotFound, "context pack not found")
 	}
 	return pack, nil
+}
+
+func (s *Store) PutFocus(ctx context.Context, focus retrieval.FocusProfile) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if err := focus.Validate(); err != nil {
+		return apperr.Wrap(apperr.Validation, "focus_profile", err)
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if _, ok := s.projects[focus.ProjectID]; !ok {
+		return apperr.New(apperr.NotFound, "project not found")
+	}
+	s.focuses[key2(string(focus.ProjectID), string(focus.ID))] = focus
+	return nil
+}
+
+func (s *Store) GetFocus(ctx context.Context, projectID ids.ProjectID, focusID ids.FocusID) (retrieval.FocusProfile, error) {
+	if err := ctx.Err(); err != nil {
+		return retrieval.FocusProfile{}, err
+	}
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	focus, ok := s.focuses[key2(string(projectID), string(focusID))]
+	if !ok {
+		return retrieval.FocusProfile{}, apperr.New(apperr.NotFound, "focus profile not found")
+	}
+	return focus, nil
+}
+
+func (s *Store) ListFocus(ctx context.Context, projectID ids.ProjectID) ([]retrieval.FocusProfile, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	prefix := string(projectID) + "\x00"
+	var out []retrieval.FocusProfile
+	for k, f := range s.focuses {
+		if strings.HasPrefix(k, prefix) {
+			out = append(out, f)
+		}
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
+	return out, nil
 }
 
 func (s *Store) PutRun(ctx context.Context, run agentruntime.AgentRun) error {

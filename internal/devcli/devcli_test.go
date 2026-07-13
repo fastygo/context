@@ -33,7 +33,7 @@ func TestCLIWorkflowSmoke(t *testing.T) {
 		t.Fatal("expected chunks")
 	}
 
-	search, err := devcli.Search(data, "demo", "ContextPack", "hybrid")
+	search, err := devcli.Search(data, "demo", "ContextPack", "hybrid", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,7 +41,7 @@ func TestCLIWorkflowSmoke(t *testing.T) {
 		t.Fatal("expected search hits")
 	}
 
-	pack, err := devcli.BuildPack(data, "demo", "ContextPack")
+	pack, err := devcli.BuildPack(data, "demo", "ContextPack", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,7 +49,7 @@ func TestCLIWorkflowSmoke(t *testing.T) {
 		t.Fatal("expected pack checksum")
 	}
 
-	agent, err := devcli.AgentRun(data, "demo", "ContextPack")
+	agent, err := devcli.AgentRun(data, "demo", "ContextPack", "")
 	if err != nil {
 		t.Fatal(err)
 	}

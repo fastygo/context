@@ -498,6 +498,75 @@ SELECT payload FROM context_packs WHERE project_id = $1 AND pack_id = $2
 	return pack, nil
 }
 
+func (s *Store) PutFocus(ctx context.Context, focus retrieval.FocusProfile) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if err := focus.Validate(); err != nil {
+		return apperr.Wrap(apperr.Validation, "focus_profile", err)
+	}
+	if err := s.requireProject(ctx, focus.ProjectID); err != nil {
+		return err
+	}
+	payload, err := json.Marshal(focus)
+	if err != nil {
+		return apperr.Wrap(apperr.Internal, "focus json", err)
+	}
+	_, err = s.conn(ctx).Exec(ctx, `
+INSERT INTO focus_profiles (project_id, focus_id, task_id, objective, payload)
+VALUES ($1,$2,$3,$4,$5)
+ON CONFLICT (project_id, focus_id) DO UPDATE SET
+  task_id = EXCLUDED.task_id,
+  objective = EXCLUDED.objective,
+  payload = EXCLUDED.payload
+`, string(focus.ProjectID), string(focus.ID), string(focus.TaskID), focus.Objective, payload)
+	return wrapDB(err, "put focus")
+}
+
+func (s *Store) GetFocus(ctx context.Context, projectID ids.ProjectID, focusID ids.FocusID) (retrieval.FocusProfile, error) {
+	if err := ctx.Err(); err != nil {
+		return retrieval.FocusProfile{}, err
+	}
+	var payload []byte
+	err := s.conn(ctx).QueryRow(ctx, `
+SELECT payload FROM focus_profiles WHERE project_id = $1 AND focus_id = $2
+`, string(projectID), string(focusID)).Scan(&payload)
+	if err != nil {
+		return retrieval.FocusProfile{}, mapNotFound(err, "focus profile not found")
+	}
+	var focus retrieval.FocusProfile
+	if err := json.Unmarshal(payload, &focus); err != nil {
+		return retrieval.FocusProfile{}, apperr.Wrap(apperr.Internal, "focus decode", err)
+	}
+	return focus, nil
+}
+
+func (s *Store) ListFocus(ctx context.Context, projectID ids.ProjectID) ([]retrieval.FocusProfile, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	rows, err := s.conn(ctx).Query(ctx, `
+SELECT payload FROM focus_profiles WHERE project_id = $1 ORDER BY focus_id
+`, string(projectID))
+	if err != nil {
+		return nil, wrapDB(err, "list focus")
+	}
+	defer rows.Close()
+	var out []retrieval.FocusProfile
+	for rows.Next() {
+		var payload []byte
+		if err := rows.Scan(&payload); err != nil {
+			return nil, wrapDB(err, "scan focus")
+		}
+		var focus retrieval.FocusProfile
+		if err := json.Unmarshal(payload, &focus); err != nil {
+			return nil, apperr.Wrap(apperr.Internal, "focus decode", err)
+		}
+		out = append(out, focus)
+	}
+	return out, rows.Err()
+}
+
 func (s *Store) PutRun(ctx context.Context, run agentruntime.AgentRun) error {
 	if err := ctx.Err(); err != nil {
 		return err

@@ -71,8 +71,7 @@ ADRs 0001–0023; do not re-implement.
 
 Open gaps carried into Phase 2: semantic/provider Embedder still deferred
 (local_hash is measurable offline); lang/lexicon only fixture-level; no service
-API. Sparse FTS is live behind `CONTEXT_SPARSE_KIND=postgres_fts` (Chunk 14).
-Version pins + dense upsert on ingest when `CONTEXT_ENABLE_DENSE=1` (Chunk 15).
+API. Ignore + FocusProfile persistence shipped (Chunk 17).
 
 ## UX / DX / DSL Consumer Track
 
@@ -245,7 +244,16 @@ Acceptance criteria:
 - FocusProfile survives restart when CONTEXT_METADATA_KIND=postgres.
 ```
 
-Status: pending
+Status: **completed** (2026-07-13)
+
+### Completion notes
+
+- `internal/indexing/ignore`: defaults (`vendor/`, `node_modules/`, …) +
+  `.contextignore` + `LocalFiles` dir skip.
+- `FocusStore` on `MetadataStore` (memory + postgres migration
+  `003_focus_profiles.sql`).
+- CLI: `focus-put|get|list`; `--focus` on search / context-pack / agent-run.
+- Offline + gated postgres round-trip tests.
 
 ## Plan Chunk 18: Language And Lexicon Contract-Test Harnesses
 

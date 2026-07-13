@@ -21,6 +21,7 @@ type MetadataStore interface {
 	ChunkStore
 	SnapshotStore
 	PackStore
+	FocusStore
 	RunStore
 	ToolCallStore
 	TraceStore
@@ -54,6 +55,13 @@ type SnapshotStore interface {
 type PackStore interface {
 	PutPack(ctx context.Context, pack retrieval.ContextPack) error
 	GetPack(ctx context.Context, projectID ids.ProjectID, packID ids.PackID) (retrieval.ContextPack, error)
+}
+
+// FocusStore persists FocusProfile lenses (Chunk 17).
+type FocusStore interface {
+	PutFocus(ctx context.Context, focus retrieval.FocusProfile) error
+	GetFocus(ctx context.Context, projectID ids.ProjectID, focusID ids.FocusID) (retrieval.FocusProfile, error)
+	ListFocus(ctx context.Context, projectID ids.ProjectID) ([]retrieval.FocusProfile, error)
 }
 
 type RunStore interface {

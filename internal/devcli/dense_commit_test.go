@@ -82,7 +82,7 @@ func TestDenseCommitOnIngestIntegration(t *testing.T) {
 
 	// Search dense without rebuild — vectors must already exist from ingest.
 	t.Setenv("CONTEXT_DENSE_REBUILD", "0")
-	res, err := devcli.Search(data, "dense-commit", "ContextPack dense", "dense")
+	res, err := devcli.Search(data, "dense-commit", "ContextPack dense", "dense", "")
 	if err != nil {
 		t.Fatalf("Search: %v", err)
 	}

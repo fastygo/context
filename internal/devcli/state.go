@@ -51,6 +51,7 @@ type State struct {
 	Runs      []agentruntime.AgentRun  `json:"runs"`
 	ToolCalls []tools.ToolCall         `json:"tool_calls"`
 	Traces    []tracing.Event          `json:"traces"`
+	Focuses   []retrieval.FocusProfile `json:"focuses,omitempty"`
 	UpdatedAt time.Time                `json:"updated_at"`
 }
 

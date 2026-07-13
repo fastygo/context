@@ -70,9 +70,9 @@ Nearest work follows `.project/progress.md` plan chunks:
 | --- | --- | --- |
 | **0 — Architecture baseline** | Chunk 01 + Foundation Gate done | Lock package, storage, index, trace, linguistic, and scoring boundaries |
 | **1 — Proof of concept** | Chunks 02–13 done | CLI loop + pgvector/Postgres + durable metadata opt-in; proof validated |
-| **2 — MVP toward service API** | Chunks **14–16** done; **17–20** pending | FTS + dense commit + local_hash embedder → ignore/focus → lang/lex harness → eval → **HTTP/gRPC** |
+| **2 — MVP toward service API** | Chunks **14–17** done; **18–20** pending | FTS + dense + embedder + ignore/focus → lang/lex harness → eval → **HTTP/gRPC** |
 
-Immediate next step: **Chunk 17** — ignore patterns + FocusProfile persistence.
+Immediate next step: **Chunk 18** — language/lexicon contract-test harnesses.
 
 Phase 2 exit: thin HTTP (preferred) or gRPC service so Lab/BFF call Context
 without importing `internal/`. See `.project/progress.md`.

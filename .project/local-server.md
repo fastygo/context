@@ -162,6 +162,24 @@ Default `CONTEXT_SPARSE_KIND` (unset/memory) keeps offline fake term-overlap.
 FTS uses PostgreSQL `simple` text config + `ts_rank_cd` (no morphology; gate for
 `context-sparse` / lang adapters).
 
+## Ignore patterns and FocusProfile (Chunk 17)
+
+Ingest skips `.git/`, `.context/`, `vendor/`, `node_modules/`, `dist/`, `build/`,
+`target/`, `bin/` by default, plus patterns from `.contextignore` at the corpus
+root.
+
+```bash
+# optional project file
+echo 'secret/' >> <corpus>/.contextignore
+
+go run ./cmd/context-dev focus-put --data <dir> --project <id> --json '{"id":"focus_cli","objective":"...","required_trust_level":"project","context_budget":{"max_items":8,"max_chars":4000}}'
+go run ./cmd/context-dev focus-list --data <dir> --project <id>
+go run ./cmd/context-dev search --data <dir> --project <id> --query '...' --focus focus_cli
+```
+
+With `CONTEXT_METADATA_KIND=postgres`, FocusProfile rows live in `focus_profiles`
+and survive restart (state.json remains a cache).
+
 ## Metadata store (Chunk 11)
 
 Migrations live in `internal/storage/postgres/migrations/` and apply on

@@ -43,7 +43,7 @@ func TestLocalHashDenseCommitIntegration(t *testing.T) {
 		t.Fatalf("chunk=%q", st.Chunks[0].EmbeddingVersion)
 	}
 
-	res, err := devcli.Search(data, "local-hash", "ContextPack local", "dense")
+	res, err := devcli.Search(data, "local-hash", "ContextPack local", "dense", "")
 	if err != nil {
 		t.Fatalf("Search: %v", err)
 	}

@@ -5,6 +5,9 @@ import (
 	"os"
 
 	"github.com/fastygo/context/internal/devcli"
+	"github.com/fastygo/context/internal/foundation"
+	"github.com/fastygo/context/internal/ids"
+	"github.com/fastygo/context/internal/retrieval"
 )
 
 func main() {
@@ -28,6 +31,12 @@ func main() {
 		err = cmdAgent(args)
 	case "trace":
 		err = cmdTrace(args)
+	case "focus-put":
+		err = cmdFocusPut(args)
+	case "focus-get":
+		err = cmdFocusGet(args)
+	case "focus-list":
+		err = cmdFocusList(args)
 	case "meta-check":
 		err = cmdMetaCheck(args)
 	case "proof-run":
@@ -51,18 +60,23 @@ func usage() {
 Usage:
   context-dev init-project --root <dir> --data <dir> [--project <id>]
   context-dev ingest --data <dir> --project <id> [--path <dir-or-file>]
-  context-dev search --data <dir> --project <id> --query <text> [--mode exact|sparse|hybrid|dense|hybrid-dense]
-  context-dev context-pack --data <dir> --project <id> --query <text>
-  context-dev agent-run --data <dir> --project <id> --query <text>
+  context-dev search --data <dir> --project <id> --query <text> [--mode exact|sparse|hybrid|dense|hybrid-dense] [--focus <id>]
+  context-dev context-pack --data <dir> --project <id> --query <text> [--focus <id>]
+  context-dev agent-run --data <dir> --project <id> --query <text> [--focus <id>]
+  context-dev focus-put --data <dir> --project <id> --json <file-or-inline> [--id <focus_id>]
+  context-dev focus-get --data <dir> --project <id> --focus <id>
+  context-dev focus-list --data <dir> --project <id>
   context-dev trace --data <dir> --project <id> --run <id>
   context-dev meta-check [--backend postgres]
   context-dev proof-run [--root <repo>] [--out <.project/proof>]
 
+Ingest skips paths via defaults + optional .contextignore at corpus root.
 Modes dense and hybrid-dense require PostgreSQL/pgvector (see .project/local-server.md).
 Set CONTEXT_ENABLE_DENSE=1 to upsert dense vectors on ingest and include dense in hybrid search.
 Set CONTEXT_DENSE_REBUILD=1 to force search-time vector rebuild (default: prefer ingest commit).
 Set CONTEXT_EMBEDDER_KIND=local_hash for offline L2/SHA embedder (dim 32, local-hash-v1).
 Set CONTEXT_SPARSE_KIND=postgres_fts for live Postgres FTS sparse/hybrid search.
+Focus profiles persist to state.json and MetadataStore (postgres when configured).
 meta-check verifies durable metadata (schema_id, lineage, temporal, documents).
 proof-run executes Chunk 12 end-to-end proof and writes JSON under --out.
 Outputs stable JSON on stdout for Lab/fixture consumption.
@@ -162,7 +176,7 @@ func cmdSearch(args []string) error {
 	if err := require(f, "data", "project", "query"); err != nil {
 		return err
 	}
-	res, err := devcli.Search(f["data"], f["project"], f["query"], f["mode"])
+	res, err := devcli.Search(f["data"], f["project"], f["query"], f["mode"], f["focus"])
 	if err != nil {
 		return err
 	}
@@ -174,7 +188,7 @@ func cmdPack(args []string) error {
 	if err := require(f, "data", "project", "query"); err != nil {
 		return err
 	}
-	res, err := devcli.BuildPack(f["data"], f["project"], f["query"])
+	res, err := devcli.BuildPack(f["data"], f["project"], f["query"], f["focus"])
 	if err != nil {
 		return err
 	}
@@ -186,7 +200,59 @@ func cmdAgent(args []string) error {
 	if err := require(f, "data", "project", "query"); err != nil {
 		return err
 	}
-	res, err := devcli.AgentRun(f["data"], f["project"], f["query"])
+	res, err := devcli.AgentRun(f["data"], f["project"], f["query"], f["focus"])
+	if err != nil {
+		return err
+	}
+	return devcli.PrintJSON(res)
+}
+
+func cmdFocusPut(args []string) error {
+	f := flagMap(args)
+	if err := require(f, "data", "project", "json"); err != nil {
+		return err
+	}
+	focus, err := devcli.ParseFocusJSON(f["json"])
+	if err != nil {
+		return err
+	}
+	if f["id"] != "" {
+		focus.ID = ids.FocusID(f["id"])
+	}
+	if focus.Objective == "" && f["objective"] != "" {
+		focus.Objective = f["objective"]
+	}
+	if focus.RequiredTrustLevel == "" {
+		focus.RequiredTrustLevel = foundation.TrustProject
+	}
+	if focus.ContextBudget.MaxItems == 0 {
+		focus.ContextBudget = retrieval.Budget{MaxItems: 8, MaxChars: 4000}
+	}
+	res, err := devcli.PutFocus(f["data"], f["project"], focus)
+	if err != nil {
+		return err
+	}
+	return devcli.PrintJSON(res)
+}
+
+func cmdFocusGet(args []string) error {
+	f := flagMap(args)
+	if err := require(f, "data", "project", "focus"); err != nil {
+		return err
+	}
+	focus, kind, err := devcli.GetFocus(f["data"], f["project"], f["focus"])
+	if err != nil {
+		return err
+	}
+	return devcli.PrintJSON(map[string]any{"focus": focus, "meta_kind": kind})
+}
+
+func cmdFocusList(args []string) error {
+	f := flagMap(args)
+	if err := require(f, "data", "project"); err != nil {
+		return err
+	}
+	res, err := devcli.ListFocus(f["data"], f["project"])
 	if err != nil {
 		return err
 	}

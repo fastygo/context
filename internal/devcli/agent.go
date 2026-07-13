@@ -34,8 +34,8 @@ type TraceResult struct {
 }
 
 // AgentRun builds a pack and executes a fake agent loop.
-func AgentRun(dataDir, projectID, query string) (AgentRunResult, error) {
-	packRes, err := BuildPack(dataDir, projectID, query)
+func AgentRun(dataDir, projectID, query, focusID string) (AgentRunResult, error) {
+	packRes, err := BuildPack(dataDir, projectID, query, focusID)
 	if err != nil {
 		return AgentRunResult{}, err
 	}

@@ -11,6 +11,7 @@ import (
 	"github.com/fastygo/context/internal/apperr"
 	"github.com/fastygo/context/internal/corpus"
 	"github.com/fastygo/context/internal/ids"
+	"github.com/fastygo/context/internal/indexing/ignore"
 	"github.com/fastygo/context/internal/indexing/normalize"
 )
 
@@ -28,7 +29,7 @@ type Adapter interface {
 }
 
 // LocalFiles discovers text/markdown files under a root directory.
-// IgnorePatterns is a placeholder for future ignore-file support.
+// IgnorePatterns are merged with defaults and optional .contextignore at root.
 type LocalFiles struct {
 	IgnorePatterns []string
 }
@@ -47,6 +48,12 @@ func (a LocalFiles) List(ctx context.Context, projectID ids.ProjectID, root stri
 	if err != nil {
 		return nil, apperr.Wrap(apperr.Validation, "source root", err)
 	}
+	filePats, err := ignore.LoadFile(filepath.Join(abs, ignore.FileName))
+	if err != nil {
+		return nil, apperr.Wrap(apperr.Validation, "load .contextignore", err)
+	}
+	patterns := ignore.Compile(filePats, a.IgnorePatterns)
+
 	var out []Discovered
 	err = filepath.WalkDir(abs, func(path string, d fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
@@ -55,19 +62,21 @@ func (a LocalFiles) List(ctx context.Context, projectID ids.ProjectID, root stri
 		if err := ctx.Err(); err != nil {
 			return err
 		}
-		if d.IsDir() {
-			name := d.Name()
-			if name == ".git" || name == ".context" {
-				return fs.SkipDir
-			}
-			return nil
-		}
 		rel, err := filepath.Rel(abs, path)
 		if err != nil {
 			return err
 		}
 		rel = normalize.RelativePath(rel)
-		if a.ignored(rel) {
+		if d.IsDir() {
+			if rel == "." || rel == "" {
+				return nil
+			}
+			if ignore.MatchDir(rel, patterns) {
+				return fs.SkipDir
+			}
+			return nil
+		}
+		if ignore.Match(rel, patterns) {
 			return nil
 		}
 		media := mediaTypeFor(rel)
@@ -90,21 +99,6 @@ func (a LocalFiles) List(ctx context.Context, projectID ids.ProjectID, root stri
 		return nil, err
 	}
 	return out, nil
-}
-
-func (a LocalFiles) ignored(rel string) bool {
-	for _, pat := range a.IgnorePatterns {
-		if pat == "" {
-			continue
-		}
-		if rel == pat || strings.HasPrefix(rel, strings.TrimSuffix(pat, "*")) && strings.HasSuffix(pat, "*") {
-			return true
-		}
-		if rel == pat {
-			return true
-		}
-	}
-	return false
 }
 
 func mediaTypeFor(rel string) string {

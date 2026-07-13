@@ -115,7 +115,7 @@ func TestDurablePostgresIngestAndTrace(t *testing.T) {
 		t.Fatalf("chunks=%d want=%d err=%v", len(chunks), len(st.Chunks), err)
 	}
 
-	agent, err := devcli.AgentRun(data, proj, "ContextPack")
+	agent, err := devcli.AgentRun(data, proj, "ContextPack", "")
 	if err != nil {
 		t.Fatal(err)
 	}

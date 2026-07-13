@@ -14,21 +14,21 @@ import (
 
 // FocusProfile is the task-specific retrieval and packing lens.
 type FocusProfile struct {
-	ID                   ids.FocusID
-	ProjectID            ids.ProjectID
-	TaskID               ids.TaskID
-	Objective            string
-	Scope                string
-	PreferredSourceTypes []string
-	ForbiddenSourceTypes []string
-	RequiredTrustLevel   foundation.TrustLevel
-	FreshnessWindow      string
-	ExactnessLevel       string
-	CitationStrictness   string // e.g. "strict"
-	ContextBudget        Budget
-	AllowedTools         []string
-	AllowedSubagents     []string
-	NegativeAssumptions  []string
+	ID                   ids.FocusID           `json:"id"`
+	ProjectID            ids.ProjectID         `json:"project_id"`
+	TaskID               ids.TaskID            `json:"task_id,omitempty"`
+	Objective            string                `json:"objective"`
+	Scope                string                `json:"scope,omitempty"`
+	PreferredSourceTypes []string              `json:"preferred_source_types,omitempty"`
+	ForbiddenSourceTypes []string              `json:"forbidden_source_types,omitempty"`
+	RequiredTrustLevel   foundation.TrustLevel `json:"required_trust_level"`
+	FreshnessWindow      string                `json:"freshness_window,omitempty"`
+	ExactnessLevel       string                `json:"exactness_level,omitempty"`
+	CitationStrictness   string                `json:"citation_strictness,omitempty"`
+	ContextBudget        Budget                `json:"context_budget"`
+	AllowedTools         []string              `json:"allowed_tools,omitempty"`
+	AllowedSubagents     []string              `json:"allowed_subagents,omitempty"`
+	NegativeAssumptions  []string              `json:"negative_assumptions,omitempty"`
 }
 
 func (f FocusProfile) Validate() error {
@@ -46,13 +46,13 @@ func (f FocusProfile) Validate() error {
 
 // Budget constrains ContextPack construction (ADR-0020).
 type Budget struct {
-	MaxItems               int
-	MaxChars               int
-	MaxTokensEstimate      int
-	ReserveForInstructions int
-	BudgetEstimatorVersion string
-	RejectScoreFloor       float64
-	AllowSpanTruncate      bool
+	MaxItems               int     `json:"max_items,omitempty"`
+	MaxChars               int     `json:"max_chars,omitempty"`
+	MaxTokensEstimate      int     `json:"max_tokens_estimate,omitempty"`
+	ReserveForInstructions int     `json:"reserve_for_instructions,omitempty"`
+	BudgetEstimatorVersion string  `json:"budget_estimator_version,omitempty"`
+	RejectScoreFloor       float64 `json:"reject_score_floor,omitempty"`
+	AllowSpanTruncate      bool    `json:"allow_span_truncate,omitempty"`
 }
 
 // RetrievalPlan chooses retriever paths, filters, and budgets for a task.

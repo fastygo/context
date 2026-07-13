@@ -123,7 +123,7 @@ func RunProof(repoRoot, outDir string) (ProofSummary, error) {
 	// 4-5: search modes
 	for _, mode := range []string{"exact", "sparse", "hybrid", "dense", "hybrid-dense"} {
 		name := "02-search-" + mode + ".json"
-		res, err := Search(dataDir, "proof", "ContextPack", mode)
+		res, err := Search(dataDir, "proof", "ContextPack", mode, "")
 		if err != nil {
 			add("search-"+mode, false, err.Error(), "")
 			if mode == "dense" || mode == "hybrid-dense" {
@@ -156,7 +156,7 @@ func RunProof(repoRoot, outDir string) (ProofSummary, error) {
 	add("lexicon", lex["ok"] == true, "sense/concept/attestation/register/region/time/authority", "04-lexicon.json")
 
 	// 8-10: pack, agent, trace/verify
-	packRes, err := BuildPack(dataDir, "proof", "ContextPack roadmap hybrid retrieval")
+	packRes, err := BuildPack(dataDir, "proof", "ContextPack roadmap hybrid retrieval", "")
 	if err != nil {
 		add("context-pack", false, err.Error(), "")
 		return summary, err
@@ -164,7 +164,7 @@ func RunProof(repoRoot, outDir string) (ProofSummary, error) {
 	_, _ = writeJSON("05-context-pack.json", packRes)
 	add("context-pack", len(packRes.Pack.EvidenceItems) > 0, "pack="+string(packRes.Pack.ID), "05-context-pack.json")
 
-	agentRes, err := AgentRun(dataDir, "proof", "ContextPack roadmap hybrid retrieval")
+	agentRes, err := AgentRun(dataDir, "proof", "ContextPack roadmap hybrid retrieval", "")
 	if err != nil {
 		add("agent-run", false, err.Error(), "")
 		return summary, err

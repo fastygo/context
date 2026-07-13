@@ -32,6 +32,7 @@ type SearchResult struct {
 	Candidates    []retrieval.Candidate `json:"candidates"`
 	Backend       string                `json:"dense_backend,omitempty"`
 	SparseBackend string                `json:"sparse_backend,omitempty"`
+	FocusID       ids.FocusID           `json:"focus_id,omitempty"`
 }
 
 func loadIndex(st State) (*index.Memory, ids.SnapshotID, error) {
@@ -65,7 +66,8 @@ func loadIndex(st State) (*index.Memory, ids.SnapshotID, error) {
 
 // Search runs exact/sparse/dense/hybrid retrieval over the local workspace index.
 // Modes dense and hybrid-dense require PostgreSQL (CONTEXT_PG_DSN or compose defaults).
-func Search(dataDir, projectID, query, mode string) (SearchResult, error) {
+// Optional focusID pins RetrievalPlan.FocusID when a FocusProfile exists.
+func Search(dataDir, projectID, query, mode, focusID string) (SearchResult, error) {
 	ws := Workspace{DataDir: dataDir}
 	st, err := ws.Load()
 	if err != nil {
@@ -81,9 +83,17 @@ func Search(dataDir, projectID, query, mode string) (SearchResult, error) {
 	if err != nil {
 		return SearchResult{}, err
 	}
+	focus, hasFocus, err := resolveFocus(dataDir, string(st.Project.ID), focusID)
+	if err != nil {
+		return SearchResult{}, err
+	}
 	plan := retrieval.RetrievalPlan{
 		ID: "cli-plan", ProjectID: st.Project.ID, SnapshotID: snap, TopNRawPool: 20,
 		Strategies: []retrieval.RetrieverStrategy{},
+	}
+	if hasFocus {
+		plan.FocusID = focus.ID
+		plan.TaskID = focus.TaskID
 	}
 
 	ctx := context.Background()
@@ -166,6 +176,7 @@ func Search(dataDir, projectID, query, mode string) (SearchResult, error) {
 		Candidates:    cands,
 		Backend:       backend,
 		SparseBackend: sparseBackend,
+		FocusID:       plan.FocusID,
 	}, nil
 }
 
@@ -264,12 +275,13 @@ func firstNonEmpty(vals ...string) string {
 
 // PackResult is CLI JSON for context-pack.
 type PackResult struct {
-	Pack retrieval.ContextPack `json:"context_pack"`
+	Pack    retrieval.ContextPack `json:"context_pack"`
+	FocusID ids.FocusID           `json:"focus_id,omitempty"`
 }
 
 // BuildPack creates a ContextPack from search candidates for a query.
-func BuildPack(dataDir, projectID, query string) (PackResult, error) {
-	search, err := Search(dataDir, projectID, query, "hybrid")
+func BuildPack(dataDir, projectID, query, focusID string) (PackResult, error) {
+	search, err := Search(dataDir, projectID, query, "hybrid", focusID)
 	if err != nil {
 		return PackResult{}, err
 	}
@@ -281,6 +293,20 @@ func BuildPack(dataDir, projectID, query string) (PackResult, error) {
 	idx, _, err := loadIndex(st)
 	if err != nil {
 		return PackResult{}, err
+	}
+	focus, hasFocus, err := resolveFocus(dataDir, string(st.Project.ID), focusID)
+	if err != nil {
+		return PackResult{}, err
+	}
+	if !hasFocus {
+		focus = retrieval.FocusProfile{
+			ID: "cli-focus", ProjectID: st.Project.ID, Objective: query,
+			RequiredTrustLevel: foundation.TrustProject,
+			CitationStrictness: "strict",
+			ContextBudget:      retrieval.Budget{MaxItems: 8, MaxChars: 4000},
+		}
+	} else if focus.Objective == "" {
+		focus.Objective = query
 	}
 	items := make([]pack.DraftItem, 0, len(search.Candidates))
 	for i, c := range search.Candidates {
@@ -300,15 +326,10 @@ func BuildPack(dataDir, projectID, query string) (PackResult, error) {
 	built, err := (pack.Builder{}).Build(context.Background(), pack.BuildRequest{
 		PackID:    ids.PackID("pack_" + string(search.SnapshotID)),
 		ProjectID: st.Project.ID,
-		TaskID:    "cli-task",
+		TaskID:    ids.TaskID(firstNonEmpty(string(focus.TaskID), "cli-task")),
 		PlanID:    "cli-plan",
 		Purpose:   "cli-context-pack",
-		Focus: retrieval.FocusProfile{
-			ID: "cli-focus", ProjectID: st.Project.ID, Objective: query,
-			RequiredTrustLevel: foundation.TrustProject,
-			CitationStrictness: "strict",
-			ContextBudget:      retrieval.Budget{MaxItems: 8, MaxChars: 4000},
-		},
+		Focus:     focus,
 		Instructions: []string{"Answer using cited evidence only."},
 		Items:        items,
 	})
@@ -319,5 +340,5 @@ func BuildPack(dataDir, projectID, query string) (PackResult, error) {
 	if err := ws.Save(st); err != nil {
 		return PackResult{}, err
 	}
-	return PackResult{Pack: built}, nil
+	return PackResult{Pack: built, FocusID: focus.ID}, nil
 }
