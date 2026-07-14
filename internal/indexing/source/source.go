@@ -79,7 +79,7 @@ func (a LocalFiles) List(ctx context.Context, projectID ids.ProjectID, root stri
 		if ignore.Match(rel, patterns) {
 			return nil
 		}
-		media := mediaTypeFor(rel)
+		media := documentMediaType(rel)
 		if media == "" {
 			return nil
 		}
@@ -101,13 +101,27 @@ func (a LocalFiles) List(ctx context.Context, projectID ids.ProjectID, root stri
 	return out, nil
 }
 
-func mediaTypeFor(rel string) string {
+func documentMediaType(rel string) string {
 	lower := strings.ToLower(rel)
 	switch {
 	case strings.HasSuffix(lower, ".md"), strings.HasSuffix(lower, ".markdown"):
 		return "text/markdown"
 	case strings.HasSuffix(lower, ".txt"), strings.HasSuffix(lower, ".text"):
 		return "text/plain"
+	case strings.HasSuffix(lower, ".html"), strings.HasSuffix(lower, ".htm"):
+		return "text/html"
+	case strings.HasSuffix(lower, ".pdf"):
+		return "application/pdf"
+	default:
+		return ""
+	}
+}
+
+func eventMediaType(rel string) string {
+	lower := strings.ToLower(rel)
+	switch {
+	case strings.HasSuffix(lower, ".ndjson"), strings.HasSuffix(lower, ".jsonl"):
+		return "application/x-ndjson"
 	default:
 		return ""
 	}

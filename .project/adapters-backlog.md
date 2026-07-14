@@ -10,26 +10,29 @@ Start from [`.project/README.md`](README.md) before promoting a later adapter.
 | `VectorStore` | `internal/retrieval/dense/postgresvector` | QDrant, Turbopuffer | Same `BackendCapabilities`; shared-collection + payload filters first |
 | `SparseSearchClient` | `internal/retrieval/sparse/postgresfts` (Chunk 14) | `context-sparse` (Tantivy) | Fake/memory remains default offline; do not add Tantivy until FTS lexical limits are a measured blocker |
 | `Embedder` | `models/fake` (default) + `models/localhash` (`local-hash-v1`, dim 32) | Provider embedding adapters | Select via `CONTEXT_EMBEDDER_KIND`; dim change requires new `embedding_version` |
-| Language | `linguistic/simple` + `linguistic/harness` (Chunk 18) | `context-lang-*` repositories | Pass `harness.RunContract` (spans, analyzer_version, original surface, expansions). Do not change vector/metadata adapters. |
-| Lexicon | `lexicon/fake` + `lexicon/harness` (Chunk 18) | TEI/SKOS/dictionary mappers | Implement `ResourceAdapter`; pass `harness.RunContract` (sense≠lemma, attestation quote+span, explainable filters). |
+| Language | `context-lang-en` (`pkg/langtestkit/refen`, `internal/linguistic/en`) + `linguistic/simple` | external `context-lang-*` | Public harness: `pkg/langtestkit.RunContract` ([ADR-0037](../docs/decisions/0037-public-langtestkit.md)). |
+| Lexicon | `lexicon/jsonres` (curated JSON) + `lexicon/fake` | TEI/SKOS mappers | Pass `lexicon/harness.RunContract` ([ADR-0038](../docs/decisions/0038-s3-thin-adapters.md)). |
+| Parse | plaintext/markdown + `HTML` + `PDF` | richer PDF/OCR, DOCX deferred | Confidence on `Document` ([ADR-0038](../docs/decisions/0038-s3-thin-adapters.md)/[0039](../docs/decisions/0039-s3-adapter-freeze-defer.md)). |
+| Event source | `source.NDJSONFiles` | message-export adapters | Idempotent batch + temporal filter ([ADR-0038](../docs/decisions/0038-s3-thin-adapters.md)). |
 | `MetadataStore` | `internal/storage/postgres` | SQLite (optional), bbolt cache later | Migrations on Open; DocumentStore for lex/ling JSON |
-| `ArtifactStore` | localfs | Object store | Unchanged by dense path |
+| `ArtifactStore` | localfs (**freeze until measured**) | Object store | [ADR-0039](../docs/decisions/0039-s3-adapter-freeze-defer.md) |
 
 ## How external language / lexicon adapters satisfy Chunk 18 harnesses
 
 ### `context-lang-*` (MorphAnalyzer / Normalizer / QueryExpander)
 
-1. Implement `linguistic.MorphAnalyzer`, `LexicalNormalizer`, and `QueryExpander`.
-2. In the adapter repo (or a thin test package), call:
+1. Depend on `github.com/fastygo/context/pkg/langcontract` +
+   `github.com/fastygo/context/pkg/langtestkit`.
+2. Implement the three ports; in the adapter repo call:
 
 ```go
-linguistic_harness.RunContract(t, linguistic_harness.Ports{
+langtestkit.RunContract(t, langtestkit.Ports{
   Normalizer: myNorm, Analyzer: myMorph, Expander: myExpand,
 })
 ```
 
-3. Provide expander fixtures covering at least `run`→`runners` (or document
-   equivalent maps in the test). Failures mean: missing `adapter_id` /
+3. Provide expander fixtures covering at least `run`→`runners`. Reference:
+   `pkg/langtestkit/refen`. Failures mean: missing `adapter_id` /
    `analyzer_version`, mutated `TokenOccurrence.Surface`, or dropped spans.
 
 ### TEI / SKOS lexicon mappers (`ResourceAdapter`)

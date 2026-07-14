@@ -129,9 +129,9 @@ Lab Gate ≠ «готово навсегда». Отложено до measured b
 evidence-backed контексте. «Не трогать годами» — только после Stabilization
 Gate (S5), не после Lab Gate.
 
-**Сейчас в работе:** S0–S2 закрыты (долговечность + evidence/safety: snippets,
-threat fixtures, tool approval, reranker hook, golden v2). Дальше **S3** —
-адаптеры. См. [stabilization-roadmap.md](stabilization-roadmap.md).
+**Сейчас в работе:** S0–S3 закрыты (память + evidence/safety + thin adapters:
+langtestkit, context-lang-en, JSON lexicon, HTML/PDF, NDJSON events). Дальше
+**S4** — graph/query decision. См. [stabilization-roadmap.md](stabilization-roadmap.md).
 
 ---
 

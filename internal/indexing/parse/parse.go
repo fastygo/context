@@ -42,12 +42,17 @@ type Section struct {
 
 // Document is parser output used by chunkers.
 type Document struct {
-	Text         string // normalized for hashing/chunking
-	Original     []byte
-	MediaType    string
+	Text          string // normalized for hashing/chunking
+	Original      []byte
+	MediaType     string
 	ParserVersion string
-	Sections     []Section
-	Boundaries   []Boundary
+	Sections      []Section
+	Boundaries    []Boundary
+	// ExtractionConfidence is 1.0 for lossless text parsers and <1 for lossy
+	// extractors (HTML/PDF). Zero means unset and is treated as 1.0 for legacy.
+	ExtractionConfidence float64
+	// LowConfidence is true when extraction may have dropped or reordered text.
+	LowConfidence bool
 }
 
 // Parser converts original bytes into a normalized document.
@@ -70,11 +75,12 @@ func (p PlainText) Parse(ctx context.Context, mediaType string, original []byte)
 		return Document{}, apperr.Wrap(apperr.Validation, "plaintext parse", err)
 	}
 	doc := Document{
-		Text:          text,
-		Original:      append([]byte(nil), original...),
-		MediaType:     mediaType,
-		ParserVersion: p.Version(),
-		Boundaries:    paragraphBoundaries(text),
+		Text:                 text,
+		Original:             append([]byte(nil), original...),
+		MediaType:            mediaType,
+		ParserVersion:        p.Version(),
+		Boundaries:           paragraphBoundaries(text),
+		ExtractionConfidence: 1.0,
 	}
 	return doc, nil
 }
@@ -94,12 +100,13 @@ func (p Markdown) Parse(ctx context.Context, mediaType string, original []byte) 
 	}
 	sections := markdownSections(text)
 	doc := Document{
-		Text:          text,
-		Original:      append([]byte(nil), original...),
-		MediaType:     mediaType,
-		ParserVersion: p.Version(),
-		Sections:      sections,
-		Boundaries:    append(paragraphBoundaries(text), headingBoundaries(sections)...),
+		Text:                 text,
+		Original:             append([]byte(nil), original...),
+		MediaType:            mediaType,
+		ParserVersion:        p.Version(),
+		Sections:             sections,
+		Boundaries:           append(paragraphBoundaries(text), headingBoundaries(sections)...),
+		ExtractionConfidence: 1.0,
 	}
 	return doc, nil
 }
@@ -108,12 +115,18 @@ func (p Markdown) Parse(ctx context.Context, mediaType string, original []byte) 
 type Registry struct {
 	Plain    PlainText
 	Markdown Markdown
+	HTML     HTML
+	PDF      PDF
 }
 
 func (r Registry) For(mediaType string) Parser {
 	switch mediaType {
 	case "text/markdown":
 		return r.Markdown
+	case "text/html", "application/xhtml+xml":
+		return r.HTML
+	case "application/pdf":
+		return r.PDF
 	default:
 		return r.Plain
 	}

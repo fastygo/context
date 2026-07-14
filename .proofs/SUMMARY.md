@@ -33,8 +33,9 @@
   `local_hash` (`local-hash-v1` dim=32) via `CONTEXT_EMBEDDER_KIND` (Chunk 16).
   Provider/TEI adapters remain deferred. Dense rows upsert on ingest when
   `CONTEXT_ENABLE_DENSE=1` (Chunk 15).
-- Language/lexicon: contract harnesses in `internal/linguistic/harness` and
-  `internal/lexicon/harness` (Chunk 18); production adapters stay external.
+- Language/lexicon: public `pkg/langtestkit` + `context-lang-en` (refen/en);
+  curated JSON lexicon (`lexicon/jsonres`); HTML/PDF parsers; NDJSON events
+  (S3 / ADR-0037–0038). Richer engines stay external.
 - Eval: offline golden suite `eval-golden-v2` (`internal/evals/golden`) +
   adversarial fixtures (`internal/evals/adversarial`) + `context-dev eval`;
   report under `.proofs/eval/`.

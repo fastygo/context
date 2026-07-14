@@ -38,6 +38,7 @@ ingest (corpus → chunks + optional dense/FTS)
 | CLI | `go run ./cmd/context-dev …` — see [cli.md](cli.md) |
 | HTTP | `go run ./cmd/context-serve --data …` — see [api/v1.md](api/v1.md) |
 | Go client | `github.com/fastygo/context/pkg/contextkit` |
+| Language adapter harness | `pkg/langtestkit` + `pkg/langcontract` |
 
 **Do not** import `internal/` from Lab or products. **Do not** treat model text
 as source truth (redaction applies to Lab-visible surfaces).
@@ -58,6 +59,7 @@ as source truth (redaction applies to Lab-visible surfaces).
 | **`.project/`** | Plugins, drafts, future roadmaps only |
 | **`.proofs/`** | Measured PoC / eval JSON artifacts |
 
-Deferred work (auth, OpenAPI, lang adapters, fuzzy): see
+Deferred work (auth, OpenAPI, richer lang engines, fuzzy): see
 [`.project/future-layer.md`](../.project/future-layer.md) and
 [`.project/adapters-backlog.md`](../.project/adapters-backlog.md).
+Thin S3 adapters + public langtestkit are shipped (ADR-0037–0039).

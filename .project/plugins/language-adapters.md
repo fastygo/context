@@ -121,8 +121,11 @@ must preserve these versions when language processing affects a result.
 
 ## Shared Contract Tests
 
-`context-lang-testkit` should provide tests that every official adapter must
-pass:
+**Shipped in-module (S3 / A2):** `github.com/fastygo/context/pkg/langtestkit`
+(+ `pkg/langcontract`). A separate `context-lang-testkit` repo remains optional
+packaging; adapters may depend on this module path directly.
+
+`langtestkit.RunContract` is the gate every official adapter must pass:
 
 - normalization is deterministic;
 - token offsets preserve source spans;

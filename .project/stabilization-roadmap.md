@@ -122,16 +122,16 @@ These are the items that, if left open, force returns to the engine.
 
 | ID | Gap | Port | Notes |
 | --- | --- | --- | --- |
-| A1 | At least one real `context-lang-*` (prefer `ru` or `en`) passing harness | language | Postgres FTS is fallback, not the adapter story |
-| A2 | `context-lang-testkit` published / usable from adapter repos | language | plugins/language-adapters.md |
-| A3 | At least one lexicon `ResourceAdapter` (TEI **or** curated JSON) passing harness | lexicon | proves Sense/Attestation ingress |
-| A4 | HTML parser adapter | parse | web captures / HTML corpora |
-| A5 | PDF text-extraction adapter (confidence flagged) | parse | binary document corpora |
-| A6 | DOCX adapter (optional if PDF ships first) | parse | same |
-| A7 | One observation/event source adapter (message export **or** JSONL log) | source + temporal | time-windowed corpora |
-| A8 | Object-store `ArtifactStore` **or** ADR “localfs-only until measured” | artifacts | ADR-0003 / 0017 |
-| A9 | Provider Completer/Embedder beyond generic HTTP **or** document HTTP as the supported production adapter | models | avoid vendor lock in core |
-| A10 | Fuzzy/trigram **or** ADR defer-with-Postgres-`pg_trgm` recipe outside core | sparse | typo-tolerant search |
+| A1 | At least one real `context-lang-*` (prefer `ru` or `en`) passing harness | language | **closed** — `context-lang-en` (`pkg/langtestkit/refen` + `internal/linguistic/en`); [ADR-0037](../docs/decisions/0037-public-langtestkit.md)/[0038](../docs/decisions/0038-s3-thin-adapters.md) |
+| A2 | `context-lang-testkit` published / usable from adapter repos | language | **closed** — `pkg/langcontract` + `pkg/langtestkit`; [ADR-0037](../docs/decisions/0037-public-langtestkit.md) |
+| A3 | At least one lexicon `ResourceAdapter` (TEI **or** curated JSON) passing harness | lexicon | **closed** — `internal/lexicon/jsonres`; [ADR-0038](../docs/decisions/0038-s3-thin-adapters.md) |
+| A4 | HTML parser adapter | parse | **closed** — `parse.HTML`; [ADR-0038](../docs/decisions/0038-s3-thin-adapters.md) |
+| A5 | PDF text-extraction adapter (confidence flagged) | parse | **closed** — `parse.PDF` (`LowConfidence`); [ADR-0038](../docs/decisions/0038-s3-thin-adapters.md) |
+| A6 | DOCX adapter (optional if PDF ships first) | parse | **freeze-defer** — [ADR-0039](../docs/decisions/0039-s3-adapter-freeze-defer.md) |
+| A7 | One observation/event source adapter (message export **or** JSONL log) | source + temporal | **closed** — `source.NDJSONFiles`; [ADR-0038](../docs/decisions/0038-s3-thin-adapters.md) |
+| A8 | Object-store `ArtifactStore` **or** ADR “localfs-only until measured” | artifacts | **freeze-defer localfs** — [ADR-0039](../docs/decisions/0039-s3-adapter-freeze-defer.md) |
+| A9 | Provider Completer/Embedder beyond generic HTTP **or** document HTTP as the supported production adapter | models | **closed (HTTP documented)** — [ADR-0039](../docs/decisions/0039-s3-adapter-freeze-defer.md) |
+| A10 | Fuzzy/trigram **or** ADR defer-with-Postgres-`pg_trgm` recipe outside core | sparse | **freeze-defer pg_trgm outside core** — [ADR-0039](../docs/decisions/0039-s3-adapter-freeze-defer.md) |
 
 ### D. Explicitly deferred past Stabilization Gate
 
@@ -211,20 +211,21 @@ core for “show me why.”
   event-window cases.~~ ✅ `eval-golden-v2`
 - ~~Intentional reranker path (even Identity).~~ ✅ ADR-0036
 
-### Gate S3 — Adapter completeness (external + thin in-repo adapters)
+### Gate S3 — Adapter completeness (external + thin in-repo adapters) ✅
 
-Close: **A1–A7**; decide **A8–A10** via ADR (implement or freeze-defer).
+Close: **A1–A7**; decide **A8–A10** via ADR (implement or freeze-defer). ✅
 
 Goal: linguistic, lexicon, binary, and event paths exist as replaceable
 adapters, not wishful interfaces.
 
 **Exit tests:**
 
-- `context-lang-*` passes `linguistic/harness.RunContract`.
-- Lexicon importer passes `lexicon/harness.RunContract`.
-- PDF/HTML ingest preserves provenance + extraction confidence.
-- One event adapter proves idempotent re-ingest + temporal filter explain.
-- No adapter imports product brand into core.
+- ~~`context-lang-*` passes harness.~~ ✅ `langtestkit` + `linguistic/en`
+- ~~Lexicon importer passes `lexicon/harness.RunContract`.~~ ✅ `lexicon/jsonres`
+- ~~PDF/HTML ingest preserves provenance + extraction confidence.~~ ✅
+- ~~One event adapter proves idempotent re-ingest + temporal filter explain.~~ ✅ NDJSON
+- ~~No adapter imports product brand into core.~~ ✅
+- ~~A6/A8/A9/A10 decided.~~ ✅ [ADR-0039](../docs/decisions/0039-s3-adapter-freeze-defer.md)
 
 ### Gate S4 — Graph + search semantics decision (core ports)
 
@@ -299,6 +300,6 @@ docs/lab-gate.md
 5. ~~C7 project export/delete.~~ ✅ ADR-0030
 6. ~~C8 scheduler port + file adapter.~~ ✅ ADR-0031
 7. ~~S1 complete.~~ ✅
-8. ~~S2 complete.~~ ✅ (C4–C6, C11, C12) → start **S3** (A1–A7; A8–A10 ADR).
-9. Parallel: **A2** (`context-lang-testkit`) — unblocks A1.
+8. ~~S2 complete.~~ ✅
+9. ~~S3 complete.~~ ✅ (A1–A7; A6/A8–A10 freeze-defer) → start **S4** (C9/C10 decide).
 10. Write defer ADRs for anything in section D that keeps getting reopened.

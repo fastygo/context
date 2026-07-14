@@ -69,6 +69,9 @@ Status: **closed** — ADR-0015–0021 (and later Lab-ready ADRs through 0027).
 | [0034](0034-tool-side-effect-approval.md) | Tool side-effect approval baseline | Accepted |
 | [0035](0035-prompt-injection-fixtures.md) | Prompt-injection threat fixtures | Accepted |
 | [0036](0036-intentional-reranker-path.md) | Intentional reranker path | Accepted |
+| [0037](0037-public-langtestkit.md) | Public language adapter testkit | Accepted |
+| [0038](0038-s3-thin-adapters.md) | S3 thin in-repo adapters | Accepted |
+| [0039](0039-s3-adapter-freeze-defer.md) | S3 freeze-defer A6/A8/A9/A10 | Accepted |
 
 ## Writing a new ADR
 
