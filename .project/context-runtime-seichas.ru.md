@@ -109,16 +109,29 @@ HTTP API v1 и `pkg/contextkit` (см. [`docs/lab-gate.md`](../docs/lab-gate.md)
 
 ## Честно: чего ещё нет (и это ок)
 
-Отложено до measured blocker / ADR — см. [future-layer.md](future-layer.md) и
-[adapters-backlog.md](adapters-backlog.md):
+Lab Gate ≠ «готово навсегда». Отложено до measured blocker / ADR — см.
+[future-layer.md](future-layer.md), [adapters-backlog.md](adapters-backlog.md) и
+путь к долгой стабилизации ядра+адаптеров:
+[stabilization-roadmap.md](stabilization-roadmap.md).
+
+Коротко по факту кода:
 
 - полноценная multi-tenant auth и fine-grained ACL;
+- живые `context-lang-*` / TEI-lexicon адаптеры (есть контракты и harness);
+- PDF/DOCX и прочие binary parsers;
+- graph store/traversal (сейчас stubs);
 - QDrant / Turbopuffer / Tantivy как first-class live adapters;
 - fuzzy/trigram как обязательный путь;
-- OpenAPI codegen, distributed workers, crawler governance.
+- scheduled/distributed jobs (есть in-process);
+- OpenAPI codegen, crawler governance.
 
-Ядро уже **достаточно**, чтобы строить Lab и агентные продукты на evidence-backed
-контексте. Остальное — усиление платформы, не замена смысла.
+Ядро уже **достаточно**, чтобы строить Lab и агентные продукты на
+evidence-backed контексте. «Не трогать годами» — только после Stabilization
+Gate (S5), не после Lab Gate.
+
+**Сейчас в работе:** Gate S0 принят; S1 — C3 (lineage/temporal) и C2 (snapshot
+export/import с verify-before-activate) закрыты; C1 tombstones есть; дальше
+C7/C8 и остаток lifecycle. См. [stabilization-roadmap.md](stabilization-roadmap.md).
 
 ---
 

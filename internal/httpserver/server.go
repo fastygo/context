@@ -95,6 +95,9 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("POST /v1/repair", s.handleRepair)
 	s.mux.HandleFunc("POST /v1/inspect", s.handleInspect)
 	s.mux.HandleFunc("POST /v1/ingest", s.handleIngest)
+	s.mux.HandleFunc("POST /v1/sources/tombstone", s.handleTombstoneSource)
+	s.mux.HandleFunc("POST /v1/snapshot/export", s.handleSnapshotExport)
+	s.mux.HandleFunc("POST /v1/snapshot/import", s.handleSnapshotImport)
 	s.mux.HandleFunc("POST /v1/jobs", s.handleJobStart)
 	s.mux.HandleFunc("GET /v1/jobs", s.handleJobList)
 	s.mux.HandleFunc("GET /v1/jobs/{id}", s.handleJobGet)
@@ -529,6 +532,74 @@ func (s *Server) handleIngest(w http.ResponseWriter, r *http.Request) {
 		"chunks":      len(st.Chunks),
 		"status":      st.Snapshot.Status,
 	})
+}
+
+type tombstoneRequest struct {
+	ProjectID string `json:"project_id"`
+	SourceID  string `json:"source_id"`
+}
+
+func (s *Server) handleTombstoneSource(w http.ResponseWriter, r *http.Request) {
+	var req tombstoneRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeErr(w, http.StatusBadRequest, err)
+		return
+	}
+	res, err := devcli.TombstoneSource(s.cfg.DataDir, req.ProjectID, req.SourceID)
+	if err != nil {
+		writeAppErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
+}
+
+type snapshotExportRequest struct {
+	ProjectID string `json:"project_id"`
+}
+
+func (s *Server) handleSnapshotExport(w http.ResponseWriter, r *http.Request) {
+	var req snapshotExportRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeErr(w, http.StatusBadRequest, err)
+		return
+	}
+	meta, bundle, err := devcli.ExportSnapshotBundle(s.cfg.DataDir, req.ProjectID, "")
+	if err != nil {
+		writeAppErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"ok":              meta.OK,
+		"project_id":      meta.ProjectID,
+		"snapshot_id":     meta.SnapshotID,
+		"chunks":          meta.Chunks,
+		"bundle_checksum": meta.BundleChecksum,
+		"bundle":          bundle,
+	})
+}
+
+type snapshotImportRequest struct {
+	ProjectID string          `json:"project_id"`
+	Activate  bool            `json:"activate"`
+	Bundle    json.RawMessage `json:"bundle"`
+}
+
+func (s *Server) handleSnapshotImport(w http.ResponseWriter, r *http.Request) {
+	var req snapshotImportRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeErr(w, http.StatusBadRequest, err)
+		return
+	}
+	if len(req.Bundle) == 0 {
+		writeErr(w, http.StatusBadRequest, apperr.New(apperr.Validation, "bundle required"))
+		return
+	}
+	res, err := devcli.ImportSnapshotBundleBytes(s.cfg.DataDir, req.ProjectID, req.Bundle, req.Activate)
+	if err != nil {
+		writeAppErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
 }
 
 // resolveCorpusPath joins path_key under corpus root and rejects escapes / abs paths.

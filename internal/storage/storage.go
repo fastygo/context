@@ -3,6 +3,7 @@ package storage
 
 import (
 	"context"
+	"time"
 
 	"github.com/fastygo/context/internal/agentruntime"
 	"github.com/fastygo/context/internal/artifacts"
@@ -38,6 +39,9 @@ type SourceStore interface {
 	PutSource(ctx context.Context, source corpus.Source) error
 	GetSource(ctx context.Context, projectID ids.ProjectID, sourceID ids.SourceID) (corpus.Source, error)
 	ListSources(ctx context.Context, projectID ids.ProjectID) ([]corpus.Source, error)
+	// TombstoneSource soft-deletes a source (stabilization C1). Idempotent when
+	// already tombstoned. Re-ingest via PutSource with nil TombstonedAt revives.
+	TombstoneSource(ctx context.Context, projectID ids.ProjectID, sourceID ids.SourceID, at time.Time) error
 }
 
 type ChunkStore interface {

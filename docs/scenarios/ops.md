@@ -31,6 +31,22 @@ curl -s -X POST http://127.0.0.1:8080/v1/repair \
   -d '{"project_id":"demo","mode":"rebuild","target":"all"}'
 ```
 
+## Snapshot move (ADR-0029 / stabilization C2)
+
+```bash
+go run ./cmd/context-dev snapshot-export --data "$DATA_A" --project demo \
+  --out /tmp/demo.bundle.json
+go run ./cmd/context-dev snapshot-import --data "$DATA_B" --project demo \
+  --in /tmp/demo.bundle.json --activate
+
+# HTTP: export returns bundle JSON; import verifies then optional activate
+curl -s -X POST http://127.0.0.1:8080/v1/snapshot/export \
+  -d '{"project_id":"demo"}'
+```
+
+Corrupt or partial bundles are refused; `active_snapshot_id` is never flipped
+on verify failure. Rebuild dense/FTS after move when those backends are enabled.
+
 ## Eval history
 
 ```bash

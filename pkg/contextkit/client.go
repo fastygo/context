@@ -254,6 +254,27 @@ func (c *Client) Ingest(ctx context.Context, req IngestRequest) (IngestResult, e
 	return out, err
 }
 
+// TombstoneSource calls POST /v1/sources/tombstone (soft-delete; additive v1).
+func (c *Client) TombstoneSource(ctx context.Context, req TombstoneSourceRequest) (TombstoneSourceResult, error) {
+	var out TombstoneSourceResult
+	err := c.do(ctx, http.MethodPost, "/v1/sources/tombstone", nil, req, &out)
+	return out, err
+}
+
+// SnapshotExport calls POST /v1/snapshot/export.
+func (c *Client) SnapshotExport(ctx context.Context, req SnapshotExportRequest) (SnapshotExportResult, error) {
+	var out SnapshotExportResult
+	err := c.do(ctx, http.MethodPost, "/v1/snapshot/export", nil, req, &out)
+	return out, err
+}
+
+// SnapshotImport calls POST /v1/snapshot/import.
+func (c *Client) SnapshotImport(ctx context.Context, req SnapshotImportRequest) (SnapshotImportResult, error) {
+	var out SnapshotImportResult
+	err := c.do(ctx, http.MethodPost, "/v1/snapshot/import", nil, req, &out)
+	return out, err
+}
+
 // JobStart calls POST /v1/jobs.
 func (c *Client) JobStart(ctx context.Context, req JobStartRequest) (JobStartResult, error) {
 	var out JobStartResult

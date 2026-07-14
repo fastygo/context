@@ -165,11 +165,15 @@ func (s *Store) PutSource(ctx context.Context, source corpus.Source) error {
 		return err
 	}
 	ts, te, tb, ing := temporalCols(source.TemporalMetadata)
+	var tomb any
+	if source.TombstonedAt != nil {
+		tomb = source.TombstonedAt.UTC()
+	}
 	_, err := s.conn(ctx).Exec(ctx, `
 INSERT INTO sources (
   project_id, source_id, source_type, path_key, uri, trust_level, media_type, checksum,
-  temporal_start, temporal_end, temporal_basis, ingested_at
-) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+  temporal_start, temporal_end, temporal_basis, ingested_at, tombstoned_at
+) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
 ON CONFLICT (project_id, source_id) DO UPDATE SET
   source_type = EXCLUDED.source_type,
   path_key = EXCLUDED.path_key,
@@ -180,10 +184,11 @@ ON CONFLICT (project_id, source_id) DO UPDATE SET
   temporal_start = EXCLUDED.temporal_start,
   temporal_end = EXCLUDED.temporal_end,
   temporal_basis = EXCLUDED.temporal_basis,
-  ingested_at = EXCLUDED.ingested_at
+  ingested_at = EXCLUDED.ingested_at,
+  tombstoned_at = EXCLUDED.tombstoned_at
 `, string(source.ProjectID), string(source.ID), string(source.Type), source.PathKey, source.URI,
 		string(source.TrustLevel), source.MediaType, string(source.Checksum),
-		ts, te, tb, ing)
+		ts, te, tb, ing, tomb)
 	return wrapDB(err, "put source")
 }
 
@@ -193,21 +198,22 @@ func (s *Store) GetSource(ctx context.Context, projectID ids.ProjectID, sourceID
 	}
 	var src corpus.Source
 	var trust, checksum string
-	var ts, te, ing *time.Time
+	var ts, te, ing, tomb *time.Time
 	var tb *string
 	err := s.conn(ctx).QueryRow(ctx, `
 SELECT project_id, source_id, source_type, path_key, uri, trust_level, media_type, checksum,
-       temporal_start, temporal_end, temporal_basis, ingested_at
+       temporal_start, temporal_end, temporal_basis, ingested_at, tombstoned_at
 FROM sources WHERE project_id = $1 AND source_id = $2
 `, string(projectID), string(sourceID)).Scan(
 		&src.ProjectID, &src.ID, &src.Type, &src.PathKey, &src.URI, &trust, &src.MediaType, &checksum,
-		&ts, &te, &tb, &ing)
+		&ts, &te, &tb, &ing, &tomb)
 	if err != nil {
 		return corpus.Source{}, mapNotFound(err, "source not found")
 	}
 	src.TrustLevel = foundation.TrustLevel(trust)
 	src.Checksum = foundation.ChecksumHex(checksum)
 	src.TemporalMetadata = temporalFromCols(ts, te, tb, ing)
+	src.TombstonedAt = tomb
 	return src, nil
 }
 
@@ -217,7 +223,7 @@ func (s *Store) ListSources(ctx context.Context, projectID ids.ProjectID) ([]cor
 	}
 	rows, err := s.conn(ctx).Query(ctx, `
 SELECT project_id, source_id, source_type, path_key, uri, trust_level, media_type, checksum,
-       temporal_start, temporal_end, temporal_basis, ingested_at
+       temporal_start, temporal_end, temporal_basis, ingested_at, tombstoned_at
 FROM sources WHERE project_id = $1 ORDER BY source_id
 `, string(projectID))
 	if err != nil {
@@ -228,19 +234,43 @@ FROM sources WHERE project_id = $1 ORDER BY source_id
 	for rows.Next() {
 		var src corpus.Source
 		var trust, checksum string
-		var ts, te, ing *time.Time
+		var ts, te, ing, tomb *time.Time
 		var tb *string
 		if err := rows.Scan(
 			&src.ProjectID, &src.ID, &src.Type, &src.PathKey, &src.URI, &trust, &src.MediaType, &checksum,
-			&ts, &te, &tb, &ing); err != nil {
+			&ts, &te, &tb, &ing, &tomb); err != nil {
 			return nil, wrapDB(err, "scan source")
 		}
 		src.TrustLevel = foundation.TrustLevel(trust)
 		src.Checksum = foundation.ChecksumHex(checksum)
 		src.TemporalMetadata = temporalFromCols(ts, te, tb, ing)
+		src.TombstonedAt = tomb
 		out = append(out, src)
 	}
 	return out, rows.Err()
+}
+
+func (s *Store) TombstoneSource(ctx context.Context, projectID ids.ProjectID, sourceID ids.SourceID, at time.Time) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if at.IsZero() {
+		return apperr.New(apperr.Validation, "tombstone time: zero")
+	}
+	if err := s.requireProject(ctx, projectID); err != nil {
+		return err
+	}
+	tag, err := s.conn(ctx).Exec(ctx, `
+UPDATE sources SET tombstoned_at = COALESCE(tombstoned_at, $3)
+WHERE project_id = $1 AND source_id = $2
+`, string(projectID), string(sourceID), at.UTC())
+	if err != nil {
+		return wrapDB(err, "tombstone source")
+	}
+	if tag.RowsAffected() == 0 {
+		return apperr.New(apperr.NotFound, "source not found")
+	}
+	return nil
 }
 
 func (s *Store) PutChunk(ctx context.Context, chunk corpus.Chunk) error {

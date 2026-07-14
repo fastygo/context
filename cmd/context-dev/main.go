@@ -63,6 +63,12 @@ func main() {
 		err = cmdInspect(args)
 	case "meta-check":
 		err = cmdMetaCheck(args)
+	case "tombstone-source":
+		err = cmdTombstoneSource(args)
+	case "snapshot-export":
+		err = cmdSnapshotExport(args)
+	case "snapshot-import":
+		err = cmdSnapshotImport(args)
 	case "proof-run":
 		err = cmdProofRun(args)
 	case "help", "-h", "--help":
@@ -101,6 +107,9 @@ Usage:
   context-dev eval-history [--data <dir>] [--history <jsonl>] [--limit N]
   context-dev repair --data <dir> --project <id> [--mode rebuild|retry-failed] [--target all|dense|sparse]
   context-dev inspect --data <dir> --project <id> (--query <text> | --pack <id>) [--focus <id>]
+  context-dev tombstone-source --data <dir> --project <id> --source <source_id>
+  context-dev snapshot-export --data <dir> --project <id> --out <bundle.json>
+  context-dev snapshot-import --data <dir> --project <id> --in <bundle.json> [--activate]
   context-dev trace --data <dir> --project <id> --run <id>
   context-dev meta-check [--backend postgres]
   context-dev proof-run [--root <repo>] [--out <.proofs>]
@@ -113,6 +122,8 @@ quota shows soft project limits (CONTEXT_QUOTA_MAX_*) with allow|ask|deny outsid
 ready probes backend readiness (metadata/sparse/vector/embedder/artifact/completer).
 repair rebuilds index payloads for the active ready snapshot, or retries last_failed under a new snapshot_id (ADR-0021).
 inspect explains search/pack decisions for Lab (budget, selected/rejected, scores) without host paths.
+tombstone-source soft-deletes a source; its chunks leave search/pack until re-ingest (stabilization C1).
+snapshot-export / snapshot-import move a ready IndexSnapshot; import verifies checksums before activate (C2).
 Modes dense and hybrid-dense require PostgreSQL/pgvector (see docs/operations/local-server.md).
 Set CONTEXT_ENABLE_DENSE=1 to upsert dense vectors on ingest and include dense in hybrid search.
 Set CONTEXT_DENSE_REBUILD=1 to force search-time vector rebuild (default: prefer ingest commit).
@@ -128,6 +139,54 @@ meta-check verifies durable metadata (schema_id, lineage, temporal, documents).
 proof-run executes Chunk 12 end-to-end proof and writes JSON under --out.
 Outputs stable JSON on stdout for Lab/fixture consumption.
 `)
+}
+
+func cmdTombstoneSource(args []string) error {
+	f := flagMap(args)
+	data := f["data"]
+	if data == "" {
+		return fmt.Errorf("--data required")
+	}
+	res, err := devcli.TombstoneSource(data, f["project"], f["source"])
+	if err != nil {
+		return err
+	}
+	return devcli.PrintJSON(res)
+}
+
+func cmdSnapshotExport(args []string) error {
+	f := flagMap(args)
+	data := f["data"]
+	out := f["out"]
+	if data == "" || out == "" {
+		return fmt.Errorf("--data and --out required")
+	}
+	res, _, err := devcli.ExportSnapshotBundle(data, f["project"], out)
+	if err != nil {
+		return err
+	}
+	return devcli.PrintJSON(res)
+}
+
+func cmdSnapshotImport(args []string) error {
+	f := flagMap(args)
+	data := f["data"]
+	in := f["in"]
+	if data == "" || in == "" {
+		return fmt.Errorf("--data and --in required")
+	}
+	activate := false
+	for _, a := range args {
+		if a == "--activate" || a == "--activate=true" || a == "--activate=1" {
+			activate = true
+			break
+		}
+	}
+	res, err := devcli.ImportSnapshotBundle(data, f["project"], in, activate)
+	if err != nil {
+		return err
+	}
+	return devcli.PrintJSON(res)
 }
 
 func cmdMetaCheck(args []string) error {

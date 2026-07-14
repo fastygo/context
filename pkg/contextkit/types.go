@@ -275,6 +275,52 @@ type IngestResult struct {
 	Status     string `json:"status,omitempty"`
 }
 
+// TombstoneSourceRequest is POST /v1/sources/tombstone.
+type TombstoneSourceRequest struct {
+	ProjectID string `json:"project_id"`
+	SourceID  string `json:"source_id"`
+}
+
+// TombstoneSourceResult is POST /v1/sources/tombstone response.
+type TombstoneSourceResult struct {
+	ProjectID    string `json:"project_id"`
+	SourceID     string `json:"source_id"`
+	Tombstoned   bool   `json:"tombstoned"`
+	TombstonedAt string `json:"tombstoned_at"`
+}
+
+// SnapshotExportRequest is POST /v1/snapshot/export.
+type SnapshotExportRequest struct {
+	ProjectID string `json:"project_id"`
+}
+
+// SnapshotExportResult is POST /v1/snapshot/export response.
+type SnapshotExportResult struct {
+	OK             bool            `json:"ok"`
+	ProjectID      string          `json:"project_id"`
+	SnapshotID     string          `json:"snapshot_id"`
+	Chunks         int             `json:"chunks"`
+	BundleChecksum string          `json:"bundle_checksum"`
+	Bundle         json.RawMessage `json:"bundle"`
+}
+
+// SnapshotImportRequest is POST /v1/snapshot/import.
+type SnapshotImportRequest struct {
+	ProjectID string          `json:"project_id"`
+	Activate  bool            `json:"activate"`
+	Bundle    json.RawMessage `json:"bundle"`
+}
+
+// SnapshotImportResult is POST /v1/snapshot/import response.
+type SnapshotImportResult struct {
+	OK         bool   `json:"ok"`
+	ProjectID  string `json:"project_id"`
+	SnapshotID string `json:"snapshot_id"`
+	Chunks     int    `json:"chunks"`
+	Activated  bool   `json:"activated"`
+	Verified   bool   `json:"verified"`
+}
+
 // JobStartRequest is POST /v1/jobs.
 type JobStartRequest struct {
 	ProjectID string `json:"project_id"`

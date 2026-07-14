@@ -3,6 +3,7 @@ package corpus
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/fastygo/context/internal/foundation"
 	"github.com/fastygo/context/internal/ids"
@@ -50,6 +51,14 @@ type Source struct {
 	MediaType        string
 	Checksum         foundation.ChecksumHex // of original artifact bytes when available
 	TemporalMetadata *TemporalMetadata      // optional source-domain time; never runtime trace time
+	// TombstonedAt marks soft-delete (stabilization C1). Nil means live.
+	// Tombstoned sources must not contribute chunks to search or new packs.
+	TombstonedAt *time.Time `json:"tombstoned_at,omitempty"`
+}
+
+// IsTombstoned reports whether the source is soft-deleted.
+func (s Source) IsTombstoned() bool {
+	return s.TombstonedAt != nil
 }
 
 func (s Source) Validate() error {

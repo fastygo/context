@@ -34,6 +34,8 @@ type ChunkRecord struct {
 	TemporalMetadata *corpus.TemporalMetadata
 	Language         string // BCP 47; empty means unknown
 	AnalyzerVersion  string // language adapter / analyzer pin for explainability
+	// Tombstoned excludes the chunk from search/pack (source soft-delete).
+	Tombstoned bool
 }
 
 // Memory is a project/snapshot scoped chunk index.
@@ -55,6 +57,9 @@ func (m *Memory) Add(records ...ChunkRecord) {
 func (m *Memory) List(projectID ids.ProjectID, snapshotID ids.SnapshotID) []ChunkRecord {
 	out := make([]ChunkRecord, 0)
 	for _, c := range m.chunks {
+		if c.Tombstoned {
+			continue
+		}
 		if c.ProjectID == projectID && c.SnapshotID == snapshotID {
 			out = append(out, c)
 		}
@@ -73,6 +78,9 @@ func (m *Memory) Get(projectID ids.ProjectID, snapshotID ids.SnapshotID, chunkID
 
 // MatchesFilters reports whether a chunk satisfies RetrievalFilters (empty fields ignored).
 func MatchesFilters(c ChunkRecord, f retrieval.RetrievalFilters) bool {
+	if c.Tombstoned {
+		return false
+	}
 	if f.SenseID != "" && !containsSense(c.SenseIDs, f.SenseID) {
 		return false
 	}

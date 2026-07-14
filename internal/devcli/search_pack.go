@@ -46,11 +46,16 @@ func loadIndex(st State) (*index.Memory, ids.SnapshotID, error) {
 	if snap == "" {
 		snap = st.Snapshot.ID
 	}
+	tomb := make(map[ids.SourceID]struct{}, len(st.TombstonedSourceIDs))
+	for _, id := range st.TombstonedSourceIDs {
+		tomb[id] = struct{}{}
+	}
 	mem := index.NewMemory()
 	for _, ch := range st.Chunks {
 		if ch.SnapshotID != snap {
 			continue
 		}
+		_, dead := tomb[ch.SourceID]
 		mem.Add(index.ChunkRecord{
 			ProjectID:       st.Project.ID,
 			SnapshotID:      ch.SnapshotID,
@@ -62,6 +67,7 @@ func loadIndex(st State) (*index.Memory, ids.SnapshotID, error) {
 			TrustLevel:      ch.TrustLevel,
 			Language:        ch.Language,
 			AnalyzerVersion: ch.MorphVersion,
+			Tombstoned:      dead,
 		})
 	}
 	return mem, snap, nil

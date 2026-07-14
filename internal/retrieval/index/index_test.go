@@ -72,3 +72,18 @@ func TestTemporalFilterUsesDeterministicOverlap(t *testing.T) {
 		t.Fatal("record without temporal metadata must not match explicit filter")
 	}
 }
+
+func TestTombstonedChunkExcluded(t *testing.T) {
+	t.Parallel()
+	rec := index.ChunkRecord{
+		ProjectID: "p1", SnapshotID: "snap1", ChunkID: "c1", SourceID: "s1",
+		Text: "hello", Tombstoned: true,
+	}
+	mem := index.NewMemory(rec)
+	if got := mem.List("p1", "snap1"); len(got) != 0 {
+		t.Fatalf("List must skip tombstoned: %#v", got)
+	}
+	if index.MatchesFilters(rec, retrieval.RetrievalFilters{}) {
+		t.Fatal("MatchesFilters must reject tombstoned")
+	}
+}

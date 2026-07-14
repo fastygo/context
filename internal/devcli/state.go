@@ -52,6 +52,9 @@ type State struct {
 	ToolCalls []tools.ToolCall         `json:"tool_calls"`
 	Traces    []tracing.Event          `json:"traces"`
 	Focuses   []retrieval.FocusProfile `json:"focuses,omitempty"`
+	// TombstonedSourceIDs are soft-deleted sources (stabilization C1). Chunks
+	// from these sources are excluded from search and new context packs.
+	TombstonedSourceIDs []ids.SourceID `json:"tombstoned_source_ids,omitempty"`
 	// LastFailed retains the most recent aborted commit for ADR-0021 repair
 	// (new snapshot_id retry). Cleared after successful retry-failed repair.
 	LastFailed *FailedAttempt `json:"last_failed,omitempty"`

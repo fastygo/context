@@ -352,6 +352,51 @@ func TestTemporalSourceDoesNotCreateRuntimeTrace(t *testing.T) {
 	}
 }
 
+func TestTombstoneSourceExcludesFromLiveListSemantics(t *testing.T) {
+	t.Parallel()
+	store := memory.New()
+	ctx := context.Background()
+	if err := store.PutProject(ctx, corpus.Project{ID: "p1", Name: "demo"}); err != nil {
+		t.Fatal(err)
+	}
+	src := corpus.Source{
+		ID: "s1", ProjectID: "p1", Type: corpus.SourceTypeFile,
+		PathKey: "a.txt", TrustLevel: foundation.TrustProject,
+	}
+	if err := store.PutSource(ctx, src); err != nil {
+		t.Fatal(err)
+	}
+	at := time.Unix(200, 0).UTC()
+	if err := store.TombstoneSource(ctx, "p1", "s1", at); err != nil {
+		t.Fatal(err)
+	}
+	got, err := store.GetSource(ctx, "p1", "s1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.IsTombstoned() || got.TombstonedAt == nil || !got.TombstonedAt.Equal(at) {
+		t.Fatalf("tombstone=%#v", got)
+	}
+	if err := store.TombstoneSource(ctx, "p1", "s1", at.Add(time.Hour)); err != nil {
+		t.Fatal(err)
+	}
+	again, err := store.GetSource(ctx, "p1", "s1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !again.TombstonedAt.Equal(at) {
+		t.Fatalf("idempotent tombstone must keep first time: %#v", again.TombstonedAt)
+	}
+	src.TombstonedAt = nil
+	if err := store.PutSource(ctx, src); err != nil {
+		t.Fatal(err)
+	}
+	revived, err := store.GetSource(ctx, "p1", "s1")
+	if err != nil || revived.IsTombstoned() {
+		t.Fatalf("put without tombstone must revive: %#v err=%v", revived, err)
+	}
+}
+
 func projectIDs(projects []corpus.Project) []ids.ProjectID {
 	out := make([]ids.ProjectID, len(projects))
 	for i, p := range projects {

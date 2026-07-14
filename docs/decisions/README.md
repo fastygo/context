@@ -60,6 +60,8 @@ Status: **closed** — ADR-0015–0021 (and later Lab-ready ADRs through 0027).
 | [0025](0025-multi-tenant-isolation.md) | Multi-tenant isolation boundary | Accepted |
 | [0026](0026-public-api-v1-freeze.md) | Public API v1 compatibility freeze | Accepted |
 | [0027](0027-lab-gate-freeze.md) | Lab gate freeze | Accepted |
+| [0028](0028-source-tombstones.md) | Source tombstones for soft delete | Accepted |
+| [0029](0029-snapshot-bundle-export-import.md) | Snapshot bundle export/import | Accepted |
 
 ## Writing a new ADR
 

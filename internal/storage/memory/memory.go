@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/fastygo/context/internal/agentruntime"
 	"github.com/fastygo/context/internal/apperr"
@@ -140,6 +141,29 @@ func (s *Store) ListSources(ctx context.Context, projectID ids.ProjectID) ([]cor
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
 	return out, nil
+}
+
+func (s *Store) TombstoneSource(ctx context.Context, projectID ids.ProjectID, sourceID ids.SourceID, at time.Time) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if at.IsZero() {
+		return apperr.New(apperr.Validation, "tombstone time: zero")
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	key := key2(string(projectID), string(sourceID))
+	src, ok := s.sources[key]
+	if !ok {
+		return apperr.New(apperr.NotFound, "source not found")
+	}
+	if src.TombstonedAt != nil {
+		return nil
+	}
+	ts := at.UTC()
+	src.TombstonedAt = &ts
+	s.sources[key] = src
+	return nil
 }
 
 func (s *Store) PutChunk(ctx context.Context, chunk corpus.Chunk) error {

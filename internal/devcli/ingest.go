@@ -156,6 +156,7 @@ func Ingest(dataDir, projectID, path string) (State, error) {
 	st.Chunks = chunks
 	st.CorpusRoot = absRoot
 	st.LastFailed = nil
+	st.TombstonedSourceIDs = dropRevivedTombstones(st.TombstonedSourceIDs, chunks)
 	if err := ws.Save(st); err != nil {
 		return State{}, err
 	}
@@ -260,6 +261,23 @@ func sourceIDFromPathKey(pathKey string) ids.SourceID {
 		return ids.SourceID(pathKey[:16])
 	}
 	return ids.SourceID(pathKey)
+}
+
+func dropRevivedTombstones(tombstoned []ids.SourceID, chunks []IndexedChunk) []ids.SourceID {
+	if len(tombstoned) == 0 {
+		return tombstoned
+	}
+	live := make(map[ids.SourceID]struct{}, len(chunks))
+	for _, ch := range chunks {
+		live[ch.SourceID] = struct{}{}
+	}
+	kept := make([]ids.SourceID, 0, len(tombstoned))
+	for _, id := range tombstoned {
+		if _, revived := live[id]; !revived {
+			kept = append(kept, id)
+		}
+	}
+	return kept
 }
 
 func sanitizeID(s string) string {
