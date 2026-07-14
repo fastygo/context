@@ -16,6 +16,10 @@ Start from [`.project/README.md`](README.md) before promoting a later adapter.
 | Event source | `source.NDJSONFiles` | message-export adapters | Idempotent batch + temporal filter ([ADR-0038](../docs/decisions/0038-s3-thin-adapters.md)). |
 | `MetadataStore` | `internal/storage/postgres` | SQLite (optional), bbolt cache later | Migrations on Open; DocumentStore for lex/ling JSON |
 | `ArtifactStore` | localfs (**freeze until measured**) | Object store | [ADR-0039](../docs/decisions/0039-s3-adapter-freeze-defer.md) |
+| Completer / Embedder | `models/fake`, `localhash`, `localecho`, **`httpjson` (production)** | Vendor SDKs outside core | [ADR-0039](../docs/decisions/0039-s3-adapter-freeze-defer.md) |
+| Schedule port | `agentruntime/scheduler` + file adapter | External cron/queue | [ADR-0031](../docs/decisions/0031-durable-schedule-port.md) |
+| Graph store | **none** (stubs only) | Consumer projection | [ADR-0040](../docs/decisions/0040-graph-consumer-projection.md) |
+| Query AST | **none** (FTS + filters) | Consumer boolean UX | [ADR-0041](../docs/decisions/0041-query-ast-defer-fts-filters.md) |
 
 ## How external language / lexicon adapters satisfy Chunk 18 harnesses
 

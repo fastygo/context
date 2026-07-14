@@ -1,6 +1,7 @@
 # Context Runtime Stabilization Roadmap
 
-Status: **S0 accepted** (2026-07-14) — post–Lab Gate freeze path in progress  
+Status: **Stabilization Gate (S5) passed** (2026-07-14) —
+[ADR-0042](../docs/decisions/0042-stabilization-gate.md)  
 Scope: **core + adapters only** (not Lab UI, not branded apps, not domain UIs)  
 Architecture baseline: [roadmap-context-core.md](roadmap-context-core.md)  
 Deferral catalog: [future-layer.md](future-layer.md)  
@@ -21,30 +22,31 @@ operational rule:
 downstream consumers; API v1 stays additive; adapters evolve behind harnesses;
 ops can rebuild, degrade, and recover without archaeology.
 
-## Honest status (2026-07-14)
+## Honest status (2026-07-14, post-S5)
 
 | Track | Reality |
 | --- | --- |
 | Phase 0–2 (baseline → MVP path) | **done** in code |
 | Lab Gate (Chunks 20–32, ADR-0027) | **passed** — HTTP v1 + contextkit frozen for Lab |
-| Phase 3 leftovers beyond Lab | **open** |
-| Phase 4 commercial / Phase 5 ecosystem | **planned** |
-| Language / lexicon live adapters | **contracts + harness only** |
-| Graph store / traversal | **forever-defer** — stubs only; [ADR-0040](../docs/decisions/0040-graph-consumer-projection.md) |
-| Binary parsers (PDF/DOCX/…) | **not shipped** (plaintext + markdown only) |
-| Fuzzy / trigram / query language | **deferred** |
-| Distributed / scheduled job control | **in-process jobs only** |
-| QDrant / Turbopuffer / Tantivy | **backlog on measured blocker** |
+| Stabilization S0–S5 | **passed** — [ADR-0042](../docs/decisions/0042-stabilization-gate.md) |
+| Phase 4 commercial / Phase 5 ecosystem | **planned after S5** (unless deployment blocks) |
+| Language / lexicon | thin `context-lang-en` + JSON lexicon + public langtestkit; rich engines external |
+| Graph store / traversal | **forever-defer** — [ADR-0040](../docs/decisions/0040-graph-consumer-projection.md) |
+| Binary parsers | HTML + lossy PDF shipped; DOCX/OCR deferred |
+| Fuzzy / Query AST | **forever-defer / outside core** — [ADR-0041](../docs/decisions/0041-query-ast-defer-fts-filters.md), ADR-0039 |
+| Scheduled jobs | durable schedule port + file adapter (C8); distributed workers deferred |
+| QDrant / Turbopuffer / Tantivy | **frozen-deferred** on measured blocker |
 
 Shipped runtime loop today:
 
 ```text
-ingest → hybrid search → ContextPack → agent-run → trace
+ingest → hybrid search (+ snippets) → ContextPack → agent-run → trace
 ```
 
-with quotas, redaction, readiness, repair, and inspect.
+with quotas, redaction, readiness, repair, inspect, tombstones, snapshot
+move, schedules, and index lifecycle explain.
 
-Do not claim: full morphology, full graph, complete private-search parity, or
+Do not claim: full morphology, in-core graph, boolean Query AST, or
 production multi-tenant auth.
 
 ## What “complete core + adapters” means
@@ -242,22 +244,40 @@ Goal: stop re-litigating “do we have a graph?” and “do we have boolean que
   [ADR-0041](../docs/decisions/0041-query-ast-defer-fts-filters.md);
   how-to [docs/search-power-user.md](../docs/search-power-user.md)
 
-### Gate S5 — Stabilization Gate (“don’t touch”)
+### Gate S5 — Stabilization Gate (“don’t touch”) ✅
 
 Checklist (all must be true):
 
-- [ ] S1–S4 exit criteria green
-- [ ] `go test ./...` + Lab smoke + golden suites green offline where required
-- [ ] `docs/lab-gate.md` still accurate; additive API changelog clean
-- [ ] `docs/` runbooks: ingest, rebuild, restore snapshot, degraded modes
-- [ ] Adapters-backlog updated: every port has first-live **or** explicit defer
-- [ ] future-layer items not in S1–S4 marked **frozen-deferred** with owner
-- [ ] No open “Immediate Next Steps” in roadmap that imply unfinished foundation
-      without a dated follow-up ADR
-- [ ] Downstream consumers integrate via API/adapters only (no `internal/` imports)
+- [x] S1–S4 exit criteria green
+- [x] `go test ./...` + Lab smoke + golden suites green offline where required
+- [x] `docs/lab-gate.md` still accurate; additive API changelog clean
+      ([api/v1-changelog.md](../docs/api/v1-changelog.md))
+- [x] `docs/` runbooks: ingest, rebuild, restore snapshot, degraded modes
+      ([operations/runbook.md](../docs/operations/runbook.md))
+- [x] Adapters-backlog updated: every port has first-live **or** explicit defer
+- [x] future-layer items not in S1–S4 marked **frozen-deferred** with owner
+      (registry in [future-layer.md](future-layer.md); owner: core steward)
+- [x] No open “Immediate Next Steps” implying unfinished foundation without ADR
+- [x] Downstream consumers integrate via API/adapters only (no `internal/`
+      imports) — enforced by `pkg/contextkit` import test + Lab gate docs
+
+**Section D freeze notes** (reopen only with measured blocker + ADR):
+
+| Item | Owner |
+| --- | --- |
+| QDrant / Turbopuffer / Tantivy | core steward |
+| Distributed workers / leases / DLQ | core steward |
+| Multi-tenant OIDC + fine-grained ACL | core steward |
+| OpenAPI codegen / gRPC | core steward |
+| Claim graph, simhash COW, cross-user Merkle | core steward |
+| Broad crawler governance | core steward |
+| OCR / spreadsheet / mailbox | core steward |
+| Full DSL workbench in core | core steward |
+| Billing / cost accounting | product (after S5) |
 
 **After S5:** only measured blockers + ADRs reopen core. Default answer to
 feature requests that expand domain language: *adapter or downstream consumer.*
+([ADR-0042](../docs/decisions/0042-stabilization-gate.md))
 
 ## Mapping to existing phase language
 
@@ -294,13 +314,9 @@ docs/lab-gate.md
 ## Immediate next actions
 
 1. ~~Accept S0 (this file).~~ ✅
-2. ~~Confirm C3 (Postgres lineage/temporal).~~ ✅ closed — see gap matrix.
-3. ~~C1 tombstones + lifecycle explain.~~ ✅ ADR-0028 + ADR-0032
-4. ~~C2 snapshot export/import.~~ ✅ ADR-0029
-5. ~~C7 project export/delete.~~ ✅ ADR-0030
-6. ~~C8 scheduler port + file adapter.~~ ✅ ADR-0031
-7. ~~S1 complete.~~ ✅
-8. ~~S2 complete.~~ ✅
-9. ~~S3 complete.~~ ✅
-10. ~~S4 complete.~~ ✅ (C9/C10 forever-defer ADRs) → start **S5** Stabilization Gate checklist.
-11. Write defer ADRs for anything in section D that keeps getting reopened.
+2. ~~S1–S4.~~ ✅
+3. ~~S5 Stabilization Gate.~~ ✅ [ADR-0042](../docs/decisions/0042-stabilization-gate.md)
+4. **Default:** ship Lab/products against API v1; reopen core only for measured
+   blockers + ADR.
+5. Phase 4 commercial items (billing, team OIDC, COW) remain **after** S5 unless
+   a deployment blocks without them.

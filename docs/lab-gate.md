@@ -1,7 +1,9 @@
 # Lab Gate
 
 Status: **passed** (2026-07-13)  
-Related: [API v1](api/v1.md), [ADR-0026](decisions/0026-public-api-v1-freeze.md),
+Stabilization Gate: **passed** (2026-07-14) — [ADR-0042](decisions/0042-stabilization-gate.md)  
+Related: [API v1](api/v1.md), [v1 changelog](api/v1-changelog.md),
+[ADR-0026](decisions/0026-public-api-v1-freeze.md),
 [ADR-0027](decisions/0027-lab-gate-freeze.md), [ADR-0024](decisions/0024-thin-http-service-boundary.md)
 
 This gate freezes the Core → Lab/BFF contract. Lab may bind to HTTP +
@@ -36,6 +38,23 @@ This gate freezes the Core → Lab/BFF contract. Lab may bind to HTTP +
 | Redaction | 30 | Safe model/preview text |
 | Background jobs | 31 | Start/status/cancel AgentRun |
 
+## Stabilization additives (S1–S4, still v1)
+
+Lab may also use these additive routes/fields (see
+[v1-changelog.md](api/v1-changelog.md)):
+
+| Area | Surface |
+| --- | --- |
+| Index health | `GET /v1/index` |
+| Tombstones | `POST /v1/sources/tombstone` |
+| Snapshot move | `POST /v1/snapshot/export\|import` |
+| Project retention | `POST /v1/project/export\|delete` |
+| Schedules | `/v1/schedules*` |
+| Citations | search candidate optional `snippet` |
+| Tool policy | tool_call status `needs_approval` |
+
+Language adapters outside this repo use `pkg/langtestkit` (not `internal/`).
+
 ## Smoke path (automated)
 
 Offline test `TestLabGateSmoke` exercises:
@@ -52,19 +71,30 @@ Run:
 
 ```bash
 go test ./internal/httpserver/ -run TestLabGateSmoke -count=1
+go test ./... -count=1
+go test ./internal/evals/golden/ ./internal/evals/adversarial/ -count=1
 ```
 
-## Deferred (not blocking Lab)
+## Deferred past Stabilization Gate (frozen)
+
+Reopen only with measured blocker + ADR ([ADR-0042](decisions/0042-stabilization-gate.md)):
 
 - Multi-tenant OIDC / membership ACL
-- OpenAPI codegen
-- `context-lang-*` / full morphology adapters
-- Cron / event-triggered jobs, external queues
-- Fuzzy/trigram, QDrant, Lab UI in this repository
+- OpenAPI codegen / gRPC
+- QDrant / Turbopuffer / Tantivy `context-sparse`
+- Distributed workers / leases / DLQ (beyond single-node scheduler)
+- In-core graph store / Query AST (consumer patterns: ADR-0040/0041)
+- Object-store ArtifactStore, DOCX, fuzzy/`pg_trgm` in core (ADR-0039)
+- OCR / spreadsheet / mailbox / crawler governance
+- Billing / cost accounting; Lab UI inside this repository
+
+Thin `context-lang-en`, curated JSON lexicon, HTML/PDF, NDJSON events, and
+public langtestkit are **shipped** (S3) — richer engines stay external.
 
 ## Lab responsibility
 
 - Map UI identity → allowed `project_id` (and later `tenant_id`)
-- Render inspector / metrics / quota / job status JSON
+- Render inspector / metrics / quota / job / index-status JSON
 - Never treat Completer output as source truth
 - Keep product/brand names in Lab config, not in Core
+- Compose boolean/graph UX in Lab using search filters + consumer stores

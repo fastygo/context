@@ -19,6 +19,8 @@ with integration. Planning-only material lives under [`.project/`](../.project/)
 | HTTP + `contextkit` | [API v1](api/v1.md) |
 | Postgres / dense / FTS / env | [Local operations](operations/local-server.md) |
 | Lab/BFF freeze checklist | [Lab gate](lab-gate.md) |
+| Ops runbook (ingest/rebuild/restore/degraded) | [operations/runbook.md](operations/runbook.md) |
+| API v1 additive changelog | [api/v1-changelog.md](api/v1-changelog.md) |
 | Why a boundary exists | [ADRs / decisions](decisions/README.md) |
 | Proof artifacts (JSON) | [`.proofs/`](../.proofs/README.md) |
 

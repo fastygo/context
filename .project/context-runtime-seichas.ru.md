@@ -129,8 +129,9 @@ Lab Gate ≠ «готово навсегда». Отложено до measured b
 evidence-backed контексте. «Не трогать годами» — только после Stabilization
 Gate (S5), не после Lab Gate.
 
-**Сейчас в работе:** S0–S4 закрыты (в т.ч. graph/query = forever-defer ADRs).
-Дальше **S5** — Stabilization Gate checklist. См.
+**Сейчас:** Stabilization Gate **S5 пройден** (2026-07-14) —
+[ADR-0042](../docs/decisions/0042-stabilization-gate.md). Ядро «не трогать»
+без measured blocker + ADR. Lab/продукты — на API v1. См.
 [stabilization-roadmap.md](stabilization-roadmap.md).
 
 ---

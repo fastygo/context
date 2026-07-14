@@ -1,6 +1,7 @@
 # Context Core Future Layer Roadmap
 
-Status: deferred architecture backlog  
+Status: deferred architecture backlog (**frozen after Stabilization Gate S5**,
+2026-07-14 — [ADR-0042](../docs/decisions/0042-stabilization-gate.md))  
 Scope: production-grade capabilities that should be designed for, but not
 implemented before the hypothesis-validation CLI proof.
 
@@ -8,6 +9,35 @@ This document extends [roadmap-context-core.md](roadmap-context-core.md).
 Lab-ready / CLI proof path is already shipped — see [`.project/README.md`](README.md)
 and [`docs/lab-gate.md`](../docs/lab-gate.md). Use this file for deferred
 production gates only.
+
+## Frozen-deferred registry (post-S5)
+
+Owner for all rows: **core steward**. Reopen only with measured blocker + ADR.
+
+| Layer | Status after S5 | Notes |
+| --- | --- | --- |
+| L01 Threat / injection | **partial closed** | Trust + pack separation + adversarial fixtures (C5); ML classifier deferred |
+| L02 Fine-grained ACL | **frozen-deferred** | Project isolation shipped; OIDC/ACL later |
+| L03 Index lifecycle | **closed** | C1 tombstones + lifecycle explain |
+| L03A Snapshot reuse / COW | **partial / frozen** | Export/import (C2); simhash COW deferred |
+| L04 Query AST | **forever-defer** | [ADR-0041](../docs/decisions/0041-query-ast-defer-fts-filters.md) |
+| L04A Focus / memory tiers | **partial** | FocusProfile shipped; deep memory tiers deferred |
+| L05 Snippets | **closed** | C4 / ADR-0033 |
+| L05A Language adapters | **partial** | testkit + en thin; rich engines external |
+| L05B Lexicon resources | **partial** | curated JSON; TEI external |
+| L05C Event adapters | **partial** | NDJSON thin; richer exports external |
+| L06 Relevance feedback | **frozen-deferred** | |
+| L07 Claim/citation graph | **forever-defer in core** | [ADR-0040](../docs/decisions/0040-graph-consumer-projection.md) |
+| L08 Distributed jobs | **frozen-deferred** | Single-node scheduler shipped (C8) |
+| L09 Tool sandbox | **partial** | Side-effect ask baseline (C6); full sandbox deferred |
+| L10 SLOs / capacity | **frozen-deferred** | |
+| L11 Crawler governance | **frozen-deferred** | |
+| L12 Multi-modal / binary | **partial** | HTML/PDF thin; OCR/DOCX deferred |
+| L13 Privacy / encryption | **frozen-deferred** | Soft delete/export hooks minimal (C7) |
+| L14 Multi-tenant governance | **frozen-deferred** | Isolation design only |
+| L15 API/SDK | **partial** | v1 freeze + changelog; OpenAPI deferred |
+| L15A Lab workbench/DSL | **frozen-deferred** | Outside core |
+| L16 Production review gates | **frozen-deferred** | Product/ops process |
 
 The layers below are intentionally deferred. They are the gates that turn a
 working context engine into a reliable private search system, distributed agent

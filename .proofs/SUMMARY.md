@@ -39,6 +39,8 @@
 - Eval: offline golden suite `eval-golden-v2` (`internal/evals/golden`) +
   adversarial fixtures (`internal/evals/adversarial`) + `context-dev eval`;
   report under `.proofs/eval/`.
+- Stabilization Gate S5 passed (2026-07-14): ADR-0042; runbook
+  `docs/operations/runbook.md`; API changelog `docs/api/v1-changelog.md`.
 - Service: thin HTTP+JSON `cmd/context-serve` / `internal/httpserver`
   (Chunk 20, ADR-0024); Lab/BFF call without importing `internal/`.
 - Client: `pkg/contextkit` HTTP client (Chunk 21); zero `internal/` imports.

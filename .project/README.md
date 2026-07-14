@@ -8,6 +8,7 @@ user guide and not a completion dump.
 | **Что умеет Runtime сейчас (RU, продукт)** | [context-runtime-seichas.ru.md](context-runtime-seichas.ru.md) |
 | How to run / integrate shipped core | [`docs/`](../docs/README.md) |
 | Lab/BFF freeze (passed) | [`docs/lab-gate.md`](../docs/lab-gate.md) |
+| Stabilization Gate (passed) | [stabilization-roadmap.md](stabilization-roadmap.md), [ADR-0042](../docs/decisions/0042-stabilization-gate.md) |
 | Why a boundary exists | [`docs/decisions/`](../docs/decisions/README.md) |
 | Measured PoC / eval JSON | [`.proofs/`](../.proofs/) |
 | **What to plan or defer next** | this folder (below) |
@@ -18,9 +19,9 @@ user guide and not a completion dump.
 | --- | --- | --- |
 | Phase 0–2 (baseline → MVP path) | **done** | Architecture + PoC/MVP scope in code; see ADRs |
 | Phase 3 Lab-ready (Chunks 20–32) | **done** | Gate: [`docs/lab-gate.md`](../docs/lab-gate.md), [ADR-0027](../docs/decisions/0027-lab-gate-freeze.md) |
-| Phase 3 leftovers → Stabilization Gate | **S0+S1 done; S2 next** | [stabilization-roadmap.md](stabilization-roadmap.md) |
-| Phase 4–5 | **planned** | Commercial / ecosystem — roadmap + future-layer |
-| External adapters (QDrant, Tantivy, …) | **backlog** | Only on measured blocker + ADR; language/lexicon first via stabilization S3 |
+| Stabilization Gate S0–S5 | **passed** (2026-07-14) | [ADR-0042](../docs/decisions/0042-stabilization-gate.md) |
+| Phase 4–5 | **planned after S5** | Commercial / ecosystem — reopen core only for measured blockers |
+| External adapters (QDrant, Tantivy, …) | **frozen-deferred** | Measured blocker + ADR only |
 
 Do **not** re-add a chunk-by-chunk progress file here. Archaeology: git history +
 ADRs under `docs/decisions/`.
@@ -46,18 +47,14 @@ Also in this folder:
 
 ## Forward work (start here)
 
-1. **Stabilize core + adapters (default next)?** → [stabilization-roadmap.md](stabilization-roadmap.md)  
-   Lab Gate ≠ finished. Close gates S1–S5 before treating the runtime as
-   long-lived “don’t touch.” Gaps are framed as required engine capabilities
-   (durability, evidence, safety, language/lexicon, document/event ingress).
-2. **Measured adapter need?** → [adapters-backlog.md](adapters-backlog.md)  
-   Promote QDrant / Turbopuffer / `context-sparse` / provider embedders only after
-   limits are recorded and an ADR updates backend order
-   ([ADR-0017](../docs/decisions/0017-poc-backend-order.md)).
-   Prefer language/lexicon/event adapters from stabilization S3 before new
-   vector backends.
-3. **Production gate / deferred layer?** → [future-layer.md](future-layer.md)  
-   Define the contract early; implement only if a proof or Lab path is blocked.
+1. **Integrate Lab/product on frozen core?** → [`docs/`](../docs/README.md),
+   [lab-gate.md](../docs/lab-gate.md), [api/v1-changelog.md](../docs/api/v1-changelog.md).  
+   Stabilization Gate passed — default is “don’t touch” core
+   ([ADR-0042](../docs/decisions/0042-stabilization-gate.md)).
+2. **Measured adapter / core reopen?** → [adapters-backlog.md](adapters-backlog.md)
+   + superseding ADR. No casual reopen of section D / forever-defer items.
+3. **Deferred production layer?** → [future-layer.md](future-layer.md)  
+   Frozen-deferred registry at top; implement only if blocked.
 4. **Phase scope / invariants?** → [roadmap-context-core.md](roadmap-context-core.md)  
    Use Phase 3 leftovers and Phase 4–5 as orientation; do not treat the whole
    baseline as unfinished work.
