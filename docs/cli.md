@@ -30,6 +30,10 @@ need `--project <id>` matching the workspace project.
 | `snapshot-import` | Verify bundle (`--in`); optional `--activate` |
 | `project-export` | Project archive (`--out`; snapshot + focuses) |
 | `project-delete` | Wipe project (`--confirm` must match `--project`) |
+| `schedule-put` | Upsert durable schedule (`--kind once_at\|interval\|event`) |
+| `schedule-list` / `schedule-delete` | List / delete schedules |
+| `schedule-tick` | Fire due schedules into job registry |
+| `schedule-fire` | Fire event schedules (`--event`) |
 | `meta-check` | Metadata backend check |
 | `proof-run` | Regenerate [`.proofs/`](../.proofs/) artifacts |
 

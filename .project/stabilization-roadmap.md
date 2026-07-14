@@ -112,7 +112,7 @@ These are the items that, if left open, force returns to the engine.
 | C5 | Threat-model + prompt-injection fixtures | Untrusted sources poison agents | future-layer L01 |
 | C6 | Tool side-effect / approval baseline | Any write/network tool is unsafe otherwise | future-layer L09 (minimal slice) |
 | C7 | Retention / project delete-export hooks | Long-lived corpora need a governance boundary | **closed** (minimal) — [ADR-0030](../docs/decisions/0030-project-export-delete.md) |
-| C8 | Scheduled + event-triggered job **ports** (adapter may be local cron first) | In-process-only dies with the process | Lab deferral |
+| C8 | Scheduled + event-triggered job **ports** (adapter may be local cron first) | In-process-only dies with the process | **closed** (port + file adapter) — [ADR-0031](../docs/decisions/0031-durable-schedule-port.md) |
 | C9 | Graph **port** + one store adapter (even Postgres edges) | Otherwise consumers fork edge schemas | graph stub today |
 | C10 | Query AST subset (phrase / AND-OR-NOT / field filters) **or** explicit forever-defer ADR | Power-search keeps reopening without a decision | future-layer L04 |
 | C11 | Reranker wiring behind interface (even no-op/weighted only documented) | Interface exists; path must be intentional | models.Reranker |
@@ -295,8 +295,8 @@ docs/lab-gate.md
    remaining: degraded/rebuild explain states beyond `SnapshotStatus`.
 4. ~~**C2** snapshot export/import.~~ ✅ ([ADR-0029](../docs/decisions/0029-snapshot-bundle-export-import.md)).
 5. ~~**C7** project export/delete.~~ ✅ ([ADR-0030](../docs/decisions/0030-project-export-delete.md)).
-6. Continue S1: **C8** (scheduler port + local adapter); finish C1 lifecycle
-   explain states.
-7. Parallel: **A2** (`context-lang-testkit` packaging of `linguistic/harness`) —
+6. ~~**C8** scheduler port + file adapter.~~ ✅ ([ADR-0031](../docs/decisions/0031-durable-schedule-port.md)).
+7. Finish S1 leftovers: C1 lifecycle explain states (degraded/rebuild).
+8. Parallel: **A2** (`context-lang-testkit` packaging of `linguistic/harness`) —
    unblocks A1 without core churn.
-8. Write defer ADRs for anything in section D that keeps getting reopened.
+9. Write defer ADRs for anything in section D that keeps getting reopened.

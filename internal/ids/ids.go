@@ -37,6 +37,7 @@ type (
 	MorphAnalysisID string
 	LexemeID        string
 	JobID           string
+	ScheduleID      string
 )
 
 // Validate reports whether the identifier is non-empty.
@@ -81,3 +82,4 @@ func (id ExpansionID) Validate() error     { return Validate("expansion_id", str
 func (id MorphAnalysisID) Validate() error { return Validate("morph_analysis_id", string(id)) }
 func (id LexemeID) Validate() error        { return Validate("lexeme_id", string(id)) }
 func (id JobID) Validate() error           { return Validate("job_id", string(id)) }
+func (id ScheduleID) Validate() error      { return Validate("schedule_id", string(id)) }

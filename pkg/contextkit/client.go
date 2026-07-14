@@ -289,6 +289,47 @@ func (c *Client) ProjectDelete(ctx context.Context, req ProjectDeleteRequest) (P
 	return out, err
 }
 
+// SchedulePut calls PUT /v1/schedules.
+func (c *Client) SchedulePut(ctx context.Context, req SchedulePutRequest) (SchedulePutResult, error) {
+	var out SchedulePutResult
+	err := c.do(ctx, http.MethodPut, "/v1/schedules", nil, req, &out)
+	return out, err
+}
+
+// ScheduleList calls GET /v1/schedules.
+func (c *Client) ScheduleList(ctx context.Context, projectID string) (ScheduleListResult, error) {
+	q := url.Values{}
+	if projectID != "" {
+		q.Set("project_id", projectID)
+	}
+	var out ScheduleListResult
+	err := c.do(ctx, http.MethodGet, "/v1/schedules", q, nil, &out)
+	return out, err
+}
+
+// ScheduleDelete calls DELETE /v1/schedules/{id}.
+func (c *Client) ScheduleDelete(ctx context.Context, projectID, scheduleID string) error {
+	q := url.Values{}
+	if projectID != "" {
+		q.Set("project_id", projectID)
+	}
+	return c.do(ctx, http.MethodDelete, "/v1/schedules/"+scheduleID, q, nil, &map[string]any{})
+}
+
+// ScheduleTick calls POST /v1/schedules/tick.
+func (c *Client) ScheduleTick(ctx context.Context) (ScheduleTickResult, error) {
+	var out ScheduleTickResult
+	err := c.do(ctx, http.MethodPost, "/v1/schedules/tick", nil, map[string]any{}, &out)
+	return out, err
+}
+
+// ScheduleFire calls POST /v1/schedules/fire.
+func (c *Client) ScheduleFire(ctx context.Context, req ScheduleFireRequest) (ScheduleTickResult, error) {
+	var out ScheduleTickResult
+	err := c.do(ctx, http.MethodPost, "/v1/schedules/fire", nil, req, &out)
+	return out, err
+}
+
 // JobStart calls POST /v1/jobs.
 func (c *Client) JobStart(ctx context.Context, req JobStartRequest) (JobStartResult, error) {
 	var out JobStartResult

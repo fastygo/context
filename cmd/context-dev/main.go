@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
+	"time"
 
+	"github.com/fastygo/context/internal/agentruntime/scheduler"
 	"github.com/fastygo/context/internal/devcli"
 	"github.com/fastygo/context/internal/foundation"
 	"github.com/fastygo/context/internal/ids"
@@ -39,6 +42,16 @@ func main() {
 		err = cmdJobList(args)
 	case "job-cancel":
 		err = cmdJobCancel(args)
+	case "schedule-put":
+		err = cmdSchedulePut(args)
+	case "schedule-list":
+		err = cmdScheduleList(args)
+	case "schedule-delete":
+		err = cmdScheduleDelete(args)
+	case "schedule-tick":
+		err = cmdScheduleTick(args)
+	case "schedule-fire":
+		err = cmdScheduleFire(args)
 	case "trace":
 		err = cmdTrace(args)
 	case "focus-put":
@@ -101,6 +114,11 @@ Usage:
   context-dev job-status --data <dir> --project <id> --job <id>
   context-dev job-list --data <dir> --project <id>
   context-dev job-cancel --data <dir> --project <id> --job <id>
+  context-dev schedule-put --data <dir> --project <id> --owner <name> --query <text> --kind once_at|interval|event [--at RFC3339] [--interval sec] [--event type] [--id <sched_id>] [--focus <id>]
+  context-dev schedule-list --data <dir> --project <id>
+  context-dev schedule-delete --data <dir> --project <id> --schedule <id>
+  context-dev schedule-tick --data <dir>
+  context-dev schedule-fire --data <dir> --project <id> --event <type>
   context-dev focus-put --data <dir> --project <id> --json <file-or-inline> [--id <focus_id>]
   context-dev focus-get --data <dir> --project <id> --focus <id>
   context-dev focus-list --data <dir> --project <id>
@@ -139,7 +157,8 @@ Set CONTEXT_COMPLETER_KIND=localecho|http for non-fake agent-run Completer (defa
 Set CONTEXT_QUOTA_MAX_CHUNKS|PACKS|RUNS for soft project quotas (0/unset = unlimited; deny at hard limit).
 Set CONTEXT_FAIL_METADATA|VECTOR|SPARSE|EMBEDDER|ARTIFACT|COMPLETER=1 to inject Unavailable (Chunk 29).
 Set CONTEXT_REDACT=0 to disable secret/PII redaction on model_text / inspect previews (default on).
-Background jobs (job-start) require --owner; in-process only (dies with the process).
+Background jobs (job-start) require --owner; in-process execution dies with the process.
+Schedules (schedule-*) persist under ops/schedules and re-enqueue jobs after restart via schedule-tick (C8).
 Set CONTEXT_SPARSE_KIND=postgres_fts for live Postgres FTS sparse/hybrid search.
 Focus profiles persist to state.json and MetadataStore (postgres when configured).
 meta-check verifies durable metadata (schema_id, lineage, temporal, documents).
@@ -386,6 +405,91 @@ func cmdJobCancel(args []string) error {
 		return err
 	}
 	res, err := devcli.JobCancel(f["data"], f["project"], f["job"])
+	if err != nil {
+		return err
+	}
+	return devcli.PrintJSON(res)
+}
+
+func cmdSchedulePut(args []string) error {
+	f := flagMap(args)
+	if err := require(f, "data", "project", "owner", "query", "kind"); err != nil {
+		return err
+	}
+	spec := scheduler.Spec{
+		ID: ids.ScheduleID(f["id"]), ProjectID: ids.ProjectID(f["project"]),
+		Owner: f["owner"], Query: f["query"], FocusID: f["focus"],
+		Kind: scheduler.Kind(f["kind"]), Enabled: true,
+	}
+	if f["interval"] != "" {
+		n, err := strconv.Atoi(f["interval"])
+		if err != nil {
+			return fmt.Errorf("--interval: %w", err)
+		}
+		spec.IntervalSeconds = n
+	}
+	if f["event"] != "" {
+		spec.EventType = f["event"]
+	}
+	if f["at"] != "" {
+		at, err := time.Parse(time.RFC3339, f["at"])
+		if err != nil {
+			return fmt.Errorf("--at RFC3339: %w", err)
+		}
+		u := at.UTC()
+		spec.NextRunAt = &u
+	} else if spec.Kind == scheduler.KindInterval || spec.Kind == scheduler.KindOnceAt {
+		now := time.Now().UTC()
+		spec.NextRunAt = &now
+	}
+	res, err := devcli.SchedulePut(f["data"], spec)
+	if err != nil {
+		return err
+	}
+	return devcli.PrintJSON(res)
+}
+
+func cmdScheduleList(args []string) error {
+	f := flagMap(args)
+	if err := require(f, "data", "project"); err != nil {
+		return err
+	}
+	res, err := devcli.ScheduleList(f["data"], f["project"])
+	if err != nil {
+		return err
+	}
+	return devcli.PrintJSON(res)
+}
+
+func cmdScheduleDelete(args []string) error {
+	f := flagMap(args)
+	if err := require(f, "data", "project", "schedule"); err != nil {
+		return err
+	}
+	if err := devcli.ScheduleDelete(f["data"], f["project"], f["schedule"]); err != nil {
+		return err
+	}
+	return devcli.PrintJSON(map[string]any{"ok": true, "schedule_id": f["schedule"]})
+}
+
+func cmdScheduleTick(args []string) error {
+	f := flagMap(args)
+	if err := require(f, "data"); err != nil {
+		return err
+	}
+	res, err := devcli.ScheduleTick(f["data"])
+	if err != nil {
+		return err
+	}
+	return devcli.PrintJSON(res)
+}
+
+func cmdScheduleFire(args []string) error {
+	f := flagMap(args)
+	if err := require(f, "data", "project", "event"); err != nil {
+		return err
+	}
+	res, err := devcli.ScheduleFireEvent(f["data"], f["project"], f["event"])
 	if err != nil {
 		return err
 	}

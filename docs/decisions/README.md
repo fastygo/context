@@ -63,6 +63,7 @@ Status: **closed** — ADR-0015–0021 (and later Lab-ready ADRs through 0027).
 | [0028](0028-source-tombstones.md) | Source tombstones for soft delete | Accepted |
 | [0029](0029-snapshot-bundle-export-import.md) | Snapshot bundle export/import | Accepted |
 | [0030](0030-project-export-delete.md) | Project export and delete retention hooks | Accepted |
+| [0031](0031-durable-schedule-port.md) | Durable schedule port for background jobs | Accepted |
 
 ## Writing a new ADR
 

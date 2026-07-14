@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fastygo/context/internal/agentruntime/scheduler"
 	"github.com/fastygo/context/internal/apperr"
 	"github.com/fastygo/context/internal/devcli"
 	"github.com/fastygo/context/internal/foundation"
@@ -47,6 +48,8 @@ func New(cfg Config) (*Server, error) {
 	cfg.DataDir = abs
 	s := &Server{cfg: cfg, mux: http.NewServeMux()}
 	s.routes()
+	// Best-effort: on serve start, enqueue overdue schedules (C8 durability model).
+	go func() { _, _ = devcli.ScheduleTick(cfg.DataDir) }()
 	return s, nil
 }
 
@@ -104,6 +107,11 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /v1/jobs", s.handleJobList)
 	s.mux.HandleFunc("GET /v1/jobs/{id}", s.handleJobGet)
 	s.mux.HandleFunc("POST /v1/jobs/{id}/cancel", s.handleJobCancel)
+	s.mux.HandleFunc("PUT /v1/schedules", s.handleSchedulePut)
+	s.mux.HandleFunc("GET /v1/schedules", s.handleScheduleList)
+	s.mux.HandleFunc("DELETE /v1/schedules/{id}", s.handleScheduleDelete)
+	s.mux.HandleFunc("POST /v1/schedules/tick", s.handleScheduleTick)
+	s.mux.HandleFunc("POST /v1/schedules/fire", s.handleScheduleFire)
 }
 
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
@@ -488,6 +496,65 @@ func (s *Server) handleJobCancel(w http.ResponseWriter, r *http.Request) {
 		projectID = body.ProjectID
 	}
 	res, err := devcli.JobCancel(s.cfg.DataDir, projectID, id)
+	if err != nil {
+		writeAppErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
+}
+
+func (s *Server) handleSchedulePut(w http.ResponseWriter, r *http.Request) {
+	var spec scheduler.Spec
+	if err := decodeJSON(r, &spec); err != nil {
+		writeErr(w, http.StatusBadRequest, err)
+		return
+	}
+	res, err := devcli.SchedulePut(s.cfg.DataDir, spec)
+	if err != nil {
+		writeAppErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
+}
+
+func (s *Server) handleScheduleList(w http.ResponseWriter, r *http.Request) {
+	res, err := devcli.ScheduleList(s.cfg.DataDir, r.URL.Query().Get("project_id"))
+	if err != nil {
+		writeAppErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
+}
+
+func (s *Server) handleScheduleDelete(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	projectID := r.URL.Query().Get("project_id")
+	if err := devcli.ScheduleDelete(s.cfg.DataDir, projectID, id); err != nil {
+		writeAppErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "schedule_id": id})
+}
+
+func (s *Server) handleScheduleTick(w http.ResponseWriter, r *http.Request) {
+	res, err := devcli.ScheduleTick(s.cfg.DataDir)
+	if err != nil {
+		writeAppErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
+}
+
+func (s *Server) handleScheduleFire(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		ProjectID string `json:"project_id"`
+		EventType string `json:"event_type"`
+	}
+	if err := decodeJSON(r, &req); err != nil {
+		writeErr(w, http.StatusBadRequest, err)
+		return
+	}
+	res, err := devcli.ScheduleFireEvent(s.cfg.DataDir, req.ProjectID, req.EventType)
 	if err != nil {
 		writeAppErr(w, err)
 		return

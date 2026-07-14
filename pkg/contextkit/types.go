@@ -353,6 +353,58 @@ type ProjectDeleteResult struct {
 	SourcesTombstoned int    `json:"sources_tombstoned_before_delete"`
 }
 
+// SchedulePutRequest is PUT /v1/schedules (body is the schedule spec).
+type SchedulePutRequest struct {
+	ID              string  `json:"id,omitempty"`
+	ProjectID       string  `json:"project_id"`
+	Owner           string  `json:"owner"`
+	Query           string  `json:"query"`
+	FocusID         string  `json:"focus_id,omitempty"`
+	Kind            string  `json:"kind"`
+	Enabled         bool    `json:"enabled"`
+	NextRunAt       *string `json:"next_run_at,omitempty"`
+	IntervalSeconds int     `json:"interval_seconds,omitempty"`
+	EventType       string  `json:"event_type,omitempty"`
+}
+
+// Schedule is a durable schedule record.
+type Schedule struct {
+	ID              string  `json:"id"`
+	ProjectID       string  `json:"project_id"`
+	Owner           string  `json:"owner"`
+	Query           string  `json:"query"`
+	FocusID         string  `json:"focus_id,omitempty"`
+	Kind            string  `json:"kind"`
+	Enabled         bool    `json:"enabled"`
+	NextRunAt       *string `json:"next_run_at,omitempty"`
+	IntervalSeconds int     `json:"interval_seconds,omitempty"`
+	EventType       string  `json:"event_type,omitempty"`
+	LastJobID       string  `json:"last_job_id,omitempty"`
+}
+
+// SchedulePutResult is PUT /v1/schedules response.
+type SchedulePutResult struct {
+	Schedule Schedule `json:"schedule"`
+}
+
+// ScheduleListResult is GET /v1/schedules response.
+type ScheduleListResult struct {
+	Schedules []Schedule `json:"schedules"`
+}
+
+// ScheduleTickResult is POST /v1/schedules/tick|fire response.
+type ScheduleTickResult struct {
+	Fired  []string `json:"fired"`
+	FiredN int      `json:"fired_n"`
+	At     string   `json:"at"`
+}
+
+// ScheduleFireRequest is POST /v1/schedules/fire.
+type ScheduleFireRequest struct {
+	ProjectID string `json:"project_id"`
+	EventType string `json:"event_type"`
+}
+
 // JobStartRequest is POST /v1/jobs.
 type JobStartRequest struct {
 	ProjectID string `json:"project_id"`
