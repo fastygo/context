@@ -28,6 +28,8 @@ need `--project <id>` matching the workspace project.
 | `tombstone-source` | Soft-delete a source (`--source`); chunks leave search/pack |
 | `snapshot-export` | Write ready snapshot bundle (`--out`) |
 | `snapshot-import` | Verify bundle (`--in`); optional `--activate` |
+| `project-export` | Project archive (`--out`; snapshot + focuses) |
+| `project-delete` | Wipe project (`--confirm` must match `--project`) |
 | `meta-check` | Metadata backend check |
 | `proof-run` | Regenerate [`.proofs/`](../.proofs/) artifacts |
 

@@ -275,6 +275,20 @@ func (c *Client) SnapshotImport(ctx context.Context, req SnapshotImportRequest) 
 	return out, err
 }
 
+// ProjectExport calls POST /v1/project/export.
+func (c *Client) ProjectExport(ctx context.Context, req ProjectExportRequest) (ProjectExportResult, error) {
+	var out ProjectExportResult
+	err := c.do(ctx, http.MethodPost, "/v1/project/export", nil, req, &out)
+	return out, err
+}
+
+// ProjectDelete calls POST /v1/project/delete.
+func (c *Client) ProjectDelete(ctx context.Context, req ProjectDeleteRequest) (ProjectDeleteResult, error) {
+	var out ProjectDeleteResult
+	err := c.do(ctx, http.MethodPost, "/v1/project/delete", nil, req, &out)
+	return out, err
+}
+
 // JobStart calls POST /v1/jobs.
 func (c *Client) JobStart(ctx context.Context, req JobStartRequest) (JobStartResult, error) {
 	var out JobStartResult

@@ -62,6 +62,7 @@ Status: **closed** — ADR-0015–0021 (and later Lab-ready ADRs through 0027).
 | [0027](0027-lab-gate-freeze.md) | Lab gate freeze | Accepted |
 | [0028](0028-source-tombstones.md) | Source tombstones for soft delete | Accepted |
 | [0029](0029-snapshot-bundle-export-import.md) | Snapshot bundle export/import | Accepted |
+| [0030](0030-project-export-delete.md) | Project export and delete retention hooks | Accepted |
 
 ## Writing a new ADR
 

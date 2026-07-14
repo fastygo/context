@@ -111,7 +111,7 @@ These are the items that, if left open, force returns to the engine.
 | C4 | Snippet / highlight contract (offset-stable) | Consumers need citations, not only chunk blobs | future-layer L05 |
 | C5 | Threat-model + prompt-injection fixtures | Untrusted sources poison agents | future-layer L01 |
 | C6 | Tool side-effect / approval baseline | Any write/network tool is unsafe otherwise | future-layer L09 (minimal slice) |
-| C7 | Retention / project delete-export hooks | Long-lived corpora need a governance boundary | future-layer L13 (minimal) |
+| C7 | Retention / project delete-export hooks | Long-lived corpora need a governance boundary | **closed** (minimal) — [ADR-0030](../docs/decisions/0030-project-export-delete.md) |
 | C8 | Scheduled + event-triggered job **ports** (adapter may be local cron first) | In-process-only dies with the process | Lab deferral |
 | C9 | Graph **port** + one store adapter (even Postgres edges) | Otherwise consumers fork edge schemas | graph stub today |
 | C10 | Query AST subset (phrase / AND-OR-NOT / field filters) **or** explicit forever-defer ADR | Power-search keeps reopening without a decision | future-layer L04 |
@@ -294,8 +294,9 @@ docs/lab-gate.md
 3. **Land C1** — ~~source tombstones~~ ✅ ([ADR-0028](../docs/decisions/0028-source-tombstones.md));
    remaining: degraded/rebuild explain states beyond `SnapshotStatus`.
 4. ~~**C2** snapshot export/import.~~ ✅ ([ADR-0029](../docs/decisions/0029-snapshot-bundle-export-import.md)).
-5. Continue S1: **C7** (delete/export), **C8** (scheduler port + local adapter);
-   finish C1 lifecycle explain states.
-6. Parallel: **A2** (`context-lang-testkit` packaging of `linguistic/harness`) —
+5. ~~**C7** project export/delete.~~ ✅ ([ADR-0030](../docs/decisions/0030-project-export-delete.md)).
+6. Continue S1: **C8** (scheduler port + local adapter); finish C1 lifecycle
+   explain states.
+7. Parallel: **A2** (`context-lang-testkit` packaging of `linguistic/harness`) —
    unblocks A1 without core churn.
-7. Write defer ADRs for anything in section D that keeps getting reopened.
+8. Write defer ADRs for anything in section D that keeps getting reopened.

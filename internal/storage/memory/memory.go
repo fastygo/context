@@ -97,6 +97,45 @@ func (s *Store) ListProjects(ctx context.Context) ([]corpus.Project, error) {
 	return out, nil
 }
 
+func (s *Store) DeleteProject(ctx context.Context, id ids.ProjectID) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if err := id.Validate(); err != nil {
+		return apperr.Wrap(apperr.Validation, "project_id", err)
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if _, ok := s.projects[id]; !ok {
+		return apperr.New(apperr.NotFound, "project not found")
+	}
+	prefix := string(id) + "\x00"
+	delete(s.projects, id)
+	purgePrefixed(s.sources, prefix)
+	purgePrefixed(s.chunks, prefix)
+	purgePrefixed(s.snapshots, prefix)
+	purgePrefixed(s.packs, prefix)
+	purgePrefixed(s.focuses, prefix)
+	purgePrefixed(s.runs, prefix)
+	purgePrefixed(s.toolCalls, prefix)
+	purgePrefixed(s.artifacts, prefix)
+	purgePrefixed(s.lineage, prefix)
+	for k := range s.traces {
+		if strings.HasPrefix(k, string(id)+"\x00") || strings.HasPrefix(k, string(id)+"|") {
+			delete(s.traces, k)
+		}
+	}
+	return nil
+}
+
+func purgePrefixed[V any](m map[string]V, prefix string) {
+	for k := range m {
+		if len(k) >= len(prefix) && k[:len(prefix)] == prefix {
+			delete(m, k)
+		}
+	}
+}
+
 func (s *Store) PutSource(ctx context.Context, source corpus.Source) error {
 	if err := ctx.Err(); err != nil {
 		return err

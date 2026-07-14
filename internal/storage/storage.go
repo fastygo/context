@@ -33,6 +33,8 @@ type ProjectStore interface {
 	PutProject(ctx context.Context, project corpus.Project) error
 	GetProject(ctx context.Context, id ids.ProjectID) (corpus.Project, error)
 	ListProjects(ctx context.Context) ([]corpus.Project, error)
+	// DeleteProject removes the project and cascaded metadata rows (stabilization C7).
+	DeleteProject(ctx context.Context, id ids.ProjectID) error
 }
 
 type SourceStore interface {

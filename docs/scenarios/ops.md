@@ -47,6 +47,19 @@ curl -s -X POST http://127.0.0.1:8080/v1/snapshot/export \
 Corrupt or partial bundles are refused; `active_snapshot_id` is never flipped
 on verify failure. Rebuild dense/FTS after move when those backends are enabled.
 
+## Project export / delete (ADR-0030 / stabilization C7)
+
+```bash
+go run ./cmd/context-dev project-export --data "$DATA" --project demo \
+  --out /tmp/demo.archive.json
+go run ./cmd/context-dev project-delete --data "$DATA" --project demo \
+  --confirm demo
+```
+
+Delete tombstones sources first, then removes metadata (CASCADE), artifact
+bytes, and workspace `state.json`. Always export before delete when retention
+requires a copy.
+
 ## Eval history
 
 ```bash

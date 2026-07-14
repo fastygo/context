@@ -129,9 +129,9 @@ Lab Gate ≠ «готово навсегда». Отложено до measured b
 evidence-backed контексте. «Не трогать годами» — только после Stabilization
 Gate (S5), не после Lab Gate.
 
-**Сейчас в работе:** Gate S0 принят; S1 — C3 (lineage/temporal) и C2 (snapshot
-export/import с verify-before-activate) закрыты; C1 tombstones есть; дальше
-C7/C8 и остаток lifecycle. См. [stabilization-roadmap.md](stabilization-roadmap.md).
+**Сейчас в работе:** Gate S0 принят; S1 — C2/C3/C7 закрыты (snapshot move,
+lineage/temporal, project export/delete); C1 tombstones есть; дальше **C8**
+(scheduler port) и остаток lifecycle. См. [stabilization-roadmap.md](stabilization-roadmap.md).
 
 ---
 

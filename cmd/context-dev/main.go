@@ -69,6 +69,10 @@ func main() {
 		err = cmdSnapshotExport(args)
 	case "snapshot-import":
 		err = cmdSnapshotImport(args)
+	case "project-export":
+		err = cmdProjectExport(args)
+	case "project-delete":
+		err = cmdProjectDelete(args)
 	case "proof-run":
 		err = cmdProofRun(args)
 	case "help", "-h", "--help":
@@ -110,6 +114,8 @@ Usage:
   context-dev tombstone-source --data <dir> --project <id> --source <source_id>
   context-dev snapshot-export --data <dir> --project <id> --out <bundle.json>
   context-dev snapshot-import --data <dir> --project <id> --in <bundle.json> [--activate]
+  context-dev project-export --data <dir> --project <id> --out <archive.json>
+  context-dev project-delete --data <dir> --project <id> --confirm <id>
   context-dev trace --data <dir> --project <id> --run <id>
   context-dev meta-check [--backend postgres]
   context-dev proof-run [--root <repo>] [--out <.proofs>]
@@ -124,6 +130,7 @@ repair rebuilds index payloads for the active ready snapshot, or retries last_fa
 inspect explains search/pack decisions for Lab (budget, selected/rejected, scores) without host paths.
 tombstone-source soft-deletes a source; its chunks leave search/pack until re-ingest (stabilization C1).
 snapshot-export / snapshot-import move a ready IndexSnapshot; import verifies checksums before activate (C2).
+project-export / project-delete are retention hooks; delete requires --confirm matching --project (C7).
 Modes dense and hybrid-dense require PostgreSQL/pgvector (see docs/operations/local-server.md).
 Set CONTEXT_ENABLE_DENSE=1 to upsert dense vectors on ingest and include dense in hybrid search.
 Set CONTEXT_DENSE_REBUILD=1 to force search-time vector rebuild (default: prefer ingest commit).
@@ -183,6 +190,30 @@ func cmdSnapshotImport(args []string) error {
 		}
 	}
 	res, err := devcli.ImportSnapshotBundle(data, f["project"], in, activate)
+	if err != nil {
+		return err
+	}
+	return devcli.PrintJSON(res)
+}
+
+func cmdProjectExport(args []string) error {
+	f := flagMap(args)
+	if err := require(f, "data", "out"); err != nil {
+		return err
+	}
+	res, err := devcli.ExportProject(f["data"], f["project"], f["out"])
+	if err != nil {
+		return err
+	}
+	return devcli.PrintJSON(res)
+}
+
+func cmdProjectDelete(args []string) error {
+	f := flagMap(args)
+	if err := require(f, "data", "project", "confirm"); err != nil {
+		return err
+	}
+	res, err := devcli.DeleteProject(f["data"], f["project"], f["confirm"])
 	if err != nil {
 		return err
 	}

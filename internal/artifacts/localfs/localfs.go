@@ -114,6 +114,29 @@ func (s *Store) Get(ctx context.Context, projectID ids.ProjectID, artifactID ids
 	return art, body, nil
 }
 
+// DeleteProject removes all artifact directories for a project (stabilization C7).
+func (s *Store) DeleteProject(ctx context.Context, projectID ids.ProjectID) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	proj, err := safeSegment("project_id", string(projectID))
+	if err != nil {
+		return err
+	}
+	dir := filepath.Join(s.root, proj)
+	rel, err := filepath.Rel(s.root, dir)
+	if err != nil {
+		return apperr.Wrap(apperr.Permission, "resolve project path", err)
+	}
+	if rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
+		return apperr.New(apperr.Permission, "project path escapes store root")
+	}
+	if err := os.RemoveAll(dir); err != nil {
+		return apperr.Wrap(apperr.Validation, "delete project artifacts", err)
+	}
+	return nil
+}
+
 func (s *Store) Delete(ctx context.Context, projectID ids.ProjectID, artifactID ids.ArtifactID) error {
 	if err := ctx.Err(); err != nil {
 		return err

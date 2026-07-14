@@ -98,6 +98,8 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("POST /v1/sources/tombstone", s.handleTombstoneSource)
 	s.mux.HandleFunc("POST /v1/snapshot/export", s.handleSnapshotExport)
 	s.mux.HandleFunc("POST /v1/snapshot/import", s.handleSnapshotImport)
+	s.mux.HandleFunc("POST /v1/project/export", s.handleProjectExport)
+	s.mux.HandleFunc("POST /v1/project/delete", s.handleProjectDelete)
 	s.mux.HandleFunc("POST /v1/jobs", s.handleJobStart)
 	s.mux.HandleFunc("GET /v1/jobs", s.handleJobList)
 	s.mux.HandleFunc("GET /v1/jobs/{id}", s.handleJobGet)
@@ -595,6 +597,48 @@ func (s *Server) handleSnapshotImport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	res, err := devcli.ImportSnapshotBundleBytes(s.cfg.DataDir, req.ProjectID, req.Bundle, req.Activate)
+	if err != nil {
+		writeAppErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
+}
+
+type projectExportRequest struct {
+	ProjectID string `json:"project_id"`
+	OutPath   string `json:"out_path"`
+}
+
+func (s *Server) handleProjectExport(w http.ResponseWriter, r *http.Request) {
+	var req projectExportRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeErr(w, http.StatusBadRequest, err)
+		return
+	}
+	if req.OutPath == "" {
+		writeErr(w, http.StatusBadRequest, apperr.New(apperr.Validation, "out_path required"))
+		return
+	}
+	res, err := devcli.ExportProject(s.cfg.DataDir, req.ProjectID, req.OutPath)
+	if err != nil {
+		writeAppErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
+}
+
+type projectDeleteRequest struct {
+	ProjectID        string `json:"project_id"`
+	ConfirmProjectID string `json:"confirm_project_id"`
+}
+
+func (s *Server) handleProjectDelete(w http.ResponseWriter, r *http.Request) {
+	var req projectDeleteRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeErr(w, http.StatusBadRequest, err)
+		return
+	}
+	res, err := devcli.DeleteProject(s.cfg.DataDir, req.ProjectID, req.ConfirmProjectID)
 	if err != nil {
 		writeAppErr(w, err)
 		return

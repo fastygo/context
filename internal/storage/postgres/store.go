@@ -94,6 +94,23 @@ func (s *Store) conn(ctx context.Context) dbConn {
 	return s.pool
 }
 
+func (s *Store) DeleteProject(ctx context.Context, id ids.ProjectID) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if err := id.Validate(); err != nil {
+		return apperr.Wrap(apperr.Validation, "project_id", err)
+	}
+	tag, err := s.conn(ctx).Exec(ctx, `DELETE FROM projects WHERE id = $1`, string(id))
+	if err != nil {
+		return wrapDB(err, "delete project")
+	}
+	if tag.RowsAffected() == 0 {
+		return apperr.New(apperr.NotFound, "project not found")
+	}
+	return nil
+}
+
 func (s *Store) PutProject(ctx context.Context, project corpus.Project) error {
 	if err := ctx.Err(); err != nil {
 		return err

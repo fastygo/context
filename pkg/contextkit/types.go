@@ -321,6 +321,38 @@ type SnapshotImportResult struct {
 	Verified   bool   `json:"verified"`
 }
 
+// ProjectExportRequest is POST /v1/project/export.
+type ProjectExportRequest struct {
+	ProjectID string `json:"project_id"`
+	OutPath   string `json:"out_path"`
+}
+
+// ProjectExportResult is POST /v1/project/export response.
+type ProjectExportResult struct {
+	OK         bool   `json:"ok"`
+	ProjectID  string `json:"project_id"`
+	SnapshotID string `json:"snapshot_id"`
+	Chunks     int    `json:"chunks"`
+	Focuses    int    `json:"focuses"`
+	OutPath    string `json:"out_path,omitempty"`
+}
+
+// ProjectDeleteRequest is POST /v1/project/delete.
+type ProjectDeleteRequest struct {
+	ProjectID        string `json:"project_id"`
+	ConfirmProjectID string `json:"confirm_project_id"`
+}
+
+// ProjectDeleteResult is POST /v1/project/delete response.
+type ProjectDeleteResult struct {
+	OK                bool   `json:"ok"`
+	ProjectID         string `json:"project_id"`
+	WorkspaceCleared  bool   `json:"workspace_cleared"`
+	MetadataDeleted   bool   `json:"metadata_deleted"`
+	ArtifactsDeleted  bool   `json:"artifacts_deleted"`
+	SourcesTombstoned int    `json:"sources_tombstoned_before_delete"`
+}
+
 // JobStartRequest is POST /v1/jobs.
 type JobStartRequest struct {
 	ProjectID string `json:"project_id"`

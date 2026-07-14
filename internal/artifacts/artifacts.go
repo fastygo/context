@@ -118,4 +118,6 @@ type ArtifactStore interface {
 	Put(ctx context.Context, projectID ids.ProjectID, artifactID ids.ArtifactID, mediaType string, body []byte, opts *PutOptions) (Artifact, error)
 	Get(ctx context.Context, projectID ids.ProjectID, artifactID ids.ArtifactID) (Artifact, []byte, error)
 	Delete(ctx context.Context, projectID ids.ProjectID, artifactID ids.ArtifactID) error
+	// DeleteProject removes all artifacts for a project (stabilization C7).
+	DeleteProject(ctx context.Context, projectID ids.ProjectID) error
 }
