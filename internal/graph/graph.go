@@ -1,17 +1,18 @@
 // Package graph reserves graph-related identifiers and extension points.
-// Graph traversal and storage are intentionally not implemented in Chunk 02.
+// In-core graph storage and traversal are forever-deferred (ADR-0040 / C9);
+// consumers own edge projections keyed by public project/source/chunk IDs.
 package graph
 
 import "github.com/fastygo/context/internal/ids"
 
-// NodeRef is an optional retrieval filter extension point (see retrieval.RetrievalFilters).
+// NodeRef is a reserved identity stub for consumer graph projections.
 type NodeRef struct {
 	ID        ids.GraphNodeID
 	ProjectID ids.ProjectID
 	Kind      string
 }
 
-// EdgeRef names a future citation/co-occurrence/dependency edge without storage.
+// EdgeRef names a citation/co-occurrence/dependency edge without core storage.
 type EdgeRef struct {
 	ID        ids.GraphEdgeID
 	ProjectID ids.ProjectID

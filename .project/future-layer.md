@@ -143,6 +143,11 @@ additional safety gates.
 
 ## Layer 04: Query Language And Advanced Search Semantics
 
+> **S4 / C10:** forever-deferred in core — see
+> [ADR-0041](../docs/decisions/0041-query-ast-defer-fts-filters.md) and
+> [docs/search-power-user.md](../docs/search-power-user.md). Reopen only with a
+> measured blocker.
+
 ### Why This Matters
 
 Natural language retrieval is not enough for a private search system. Users need
@@ -409,6 +414,10 @@ adapter-owned source observation events from Layer 05C.
 - Feedback can improve retrieval without changing source truth.
 
 ## Layer 07: Claim, Contradiction, And Citation Graph
+
+> **S4 / C9:** in-core edge store forever-deferred —
+> [ADR-0040](../docs/decisions/0040-graph-consumer-projection.md). Claim graphs
+> remain consumer projections until a measured blocker reopens core.
 
 ### Why This Matters
 

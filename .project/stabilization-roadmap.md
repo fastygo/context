@@ -30,7 +30,7 @@ ops can rebuild, degrade, and recover without archaeology.
 | Phase 3 leftovers beyond Lab | **open** |
 | Phase 4 commercial / Phase 5 ecosystem | **planned** |
 | Language / lexicon live adapters | **contracts + harness only** |
-| Graph store / traversal | **stubs only** (`NodeRef` / `EdgeRef`) |
+| Graph store / traversal | **forever-defer** — stubs only; [ADR-0040](../docs/decisions/0040-graph-consumer-projection.md) |
 | Binary parsers (PDF/DOCX/…) | **not shipped** (plaintext + markdown only) |
 | Fuzzy / trigram / query language | **deferred** |
 | Distributed / scheduled job control | **in-process jobs only** |
@@ -113,8 +113,8 @@ These are the items that, if left open, force returns to the engine.
 | C6 | Tool side-effect / approval baseline | Any write/network tool is unsafe otherwise | **closed** — [ADR-0034](../docs/decisions/0034-tool-side-effect-approval.md); write/external → `ask` / `needs_approval` |
 | C7 | Retention / project delete-export hooks | Long-lived corpora need a governance boundary | **closed** (minimal) — [ADR-0030](../docs/decisions/0030-project-export-delete.md) |
 | C8 | Scheduled + event-triggered job **ports** (adapter may be local cron first) | In-process-only dies with the process | **closed** (port + file adapter) — [ADR-0031](../docs/decisions/0031-durable-schedule-port.md) |
-| C9 | Graph **port** + one store adapter (even Postgres edges) | Otherwise consumers fork edge schemas | graph stub today |
-| C10 | Query AST subset (phrase / AND-OR-NOT / field filters) **or** explicit forever-defer ADR | Power-search keeps reopening without a decision | future-layer L04 |
+| C9 | Graph **port** + one store adapter (even Postgres edges) | Otherwise consumers fork edge schemas | **forever-defer** — consumer projection; stubs only; [ADR-0040](../docs/decisions/0040-graph-consumer-projection.md) |
+| C10 | Query AST subset (phrase / AND-OR-NOT / field filters) **or** explicit forever-defer ADR | Power-search keeps reopening without a decision | **forever-defer** — FTS + `RetrievalFilters`; [ADR-0041](../docs/decisions/0041-query-ast-defer-fts-filters.md) |
 | C11 | Reranker wiring behind interface (even no-op/weighted only documented) | Interface exists; path must be intentional | **closed** — [ADR-0036](../docs/decisions/0036-intentional-reranker-path.md); Identity on CLI search |
 | C12 | Golden eval suites for morph expansion + sense/attestation + event-window | Without metrics, “stable” is opinion | **closed** (baseline) — `eval-golden-v2` morph/sense-attestation/event-window cases |
 
@@ -227,20 +227,20 @@ adapters, not wishful interfaces.
 - ~~No adapter imports product brand into core.~~ ✅
 - ~~A6/A8/A9/A10 decided.~~ ✅ [ADR-0039](../docs/decisions/0039-s3-adapter-freeze-defer.md)
 
-### Gate S4 — Graph + search semantics decision (core ports)
+### Gate S4 — Graph + search semantics decision (core ports) ✅
 
 Close: **C9** and **C10** (implement minimal **or** write forever-defer ADR
-with recommended consumer-side pattern).
+with recommended consumer-side pattern). ✅
 
 Goal: stop re-litigating “do we have a graph?” and “do we have boolean query?”
 
-**Exit:** either:
+**Exit (chosen: forever-defer ADRs):**
 
-- Postgres edge store + bounded traversal used by retrieval planner, **or**
-- ADR: graph remains a consumer projection; core keeps only `NodeRef` /
-  `EdgeRef` filters; and
-- Query AST subset shipped **or** ADR: Postgres FTS + API filters are the
-  supported power-user path until measured need.
+- ~~ADR: graph remains a consumer projection; core keeps only `NodeRef` /
+  `EdgeRef` stubs.~~ ✅ [ADR-0040](../docs/decisions/0040-graph-consumer-projection.md)
+- ~~ADR: Postgres FTS + API filters are the supported power-user path.~~ ✅
+  [ADR-0041](../docs/decisions/0041-query-ast-defer-fts-filters.md);
+  how-to [docs/search-power-user.md](../docs/search-power-user.md)
 
 ### Gate S5 — Stabilization Gate (“don’t touch”)
 
@@ -301,5 +301,6 @@ docs/lab-gate.md
 6. ~~C8 scheduler port + file adapter.~~ ✅ ADR-0031
 7. ~~S1 complete.~~ ✅
 8. ~~S2 complete.~~ ✅
-9. ~~S3 complete.~~ ✅ (A1–A7; A6/A8–A10 freeze-defer) → start **S4** (C9/C10 decide).
-10. Write defer ADRs for anything in section D that keeps getting reopened.
+9. ~~S3 complete.~~ ✅
+10. ~~S4 complete.~~ ✅ (C9/C10 forever-defer ADRs) → start **S5** Stabilization Gate checklist.
+11. Write defer ADRs for anything in section D that keeps getting reopened.

@@ -72,6 +72,8 @@ Status: **closed** — ADR-0015–0021 (and later Lab-ready ADRs through 0027).
 | [0037](0037-public-langtestkit.md) | Public language adapter testkit | Accepted |
 | [0038](0038-s3-thin-adapters.md) | S3 thin in-repo adapters | Accepted |
 | [0039](0039-s3-adapter-freeze-defer.md) | S3 freeze-defer A6/A8/A9/A10 | Accepted |
+| [0040](0040-graph-consumer-projection.md) | Graph remains a consumer projection (C9) | Accepted |
+| [0041](0041-query-ast-defer-fts-filters.md) | Query AST deferred; FTS + filters (C10) | Accepted |
 
 ## Writing a new ADR
 

@@ -15,6 +15,7 @@ with integration. Planning-only material lives under [`.project/`](../.project/)
 | What the engine is (and is not) | [Concepts](concepts.md) |
 | End-to-end recipes | [Scenarios](scenarios/README.md) |
 | CLI commands | [CLI reference](cli.md) |
+| Power-user search (no Query AST) | [search-power-user.md](search-power-user.md) |
 | HTTP + `contextkit` | [API v1](api/v1.md) |
 | Postgres / dense / FTS / env | [Local operations](operations/local-server.md) |
 | Lab/BFF freeze checklist | [Lab gate](lab-gate.md) |

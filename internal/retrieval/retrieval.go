@@ -100,8 +100,9 @@ type RetrievalFilters struct {
 	LexiconSourceID ids.LexiconSourceID
 	SourceAuthority string
 	Language        string
-	TemporalRange   *corpus.TemporalRange
-	// GraphNodeID is an optional extension point; graph traversal is not implemented in Chunk 02.
+	TemporalRange *corpus.TemporalRange
+	// GraphNodeID is reserved (ADR-0040). MatchesFilters ignores it until a
+	// superseding ADR implements graph-backed enforcement.
 	GraphNodeID ids.GraphNodeID
 }
 
