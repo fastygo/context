@@ -25,6 +25,7 @@ need `--project <id>` matching the workspace project.
 | `ready` | Backend readiness probe |
 | `eval` / `eval-history` | Golden suite + JSONL history |
 | `repair` | Index rebuild / retry-failed |
+| `index-status` | Index phase + `search_available` explain |
 | `tombstone-source` | Soft-delete a source (`--source`); chunks leave search/pack |
 | `snapshot-export` | Write ready snapshot bundle (`--out`) |
 | `snapshot-import` | Verify bundle (`--in`); optional `--activate` |

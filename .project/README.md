@@ -18,7 +18,7 @@ user guide and not a completion dump.
 | --- | --- | --- |
 | Phase 0–2 (baseline → MVP path) | **done** | Architecture + PoC/MVP scope in code; see ADRs |
 | Phase 3 Lab-ready (Chunks 20–32) | **done** | Gate: [`docs/lab-gate.md`](../docs/lab-gate.md), [ADR-0027](../docs/decisions/0027-lab-gate-freeze.md) |
-| Phase 3 leftovers → Stabilization Gate | **S0 accepted; S1 nearly done** | [stabilization-roadmap.md](stabilization-roadmap.md) (C2/C3/C7/C8 closed; C1 explain leftover) |
+| Phase 3 leftovers → Stabilization Gate | **S0+S1 done; S2 next** | [stabilization-roadmap.md](stabilization-roadmap.md) |
 | Phase 4–5 | **planned** | Commercial / ecosystem — roadmap + future-layer |
 | External adapters (QDrant, Tantivy, …) | **backlog** | Only on measured blocker + ADR; language/lexicon first via stabilization S3 |
 

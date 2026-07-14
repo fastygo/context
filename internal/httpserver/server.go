@@ -83,6 +83,7 @@ func (s *Server) authorized(r *http.Request) bool {
 
 func (s *Server) routes() {
 	s.mux.HandleFunc("GET /v1/status", s.handleStatus)
+	s.mux.HandleFunc("GET /v1/index", s.handleIndexStatus)
 	s.mux.HandleFunc("GET /v1/ready", s.handleReady)
 	s.mux.HandleFunc("POST /v1/search", s.handleSearch)
 	s.mux.HandleFunc("POST /v1/context-pack", s.handlePack)
@@ -191,6 +192,15 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		Runs:             len(st.Runs),
 		Focuses:          len(st.Focuses),
 	})
+}
+
+func (s *Server) handleIndexStatus(w http.ResponseWriter, r *http.Request) {
+	res, err := devcli.IndexStatus(s.cfg.DataDir, r.URL.Query().Get("project_id"))
+	if err != nil {
+		writeAppErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
 }
 
 type searchRequest struct {

@@ -21,6 +21,17 @@ export CONTEXT_QUOTA_MAX_RUNS=100
 # soft ask default 80%; hard deny at used >= max (HTTP 403)
 ```
 
+## Index lifecycle explain (ADR-0032 / C1)
+
+```bash
+go run ./cmd/context-dev index-status --data "$DATA" --project demo
+curl -s "http://127.0.0.1:8080/v1/index?project_id=demo"
+```
+
+Phases: `ready` | `degraded` (last_failed / tombstones) | `rebuilding` |
+`failed` | `empty`. Rebuild leaves `search_available=true` on the active ready
+snapshot.
+
 ## Index repair (ADR-0021)
 
 ```bash

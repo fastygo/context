@@ -13,6 +13,7 @@ import (
 	"github.com/fastygo/context/internal/foundation"
 	"github.com/fastygo/context/internal/ids"
 	"github.com/fastygo/context/internal/indexing"
+	"github.com/fastygo/context/internal/indexing/lifecycle"
 	"github.com/fastygo/context/internal/retrieval"
 	"github.com/fastygo/context/internal/tools"
 	"github.com/fastygo/context/internal/tracing"
@@ -58,7 +59,10 @@ type State struct {
 	// LastFailed retains the most recent aborted commit for ADR-0021 repair
 	// (new snapshot_id retry). Cleared after successful retry-failed repair.
 	LastFailed *FailedAttempt `json:"last_failed,omitempty"`
-	UpdatedAt time.Time                `json:"updated_at"`
+	// IndexOp marks in-flight rebuild/retry so Lab can explain PhaseRebuilding
+	// without clearing active_snapshot_id (stabilization C1).
+	IndexOp   *lifecycle.Op `json:"index_op,omitempty"`
+	UpdatedAt time.Time     `json:"updated_at"`
 }
 
 // FailedAttempt is a non-active commit retained for repair (ADR-0021).

@@ -275,6 +275,27 @@ type IngestResult struct {
 	Status     string `json:"status,omitempty"`
 }
 
+// IndexStatusResult is GET /v1/index (lifecycle explain).
+type IndexStatusResult struct {
+	OK                    bool     `json:"ok"`
+	ProjectID             string   `json:"project_id"`
+	ActiveSnapshotID      string   `json:"active_snapshot_id,omitempty"`
+	SnapshotID            string   `json:"snapshot_id,omitempty"`
+	SnapshotStatus        string   `json:"snapshot_status,omitempty"`
+	Phase                 string   `json:"phase"`
+	SearchAvailable       bool     `json:"search_available"`
+	Reasons               []string `json:"reasons"`
+	DenseEnabled          bool     `json:"dense_enabled"`
+	SparseEnabled         bool     `json:"sparse_enabled"`
+	ChunkCount            int      `json:"chunk_count"`
+	TombstonedSourceCount int      `json:"tombstoned_source_count"`
+	HasLastFailed         bool     `json:"has_last_failed"`
+	LastFailedReason      string   `json:"last_failed_reason,omitempty"`
+	RebuildInProgress     bool     `json:"rebuild_in_progress"`
+	RebuildKind           string   `json:"rebuild_kind,omitempty"`
+	RebuildTarget         string   `json:"rebuild_target,omitempty"`
+}
+
 // TombstoneSourceRequest is POST /v1/sources/tombstone.
 type TombstoneSourceRequest struct {
 	ProjectID string `json:"project_id"`

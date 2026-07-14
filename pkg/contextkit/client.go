@@ -254,6 +254,17 @@ func (c *Client) Ingest(ctx context.Context, req IngestRequest) (IngestResult, e
 	return out, err
 }
 
+// IndexStatus calls GET /v1/index.
+func (c *Client) IndexStatus(ctx context.Context, projectID string) (IndexStatusResult, error) {
+	q := url.Values{}
+	if projectID != "" {
+		q.Set("project_id", projectID)
+	}
+	var out IndexStatusResult
+	err := c.do(ctx, http.MethodGet, "/v1/index", q, nil, &out)
+	return out, err
+}
+
 // TombstoneSource calls POST /v1/sources/tombstone (soft-delete; additive v1).
 func (c *Client) TombstoneSource(ctx context.Context, req TombstoneSourceRequest) (TombstoneSourceResult, error) {
 	var out TombstoneSourceResult

@@ -72,6 +72,8 @@ func main() {
 		err = cmdEvalHistory(args)
 	case "repair":
 		err = cmdRepair(args)
+	case "index-status":
+		err = cmdIndexStatus(args)
 	case "inspect":
 		err = cmdInspect(args)
 	case "meta-check":
@@ -128,6 +130,7 @@ Usage:
   context-dev ready
   context-dev eval-history [--data <dir>] [--history <jsonl>] [--limit N]
   context-dev repair --data <dir> --project <id> [--mode rebuild|retry-failed] [--target all|dense|sparse]
+  context-dev index-status --data <dir> --project <id>
   context-dev inspect --data <dir> --project <id> (--query <text> | --pack <id>) [--focus <id>]
   context-dev tombstone-source --data <dir> --project <id> --source <source_id>
   context-dev snapshot-export --data <dir> --project <id> --out <bundle.json>
@@ -145,6 +148,7 @@ metrics / eval-history expose workspace counters and append-only eval regression
 quota shows soft project limits (CONTEXT_QUOTA_MAX_*) with allow|ask|deny outside the model.
 ready probes backend readiness (metadata/sparse/vector/embedder/artifact/completer).
 repair rebuilds index payloads for the active ready snapshot, or retries last_failed under a new snapshot_id (ADR-0021).
+index-status explains index phase (ready|degraded|rebuilding|failed|empty) and search_available (C1).
 inspect explains search/pack decisions for Lab (budget, selected/rejected, scores) without host paths.
 tombstone-source soft-deletes a source; its chunks leave search/pack until re-ingest (stabilization C1).
 snapshot-export / snapshot-import move a ready IndexSnapshot; import verifies checksums before activate (C2).
@@ -627,6 +631,18 @@ func cmdRepair(args []string) error {
 		return err
 	}
 	res, err := devcli.Repair(f["data"], f["project"], f["mode"], f["target"])
+	if err != nil {
+		return err
+	}
+	return devcli.PrintJSON(res)
+}
+
+func cmdIndexStatus(args []string) error {
+	f := flagMap(args)
+	if err := require(f, "data", "project"); err != nil {
+		return err
+	}
+	res, err := devcli.IndexStatus(f["data"], f["project"])
 	if err != nil {
 		return err
 	}

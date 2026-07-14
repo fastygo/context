@@ -105,7 +105,7 @@ These are the items that, if left open, force returns to the engine.
 
 | ID | Gap | Why “don’t touch” fails without it | Source |
 | --- | --- | --- | --- |
-| C1 | Index lifecycle states + tombstones | Corpora go stale; results lie | **partial** — source tombstones shipped ([ADR-0028](../docs/decisions/0028-source-tombstones.md)); remaining: degraded/rebuild explain states |
+| C1 | Index lifecycle states + tombstones | Corpora go stale; results lie | **closed** — tombstones [ADR-0028](../docs/decisions/0028-source-tombstones.md); explain [ADR-0032](../docs/decisions/0032-index-lifecycle-explain.md) |
 | C2 | Snapshot export/import + active flip safety | Cannot move projects without rewrite | **closed** — [ADR-0029](../docs/decisions/0029-snapshot-bundle-export-import.md); verify refuses corrupt/partial before activate |
 | C3 | Lineage + temporal filters durable in Postgres | ~~ADR debt~~ | **closed** — Postgres `artifact_lineage` + temporal cols; client-side overlap filters; integration + proof `08-events-lineage-temporal` |
 | C4 | Snippet / highlight contract (offset-stable) | Consumers need citations, not only chunk blobs | future-layer L05 |
@@ -182,16 +182,18 @@ build on API v1 + adapters without core surgery.
 
 Close: **C1, C2, C7 (minimal), C8 (port + one local adapter)** — **C3 already closed**.
 
+Status: **S1 complete** (2026-07-14).
+
 Goal: a project can live across process restarts, machine moves, and index
 rebuilds without silent drift.
 
 **Exit tests:**
 
-- Rebuild/reindex leaves search available or explicitly degraded.
-- Snapshot import refuses corrupt/partial bundles.
-- Lineage + temporal filter round-trip on Postgres.
-- Project export/delete tombstones expected rows.
-- Background job survives process model documented (file/cron/queue adapter).
+- ~~Rebuild/reindex leaves search available or explicitly degraded.~~ ✅ ADR-0032
+- ~~Snapshot import refuses corrupt/partial bundles.~~ ✅ ADR-0029
+- ~~Lineage + temporal filter round-trip on Postgres.~~ ✅ C3
+- ~~Project export/delete tombstones expected rows.~~ ✅ ADR-0030
+- ~~Background job survives process model documented (file/cron/queue adapter).~~ ✅ ADR-0031
 
 ### Gate S2 — Evidence presentation & safety (core)
 
@@ -291,12 +293,11 @@ docs/lab-gate.md
 
 1. ~~Accept S0 (this file).~~ ✅
 2. ~~Confirm C3 (Postgres lineage/temporal).~~ ✅ closed — see gap matrix.
-3. **Land C1** — ~~source tombstones~~ ✅ ([ADR-0028](../docs/decisions/0028-source-tombstones.md));
-   remaining: degraded/rebuild explain states beyond `SnapshotStatus`.
-4. ~~**C2** snapshot export/import.~~ ✅ ([ADR-0029](../docs/decisions/0029-snapshot-bundle-export-import.md)).
-5. ~~**C7** project export/delete.~~ ✅ ([ADR-0030](../docs/decisions/0030-project-export-delete.md)).
-6. ~~**C8** scheduler port + file adapter.~~ ✅ ([ADR-0031](../docs/decisions/0031-durable-schedule-port.md)).
-7. Finish S1 leftovers: C1 lifecycle explain states (degraded/rebuild).
-8. Parallel: **A2** (`context-lang-testkit` packaging of `linguistic/harness`) —
-   unblocks A1 without core churn.
+3. ~~C1 tombstones + lifecycle explain.~~ ✅ ADR-0028 + ADR-0032
+4. ~~C2 snapshot export/import.~~ ✅ ADR-0029
+5. ~~C7 project export/delete.~~ ✅ ADR-0030
+6. ~~C8 scheduler port + file adapter.~~ ✅ ADR-0031
+7. ~~S1 complete.~~ → start **S2** (C4 snippets, C5 threat fixtures, C6 tool
+   approval, C11 reranker wiring, C12 golden baselines).
+8. Parallel: **A2** (`context-lang-testkit`) — unblocks A1.
 9. Write defer ADRs for anything in section D that keeps getting reopened.

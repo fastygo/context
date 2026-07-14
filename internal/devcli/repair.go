@@ -100,6 +100,11 @@ func repairRebuild(ctx context.Context, ws Workspace, st State, cfg config.Stora
 	if len(chunks) == 0 {
 		return RepairResult{}, apperr.New(apperr.NotFound, "no chunks for active snapshot")
 	}
+	if err := beginIndexOp(ws, &st, RepairModeRebuild, target); err != nil {
+		return RepairResult{}, err
+	}
+	defer func() { _ = clearIndexOp(ws, &st) }()
+
 	res := RepairResult{
 		OK:         true,
 		Mode:       RepairModeRebuild,
@@ -107,11 +112,12 @@ func repairRebuild(ctx context.Context, ws Workspace, st State, cfg config.Stora
 		ProjectID:  st.Project.ID,
 		SnapshotID: snapID,
 		Chunks:     len(chunks),
-		Notes:      "idempotent re-upsert for ready snapshot index payloads",
+		Notes:      "idempotent re-upsert; active ready snapshot remains searchable (C1)",
 	}
 	if err := applyIndexUpserts(ctx, cfg, st.Project.ID, chunks, target, &res); err != nil {
 		return RepairResult{}, err
 	}
+	res.Activated = false // rebuild never flips active
 	return res, nil
 }
 
@@ -143,14 +149,18 @@ func repairRetryFailed(ctx context.Context, ws Workspace, st State, cfg config.S
 		SnapshotID:       newID,
 		ParentSnapshotID: parent,
 		Chunks:           len(chunks),
-		Notes:            "new snapshot_id from last_failed (ADR-0021); prior failed id unchanged",
+		Notes:            "new snapshot_id from last_failed (ADR-0021); prior active remains searchable until activate",
+	}
+	if err := beginIndexOp(ws, &st, RepairModeRetryFailed, target); err != nil {
+		return RepairResult{}, err
 	}
 	if err := applyIndexUpserts(ctx, cfg, st.Project.ID, chunks, target, &res); err != nil {
-		// Keep LastFailed; do not activate.
+		// Keep LastFailed; do not activate. Clear rebuild marker.
 		failedRetry := building
 		failedRetry.Status = foundation.SnapshotFailed
 		failedRetry.FailureReason = "repair_write_failed"
 		st.LastFailed = &FailedAttempt{Snapshot: failedRetry, Chunks: chunks}
+		st.IndexOp = nil
 		_ = ws.Save(st)
 		return RepairResult{}, apperr.Wrap(apperr.Internal, "repair index write failed", err)
 	}
@@ -163,6 +173,7 @@ func repairRetryFailed(ctx context.Context, ws Workspace, st State, cfg config.S
 	st.Project.ActiveSnapshotID = newID
 	st.Chunks = chunks
 	st.LastFailed = nil
+	st.IndexOp = nil
 	if err := ws.Save(st); err != nil {
 		return RepairResult{}, err
 	}
