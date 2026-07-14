@@ -11,11 +11,12 @@ import (
 	"time"
 
 	"github.com/fastygo/context/internal/config"
+	"github.com/fastygo/context/internal/corpus"
 	"github.com/fastygo/context/internal/foundation"
 	"github.com/fastygo/context/internal/ids"
-	modelfake "github.com/fastygo/context/internal/models/fake"
 	"github.com/fastygo/context/internal/indexing"
 	"github.com/fastygo/context/internal/linguistic/simple"
+	modelfake "github.com/fastygo/context/internal/models/fake"
 	"github.com/fastygo/context/internal/retrieval"
 	"github.com/fastygo/context/internal/retrieval/dense"
 	"github.com/fastygo/context/internal/retrieval/exact"
@@ -24,19 +25,20 @@ import (
 	"github.com/fastygo/context/internal/retrieval/index"
 	"github.com/fastygo/context/internal/retrieval/merge"
 	"github.com/fastygo/context/internal/retrieval/pack"
+	"github.com/fastygo/context/internal/retrieval/rerank"
 	"github.com/fastygo/context/internal/retrieval/sparse"
 )
 
 const (
 	ProjectID  = "p_eval"
 	SnapshotID = "snap_eval"
-	SuiteID    = "eval-golden-v1"
+	SuiteID    = "eval-golden-v2"
 )
 
 // CaseSpec is one golden expectation (also serialized under .proofs/eval).
 type CaseSpec struct {
 	ID           string   `json:"id"`
-	Kind         string   `json:"kind"` // exact|sparse|dense|hybrid|multilingual|lexicon|pack_verify
+	Kind         string   `json:"kind"` // exact|sparse|dense|hybrid|multilingual|lexicon|event_window|pack_verify
 	Query        string   `json:"query"`
 	WantChunkIDs []string `json:"want_chunk_ids"`
 	Language     string   `json:"language,omitempty"`
@@ -91,6 +93,11 @@ func Specs() []CaseSpec {
 			Notes:        "hybrid exact+sparse+dense with wordform expansion",
 		},
 		{
+			ID: "morph-fake-expand", Kind: "hybrid", Query: "run",
+			WantChunkIDs: []string{"c-run"},
+			Notes:        "C12 morph-fake: simple expander maps run→runners",
+		},
+		{
 			ID: "multilingual-en-filter", Kind: "multilingual", Query: "run",
 			WantChunkIDs: []string{"c-en"}, Language: "en",
 			Notes: "language filter keeps en; ru excluded (Chunk 18 fixture)",
@@ -99,6 +106,16 @@ func Specs() []CaseSpec {
 			ID: "lexicon-sense-concept", Kind: "lexicon", Query: "runners",
 			WantChunkIDs: []string{"c-lex"}, SenseID: "sense-run-sport", ConceptID: "concept-running",
 			Notes: "sense+concept filters preserve original surface (Chunk 18)",
+		},
+		{
+			ID: "sense-attestation-filter", Kind: "lexicon", Query: "runners",
+			WantChunkIDs: []string{"c-lex"}, SenseID: "sense-run-sport", ConceptID: "concept-running",
+			Notes: "C12 sense/attestation filter reasons required",
+		},
+		{
+			ID: "event-window", Kind: "event_window", Query: "deploy",
+			WantChunkIDs: []string{"c-evt-in"},
+			Notes:        "C12 temporal event-window keeps in-range chunk only",
 		},
 		{
 			ID: "pack-verify-source", Kind: "pack_verify", Query: "runners",
@@ -127,6 +144,7 @@ func RunSpecs(ctx context.Context, specs []CaseSpec) (Report, error) {
 			Store: store, Embedder: emb, Index: idx, Namespace: ns,
 		},
 		Expander: simple.Expander{WordformMap: map[string][]string{"run": {"runners"}}},
+		Reranker: rerank.Identity{},
 	}
 
 	rep := Report{
@@ -186,6 +204,14 @@ func runCase(ctx context.Context, eng hybrid.Engine, idx *index.Memory, spec Cas
 			AttestationID: "att-runners-1", Register: "sport", DialectRegion: "us",
 			TimePeriod: "2020s", LexiconSourceID: "lex-proof-1", SourceAuthority: "proof-fixture",
 		}
+	case "event_window":
+		plan.Strategies = []retrieval.RetrieverStrategy{{RetrieverID: "exact"}}
+		t0 := time.Date(2024, 6, 1, 12, 0, 0, 0, time.UTC)
+		plan.Filters = retrieval.RetrievalFilters{
+			TemporalRange: &corpus.TemporalRange{
+				Start: t0, End: t0.Add(2 * time.Hour), Basis: corpus.TimeBasisOccurred,
+			},
+		}
 	default:
 		cr.Notes = "unknown kind"
 		return cr, nil
@@ -236,9 +262,24 @@ func runCase(ctx context.Context, eng hybrid.Engine, idx *index.Memory, spec Cas
 			cr.Passed = false
 			cr.Notes += "; missing sense/concept filter reasons"
 		}
+		if spec.ID == "sense-attestation-filter" {
+			_, hasAtt := reasonSet[string(foundation.ReasonAttestationFilter)]
+			if !hasAtt {
+				cr.Passed = false
+				cr.Notes += "; missing attestation filter reason"
+			}
+		}
 		if len(cands) == 1 && cands[0].TextChecksum != "h-lex" {
 			cr.Passed = false
 			cr.Notes += "; checksum changed"
+		}
+	}
+	if spec.Kind == "event_window" {
+		for _, id := range got {
+			if id == "c-evt-out" {
+				cr.Passed = false
+				cr.Notes += "; out-of-window leak"
+			}
 		}
 	}
 	return cr, nil
@@ -295,8 +336,8 @@ func runPackVerify(ctx context.Context, eng hybrid.Engine, idx *index.Memory, sp
 }
 
 func fixtureIndex() *index.Memory {
-	return index.NewMemory(
-		index.ChunkRecord{
+	recs := []index.ChunkRecord{
+		{
 			ProjectID: ProjectID, SnapshotID: SnapshotID, ChunkID: "c-run", SourceID: "s1",
 			Span: foundation.ByteSpan{Start: 0, End: 23},
 			Text: "runners run in the park", TextChecksum: "h-run", TrustLevel: foundation.TrustProject,
@@ -306,26 +347,26 @@ func fixtureIndex() *index.Memory {
 			Register: "sport", Region: "us", TimePeriod: "2020s",
 			LexiconSourceID: "lex-proof-1", SourceAuthority: "proof-fixture",
 		},
-		index.ChunkRecord{
+		{
 			ProjectID: ProjectID, SnapshotID: SnapshotID, ChunkID: "c-bank", SourceID: "s2",
 			Span: foundation.ByteSpan{Start: 0, End: 18},
 			Text: "river bank erosion", TextChecksum: "h-bank", TrustLevel: foundation.TrustProject,
 			Language: "en", SenseIDs: []ids.SenseID{"sense-bank-river"},
 		},
-		index.ChunkRecord{
+		{
 			ProjectID: ProjectID, SnapshotID: SnapshotID, ChunkID: "c-en", SourceID: "s-en",
 			Span: foundation.ByteSpan{Start: 4, End: 11},
 			Text: "Runners run in the park", TextChecksum: "h-en", TrustLevel: foundation.TrustProject,
 			Language: "en", AnalyzerVersion: "simple-v1",
 			Lemmas: []string{"run"}, Wordforms: []string{"runners", "run"},
 		},
-		index.ChunkRecord{
+		{
 			ProjectID: ProjectID, SnapshotID: SnapshotID, ChunkID: "c-ru", SourceID: "s-ru",
 			Span: foundation.ByteSpan{Start: 0, End: 12},
 			Text: "Бегуны бегают в парке", TextChecksum: "h-ru", TrustLevel: foundation.TrustProject,
 			Language: "ru", AnalyzerVersion: "simple-v1",
 		},
-		index.ChunkRecord{
+		{
 			ProjectID: ProjectID, SnapshotID: SnapshotID, ChunkID: "c-lex", SourceID: "s-lex",
 			Span: foundation.ByteSpan{Start: 0, End: 7}, Text: "runners",
 			TextChecksum: "h-lex", TrustLevel: foundation.TrustProject, Language: "en",
@@ -334,7 +375,37 @@ func fixtureIndex() *index.Memory {
 			Register: "sport", Region: "us", TimePeriod: "2020s",
 			LexiconSourceID: "lex-proof-1", SourceAuthority: "proof-fixture",
 		},
-	)
+	}
+	recs = append(recs, eventWindowRecords()...)
+	return index.NewMemory(recs...)
+}
+
+func eventWindowRecords() []index.ChunkRecord {
+	t0 := time.Date(2024, 6, 1, 12, 0, 0, 0, time.UTC)
+	return []index.ChunkRecord{
+		{
+			ProjectID: ProjectID, SnapshotID: SnapshotID, ChunkID: "c-evt-in", SourceID: "s-evt",
+			Span: foundation.ByteSpan{Start: 0, End: 18}, Text: "deploy completed ok",
+			TextChecksum: "h-evt-in", TrustLevel: foundation.TrustProject, Language: "en",
+			TemporalMetadata: &corpus.TemporalMetadata{
+				Range: corpus.TemporalRange{
+					Start: t0.Add(30 * time.Minute), End: t0.Add(time.Hour), Basis: corpus.TimeBasisOccurred,
+				},
+				IngestedAt: t0.Add(3 * time.Hour),
+			},
+		},
+		{
+			ProjectID: ProjectID, SnapshotID: SnapshotID, ChunkID: "c-evt-out", SourceID: "s-evt",
+			Span: foundation.ByteSpan{Start: 0, End: 16}, Text: "deploy rolled back",
+			TextChecksum: "h-evt-out", TrustLevel: foundation.TrustProject, Language: "en",
+			TemporalMetadata: &corpus.TemporalMetadata{
+				Range: corpus.TemporalRange{
+					Start: t0.Add(5 * time.Hour), End: t0.Add(6 * time.Hour), Basis: corpus.TimeBasisOccurred,
+				},
+				IngestedAt: t0.Add(7 * time.Hour),
+			},
+		},
+	}
 }
 
 func openDenseOffline(idx *index.Memory) (*fake.VectorStore, indexing.VectorNamespace, modelfake.Embedder, error) {

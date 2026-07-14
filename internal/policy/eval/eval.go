@@ -13,6 +13,9 @@ type Engine struct {
 	Default  policy.Decision // used when no rule matches; default deny
 }
 
+// Decide returns the policy decision for a tool.
+// Explicit rules win. When no rule matches, write/external side effects require
+// approval (ask) before Default is applied — ADR-0034 / C6 baseline.
 func (e Engine) Decide(toolName string, schema tools.ToolSchema) (policy.Decision, error) {
 	if err := e.Snapshot.Validate(); err != nil {
 		return "", apperr.Wrap(apperr.Validation, "policy_snapshot", err)
@@ -25,9 +28,12 @@ func (e Engine) Decide(toolName string, schema tools.ToolSchema) (policy.Decisio
 			return rule.Decision, nil
 		}
 	}
+	switch schema.SideEffectClass {
+	case tools.SideEffectWrite, tools.SideEffectExternal:
+		return policy.DecisionAsk, nil
+	}
 	if e.Default != "" {
 		return e.Default, nil
 	}
-	_ = schema
 	return policy.DecisionDeny, nil
 }

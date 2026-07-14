@@ -152,6 +152,17 @@ type Candidate struct {
 	Contributions []ScoreContribution    `json:"contributions"`
 	TrustLevel    foundation.TrustLevel  `json:"trust_level"`
 	TextChecksum  foundation.ChecksumHex `json:"text_checksum"`
+	// Snippet is an optional citation window with absolute offsets into chunk text (C4).
+	Snippet *Snippet `json:"snippet,omitempty"`
+}
+
+// Snippet is a citation window into chunk text (see retrieval/snippet for builders).
+type Snippet struct {
+	Text          string                 `json:"text"`
+	ChunkSpan     foundation.ByteSpan    `json:"chunk_span"`
+	Highlights    []foundation.ByteSpan  `json:"highlights,omitempty"`
+	ChunkChecksum foundation.ChecksumHex `json:"chunk_checksum"`
+	Query         string                 `json:"query,omitempty"`
 }
 
 func (c Candidate) DedupKey() string {
@@ -291,7 +302,8 @@ type SparseHit struct {
 	Score   float64
 }
 
-// Reranker is deferred for phase 2; phase 1 uses deterministic weighted merge only.
+// Reranker is an optional post-merge stage (C11). Hybrid merge remains the
+// default; Identity / WeightedResort document the intentional no-op path.
 type Reranker interface {
 	Rerank(ctx context.Context, query string, candidates []Candidate) ([]Candidate, error)
 }

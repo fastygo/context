@@ -65,7 +65,8 @@ type Embedder interface {
 	Embed(ctx context.Context, texts []string) (vectors [][]float32, modelVersion string, err error)
 }
 
-// Reranker adapts cross-encoder style ranking; unused in phase-1 merge.
+// Reranker adapts cross-encoder style passage scoring.
+// Wire via retrieval/rerank.ModelAdapter onto hybrid.Engine.Reranker (C11).
 type Reranker interface {
 	Rerank(ctx context.Context, query string, passages []string) ([]float64, error)
 }

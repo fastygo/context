@@ -192,12 +192,15 @@ External `context-lang-*` / TEI adapters satisfy the same `RunContract` entry
 points (see `.project/adapters-backlog.md`). Core remains brand-neutral and
 fixture-only (`linguistic/simple`, `lexicon/fake`).
 
-## Eval golden harness (Chunk 19)
+## Eval golden harness (Chunk 19 / S2 C12)
 
-Offline by default (fake dense vectors):
+Offline by default (fake dense vectors). Suite id `eval-golden-v2` covers
+exact / sparse / dense / hybrid / morph-fake / sense+attestation / event-window
+/ pack_verify:
 
 ```bash
 go test ./internal/evals/golden/ -count=1
+go test ./internal/evals/adversarial/ -count=1
 go run ./cmd/context-dev eval --out .proofs/eval/report.json
 ```
 

@@ -65,6 +65,10 @@ Status: **closed** — ADR-0015–0021 (and later Lab-ready ADRs through 0027).
 | [0030](0030-project-export-delete.md) | Project export and delete retention hooks | Accepted |
 | [0031](0031-durable-schedule-port.md) | Durable schedule port for background jobs | Accepted |
 | [0032](0032-index-lifecycle-explain.md) | Index lifecycle explain report | Accepted |
+| [0033](0033-offset-stable-snippets.md) | Offset-stable snippet / highlight contract | Accepted |
+| [0034](0034-tool-side-effect-approval.md) | Tool side-effect approval baseline | Accepted |
+| [0035](0035-prompt-injection-fixtures.md) | Prompt-injection threat fixtures | Accepted |
+| [0036](0036-intentional-reranker-path.md) | Intentional reranker path | Accepted |
 
 ## Writing a new ADR
 

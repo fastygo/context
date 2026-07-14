@@ -130,5 +130,6 @@ rejection.
 
 ### Follow-ups
 
-- Phase-2 `Reranker` adapter with mandatory trace of pre/post order.
+- ~~Phase-2 `Reranker` adapter with mandatory trace of pre/post order.~~
+  Closed by [ADR-0036](0036-intentional-reranker-path.md) (Identity / ModelAdapter).
 - Evaluation harness comparing exact-only vs hybrid on fixture corpora.

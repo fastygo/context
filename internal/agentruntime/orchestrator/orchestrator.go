@@ -221,6 +221,16 @@ func (r Runner) executeTool(ctx context.Context, req Request, toolName string, i
 		Payload: map[string]string{"tool": toolName, "decision": string(decision)},
 	})
 
+	if decision == policy.DecisionAsk {
+		call.Status = "needs_approval"
+		call.Error = "policy requires approval"
+		_ = appendEventHelper(events, r, ctx, tracing.Event{
+			ID: ids.TraceEventID(string(call.ID) + ":ask"), ProjectID: req.ProjectID, RunID: req.RunID,
+			Type: tracing.EventToolDecision, Timestamp: time.Now().UTC(),
+			Payload: map[string]string{"tool": toolName, "status": call.Status, "decision": string(decision)},
+		})
+		return call, nil
+	}
 	if decision != policy.DecisionAllow {
 		call.Status = "denied"
 		call.Error = "policy denied tool call"

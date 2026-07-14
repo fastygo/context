@@ -142,7 +142,7 @@ Usage:
   context-dev proof-run [--root <repo>] [--out <.proofs>]
 
 Ingest skips paths via defaults + optional .contextignore at corpus root.
-eval runs offline golden retrieval suite (exact/sparse/dense/hybrid + multilingual/lexicon/pack).
+eval runs offline golden retrieval suite (exact/sparse/dense/hybrid + morph/sense/event-window/pack).
 With --data, eval also appends a summary to <data>/ops/eval_history.jsonl (or --history).
 metrics / eval-history expose workspace counters and append-only eval regression history.
 quota shows soft project limits (CONTEXT_QUOTA_MAX_*) with allow|ask|deny outside the model.

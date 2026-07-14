@@ -108,15 +108,15 @@ These are the items that, if left open, force returns to the engine.
 | C1 | Index lifecycle states + tombstones | Corpora go stale; results lie | **closed** — tombstones [ADR-0028](../docs/decisions/0028-source-tombstones.md); explain [ADR-0032](../docs/decisions/0032-index-lifecycle-explain.md) |
 | C2 | Snapshot export/import + active flip safety | Cannot move projects without rewrite | **closed** — [ADR-0029](../docs/decisions/0029-snapshot-bundle-export-import.md); verify refuses corrupt/partial before activate |
 | C3 | Lineage + temporal filters durable in Postgres | ~~ADR debt~~ | **closed** — Postgres `artifact_lineage` + temporal cols; client-side overlap filters; integration + proof `08-events-lineage-temporal` |
-| C4 | Snippet / highlight contract (offset-stable) | Consumers need citations, not only chunk blobs | future-layer L05 |
-| C5 | Threat-model + prompt-injection fixtures | Untrusted sources poison agents | future-layer L01 |
-| C6 | Tool side-effect / approval baseline | Any write/network tool is unsafe otherwise | future-layer L09 (minimal slice) |
+| C4 | Snippet / highlight contract (offset-stable) | Consumers need citations, not only chunk blobs | **closed** — [ADR-0033](../docs/decisions/0033-offset-stable-snippets.md); `retrieval.Snippet` + `snippet.Attach` |
+| C5 | Threat-model + prompt-injection fixtures | Untrusted sources poison agents | **closed** — [ADR-0035](../docs/decisions/0035-prompt-injection-fixtures.md); `evals/adversarial` |
+| C6 | Tool side-effect / approval baseline | Any write/network tool is unsafe otherwise | **closed** — [ADR-0034](../docs/decisions/0034-tool-side-effect-approval.md); write/external → `ask` / `needs_approval` |
 | C7 | Retention / project delete-export hooks | Long-lived corpora need a governance boundary | **closed** (minimal) — [ADR-0030](../docs/decisions/0030-project-export-delete.md) |
 | C8 | Scheduled + event-triggered job **ports** (adapter may be local cron first) | In-process-only dies with the process | **closed** (port + file adapter) — [ADR-0031](../docs/decisions/0031-durable-schedule-port.md) |
 | C9 | Graph **port** + one store adapter (even Postgres edges) | Otherwise consumers fork edge schemas | graph stub today |
 | C10 | Query AST subset (phrase / AND-OR-NOT / field filters) **or** explicit forever-defer ADR | Power-search keeps reopening without a decision | future-layer L04 |
-| C11 | Reranker wiring behind interface (even no-op/weighted only documented) | Interface exists; path must be intentional | models.Reranker |
-| C12 | Golden eval suites for morph expansion + sense/attestation + event-window | Without metrics, “stable” is opinion | roadmap testing strategy |
+| C11 | Reranker wiring behind interface (even no-op/weighted only documented) | Interface exists; path must be intentional | **closed** — [ADR-0036](../docs/decisions/0036-intentional-reranker-path.md); Identity on CLI search |
+| C12 | Golden eval suites for morph expansion + sense/attestation + event-window | Without metrics, “stable” is opinion | **closed** (baseline) — `eval-golden-v2` morph/sense-attestation/event-window cases |
 
 ### C. Must close before Stabilization Gate (adapters)
 
@@ -195,20 +195,21 @@ rebuilds without silent drift.
 - ~~Project export/delete tombstones expected rows.~~ ✅ ADR-0030
 - ~~Background job survives process model documented (file/cron/queue adapter).~~ ✅ ADR-0031
 
-### Gate S2 — Evidence presentation & safety (core)
+### Gate S2 — Evidence presentation & safety (core) ✅
 
-Close: **C4, C5, C6, C11, C12 (baseline golden sets)**.
+Close: **C4, C5, C6, C11, C12 (baseline golden sets)**. ✅
 
 Goal: citations and tools are trustworthy enough that consumers stop patching
 core for “show me why.”
 
 **Exit tests:**
 
-- Snippet offsets stable across re-index of unchanged bytes.
-- Adversarial fixture cannot grant tools or override policy.
-- Approval required for non-read tool classes in tests.
-- Golden suite gates CI for exact / sparse / morph-fake / sense-filter /
-  event-window cases.
+- ~~Snippet offsets stable across re-index of unchanged bytes.~~ ✅ ADR-0033
+- ~~Adversarial fixture cannot grant tools or override policy.~~ ✅ ADR-0035
+- ~~Approval required for non-read tool classes in tests.~~ ✅ ADR-0034
+- ~~Golden suite gates CI for exact / sparse / morph-fake / sense-filter /
+  event-window cases.~~ ✅ `eval-golden-v2`
+- ~~Intentional reranker path (even Identity).~~ ✅ ADR-0036
 
 ### Gate S3 — Adapter completeness (external + thin in-repo adapters)
 
@@ -297,7 +298,7 @@ docs/lab-gate.md
 4. ~~C2 snapshot export/import.~~ ✅ ADR-0029
 5. ~~C7 project export/delete.~~ ✅ ADR-0030
 6. ~~C8 scheduler port + file adapter.~~ ✅ ADR-0031
-7. ~~S1 complete.~~ → start **S2** (C4 snippets, C5 threat fixtures, C6 tool
-   approval, C11 reranker wiring, C12 golden baselines).
-8. Parallel: **A2** (`context-lang-testkit`) — unblocks A1.
-9. Write defer ADRs for anything in section D that keeps getting reopened.
+7. ~~S1 complete.~~ ✅
+8. ~~S2 complete.~~ ✅ (C4–C6, C11, C12) → start **S3** (A1–A7; A8–A10 ADR).
+9. Parallel: **A2** (`context-lang-testkit`) — unblocks A1.
+10. Write defer ADRs for anything in section D that keeps getting reopened.

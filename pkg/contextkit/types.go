@@ -59,12 +59,13 @@ type SearchRequest struct {
 
 // Candidate is a retrieval hit in SearchResult.
 type Candidate struct {
-	ChunkID     string          `json:"chunk_id"`
-	MergedScore float64         `json:"merged_score"`
-	TrustLevel  string          `json:"trust_level,omitempty"`
-	TextChecksum string         `json:"text_checksum,omitempty"`
-	SourceRef   json.RawMessage `json:"source_ref,omitempty"`
+	ChunkID       string          `json:"chunk_id"`
+	MergedScore   float64         `json:"merged_score"`
+	TrustLevel    string          `json:"trust_level,omitempty"`
+	TextChecksum  string          `json:"text_checksum,omitempty"`
+	SourceRef     json.RawMessage `json:"source_ref,omitempty"`
 	Contributions json.RawMessage `json:"contributions,omitempty"`
+	Snippet       json.RawMessage `json:"snippet,omitempty"`
 }
 
 // SearchResult is POST /v1/search response.

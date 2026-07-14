@@ -21,6 +21,7 @@ type Engine struct {
 	Sparse    retrieval.Retriever
 	Dense     retrieval.Retriever
 	Expander  linguistic.QueryExpander
+	Reranker  retrieval.Reranker // optional post-merge; Identity is the intentional no-op (C11)
 	Recorder  tracing.Recorder
 	RejectExp map[string]bool // expanded terms that must be ignored (false-positive control)
 }
@@ -119,6 +120,27 @@ func (e Engine) Search(ctx context.Context, plan retrieval.RetrievalPlan, queryI
 	}
 
 	res.Candidates = merge.DedupAndMerge(all)
+	preRerank := len(res.Candidates)
+	if e.Reranker != nil {
+		ranked, err := e.Reranker.Rerank(ctx, query, res.Candidates)
+		if err != nil {
+			return Result{}, err
+		}
+		res.Candidates = ranked
+		res.Events = append(res.Events, tracing.Event{
+			ID:         ids.TraceEventID(string(queryID) + ":rerank"),
+			ProjectID:  plan.ProjectID,
+			RunID:      ids.RunID(queryID),
+			Type:       tracing.EventRetrievalCandidates,
+			Timestamp:  now,
+			SnapshotID: plan.SnapshotID,
+			Payload: map[string]string{
+				"phase": "rerank",
+				"pre":   itoa(preRerank),
+				"post":  itoa(len(res.Candidates)),
+			},
+		})
+	}
 	res.Events = append(res.Events, tracing.Event{
 		ID:         ids.TraceEventID(string(queryID) + ":candidates"),
 		ProjectID:  plan.ProjectID,

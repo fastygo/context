@@ -92,7 +92,27 @@ func hashEmbed(text string, dim int) []float32 {
 	return out
 }
 
+// Reranker returns deterministic passage scores (length + query overlap).
+type Reranker struct{}
+
+func (Reranker) Rerank(ctx context.Context, query string, passages []string) ([]float64, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	out := make([]float64, len(passages))
+	q := strings.ToLower(query)
+	for i, p := range passages {
+		score := float64(len(p))
+		if q != "" && strings.Contains(strings.ToLower(p), q) {
+			score += 100
+		}
+		out[i] = score
+	}
+	return out, nil
+}
+
 var (
 	_ models.Completer = Completer{}
 	_ models.Embedder  = Embedder{}
+	_ models.Reranker  = Reranker{}
 )

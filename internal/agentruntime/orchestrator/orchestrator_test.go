@@ -143,3 +143,28 @@ func TestDeniedToolCall(t *testing.T) {
 		t.Fatalf("denied tool should not fail the whole run by default, status=%s", res.Run.Status)
 	}
 }
+
+func TestWriteToolNeedsApprovalWithoutRule(t *testing.T) {
+	t.Parallel()
+	meta, arts, reg := setup(t)
+	if err := reg.Register(toolfake.WriteNoteSchema()); err != nil {
+		t.Fatal(err)
+	}
+	runner := orchestrator.Runner{
+		Meta: meta, Artifacts: arts, Tools: reg,
+		Exec:  toolfake.WriteNoteExecutor{},
+		Model: modelfake.Completer{},
+	}
+	pol := policy.PolicySnapshot{ID: "pol1", ProjectID: "p1", Version: "v1"}
+	res, err := runner.Run(context.Background(), orchestrator.Request{
+		RunID: "run-ask", ProjectID: "p1", TaskID: "t1",
+		Policy: pol, Pack: samplePack(t),
+		ToolName: toolfake.WriteNoteName, ToolInput: []byte(`{"text":"x"}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.ToolCall == nil || res.ToolCall.Status != "needs_approval" || res.ToolCall.Decision != policy.DecisionAsk {
+		t.Fatalf("expected needs_approval, got %#v", res.ToolCall)
+	}
+}

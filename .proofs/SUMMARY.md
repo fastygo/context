@@ -35,8 +35,9 @@
   `CONTEXT_ENABLE_DENSE=1` (Chunk 15).
 - Language/lexicon: contract harnesses in `internal/linguistic/harness` and
   `internal/lexicon/harness` (Chunk 18); production adapters stay external.
-- Eval: offline golden suite `internal/evals/golden` + `context-dev eval`
-  (Chunk 19); report under `.proofs/eval/`.
+- Eval: offline golden suite `eval-golden-v2` (`internal/evals/golden`) +
+  adversarial fixtures (`internal/evals/adversarial`) + `context-dev eval`;
+  report under `.proofs/eval/`.
 - Service: thin HTTP+JSON `cmd/context-serve` / `internal/httpserver`
   (Chunk 20, ADR-0024); Lab/BFF call without importing `internal/`.
 - Client: `pkg/contextkit` HTTP client (Chunk 21); zero `internal/` imports.

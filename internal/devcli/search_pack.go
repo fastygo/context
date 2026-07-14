@@ -21,6 +21,8 @@ import (
 	"github.com/fastygo/context/internal/retrieval/index"
 	"github.com/fastygo/context/internal/retrieval/merge"
 	"github.com/fastygo/context/internal/retrieval/pack"
+	"github.com/fastygo/context/internal/retrieval/rerank"
+	"github.com/fastygo/context/internal/retrieval/snippet"
 	"github.com/fastygo/context/internal/retrieval/sparse/postgresfts"
 )
 
@@ -120,8 +122,9 @@ func Search(dataDir, projectID, query, mode, focusID string) (SearchResult, erro
 	}
 
 	eng := hybrid.Engine{
-		Exact:  exact.Retriever{Index: idx},
-		Sparse: sparseH.Retriever(idx),
+		Exact:    exact.Retriever{Index: idx},
+		Sparse:   sparseH.Retriever(idx),
+		Reranker: rerank.Identity{}, // intentional post-merge hook (C11)
 	}
 	backend := ""
 	sparseBackend := sparseH.BackendID
@@ -192,6 +195,7 @@ func Search(dataDir, projectID, query, mode, focusID string) (SearchResult, erro
 		return SearchResult{}, err
 	}
 	cands := merge.DedupAndMerge(res.Candidates)
+	cands = snippet.Attach(cands, idx, st.Project.ID, snap, query, snippet.Options{})
 	return SearchResult{
 		ProjectID:       st.Project.ID,
 		SnapshotID:      snap,
