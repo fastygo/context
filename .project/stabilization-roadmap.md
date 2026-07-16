@@ -33,7 +33,7 @@ ops can rebuild, degrade, and recover without archaeology.
 | Language / lexicon | thin `context-lang-en` + JSON lexicon + public langtestkit; rich engines external |
 | Graph store / traversal | **forever-defer** — [ADR-0040](../docs/decisions/0040-graph-consumer-projection.md) |
 | Binary parsers | HTML + lossy PDF shipped; DOCX/OCR deferred |
-| Fuzzy / Query AST | **forever-defer / outside core** — [ADR-0041](../docs/decisions/0041-query-ast-defer-fts-filters.md), ADR-0039 |
+| Fuzzy / Query AST | Fuzzy: outside core (ADR-0039). Query operators: **minimal subset shipped post-S5** via documented reopen — [ADR-0043](../docs/decisions/0043-ru-adapter-operator-query-layer.md); general DSL still deferred ([ADR-0041](../docs/decisions/0041-query-ast-defer-fts-filters.md)) |
 | Scheduled jobs | durable schedule port + file adapter (C8); distributed workers deferred |
 | QDrant / Turbopuffer / Tantivy | **frozen-deferred** on measured blocker |
 

@@ -75,6 +75,7 @@ Status: **closed** — ADR-0015–0021 (and later Lab-ready ADRs through 0027).
 | [0040](0040-graph-consumer-projection.md) | Graph remains a consumer projection (C9) | Accepted |
 | [0041](0041-query-ast-defer-fts-filters.md) | Query AST deferred; FTS + filters (C10) | Accepted |
 | [0042](0042-stabilization-gate.md) | Stabilization Gate closed | Accepted |
+| [0043](0043-ru-adapter-operator-query-layer.md) | In-repo context-lang-ru + operator query layer | Accepted |
 
 ## Writing a new ADR
 

@@ -51,7 +51,16 @@ HTTP API v1 и `pkg/contextkit` (см. [`docs/lab-gate.md`](../docs/lab-gate.md)
 
 ### Поиск и сбор контекста
 
-- Поиск: `exact` | `sparse` | `hybrid` | `dense` | `hybrid-dense`.
+- Поиск: `exact` | `sparse` | `hybrid` | `dense` | `hybrid-dense` | `query`.
+- **Операторный поиск** (`mode=query`, ADR-0043): `"точная фраза"`,
+  `AND/OR/NOT/-`, скобки, `~слово` (морфология), `~"словосочетание"`
+  (совпадение по леммам — «железная дорога» находит «железной дороги»),
+  `lang:ru`. Термы матчятся по границам токенов, интерпретация видна в
+  `query_explain`.
+- **Русская морфология**: rule-based `context-lang-ru` (`pkg/lang/ru`, без
+  словарей) — анализ с явной неоднозначностью, генерация парадигм для
+  расширения запроса, ё→е policy. Словарные движки — снаружи, за тем же
+  контрактом.
 - Сборка **ContextPack** с бюджетом и объяснимыми scores.
 - **Inspect** — JSON «что увидел поиск / pack» для отладки и Lab UX.
 - Лингвистические и лексикографические контракты в ядре (простые / harness
@@ -117,8 +126,9 @@ Lab Gate ≠ «готово навсегда». Отложено до measured b
 Коротко по факту кода:
 
 - полноценная multi-tenant auth и fine-grained ACL;
-- живые `context-lang-*` / TEI-lexicon адаптеры (есть контракты и harness);
-- PDF/DOCX и прочие binary parsers;
+- словарные `context-lang-*` (in-repo: rule-based ru/en, ADR-0043) и
+  TEI-lexicon адаптеры;
+- DOCX/OCR и богатые binary parsers (thin HTML/PDF есть);
 - graph store/traversal (сейчас stubs);
 - QDrant / Turbopuffer / Tantivy как first-class live adapters;
 - fuzzy/trigram как обязательный путь;

@@ -27,7 +27,7 @@ func TestGoldenSuiteOffline(t *testing.T) {
 			t.Fatalf("case %s failed: %#v", c.ID, c)
 		}
 	}
-	for _, k := range []string{"exact", "sparse", "dense", "hybrid", "multilingual", "lexicon", "pack_verify"} {
+	for _, k := range []string{"exact", "sparse", "dense", "hybrid", "multilingual", "lexicon", "pack_verify", "morph_ru", "query"} {
 		if !kinds[k] {
 			t.Fatalf("missing kind %s", k)
 		}

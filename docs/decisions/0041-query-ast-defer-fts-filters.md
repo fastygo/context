@@ -1,6 +1,10 @@
 # ADR-0041: Query AST Deferred — FTS + API Filters (C10)
 
-Status: Accepted  
+Status: Accepted — **partially superseded by
+[ADR-0043](0043-ru-adapter-operator-query-layer.md)** (2026-07-16): the reopen
+condition in Follow-ups was met by the lexical-search product mandate; a
+minimal operator layer shipped with golden tests and trace payloads. Field
+filters and the no-general-DSL stance remain in force.  
 Date: 2026-07-14  
 Related: [0008](0008-hybrid-index-architecture.md),
 [0009](0009-context-sparse-tantivy-sidecar.md),

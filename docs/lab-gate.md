@@ -52,6 +52,7 @@ Lab may also use these additive routes/fields (see
 | Schedules | `/v1/schedules*` |
 | Citations | search candidate optional `snippet` |
 | Tool policy | tool_call status `needs_approval` |
+| Operator search | `POST /v1/search` `mode:"query"` + `lang` + `query_explain` (post-S5 additive, ADR-0043) |
 
 Language adapters outside this repo use `pkg/langtestkit` (not `internal/`).
 
@@ -97,4 +98,5 @@ public langtestkit are **shipped** (S3) — richer engines stay external.
 - Render inspector / metrics / quota / job / index-status JSON
 - Never treat Completer output as source truth
 - Keep product/brand names in Lab config, not in Core
-- Compose boolean/graph UX in Lab using search filters + consumer stores
+- Boolean/phrase/morphology UX: prefer `mode:"query"` + `query_explain`
+  (ADR-0043); graph UX stays consumer-side (ADR-0040)

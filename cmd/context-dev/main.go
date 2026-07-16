@@ -109,7 +109,7 @@ func usage() {
 Usage:
   context-dev init-project --root <dir> --data <dir> [--project <id>]
   context-dev ingest --data <dir> --project <id> [--path <dir-or-file>]
-  context-dev search --data <dir> --project <id> --query <text> [--mode exact|sparse|hybrid|dense|hybrid-dense] [--focus <id>]
+  context-dev search --data <dir> --project <id> --query <text> [--mode exact|sparse|hybrid|dense|hybrid-dense|query] [--focus <id>] [--lang ru|en]
   context-dev context-pack --data <dir> --project <id> --query <text> [--focus <id>]
   context-dev agent-run --data <dir> --project <id> --query <text> [--focus <id>]
   context-dev job-start --data <dir> --project <id> --query <text> --owner <name> [--focus <id>]
@@ -141,6 +141,11 @@ Usage:
   context-dev meta-check [--backend postgres]
   context-dev proof-run [--root <repo>] [--out <.proofs>]
 
+Mode query enables search operators: "exact phrase", AND/OR/NOT or -, (grouping),
+~term / ~"phrase" for morphology-aware matching, and lang:ru|en inside the query.
+Term matching in query mode is token-boundary (word-level), not substring.
+Set CONTEXT_LANG=ru|en (or pass --lang / lang:) to enable morph expansion in
+hybrid and query modes via in-repo language adapters (context-lang-ru/en).
 Ingest skips paths via defaults + optional .contextignore at corpus root.
 eval runs offline golden retrieval suite (exact/sparse/dense/hybrid + morph/sense/event-window/pack).
 With --data, eval also appends a summary to <data>/ops/eval_history.jsonl (or --history).
@@ -336,7 +341,7 @@ func cmdSearch(args []string) error {
 	if err := require(f, "data", "project", "query"); err != nil {
 		return err
 	}
-	res, err := devcli.Search(f["data"], f["project"], f["query"], f["mode"], f["focus"])
+	res, err := devcli.SearchWithLang(f["data"], f["project"], f["query"], f["mode"], f["focus"], f["lang"])
 	if err != nil {
 		return err
 	}

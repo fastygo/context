@@ -20,7 +20,10 @@ import (
 	"github.com/fastygo/context/internal/retrieval/hybrid"
 	"github.com/fastygo/context/internal/retrieval/index"
 	"github.com/fastygo/context/internal/retrieval/merge"
+	"github.com/fastygo/context/internal/linguistic"
+	"github.com/fastygo/context/internal/linguistic/registry"
 	"github.com/fastygo/context/internal/retrieval/pack"
+	"github.com/fastygo/context/internal/retrieval/querylang"
 	"github.com/fastygo/context/internal/retrieval/rerank"
 	"github.com/fastygo/context/internal/retrieval/snippet"
 	"github.com/fastygo/context/internal/retrieval/sparse/postgresfts"
@@ -38,6 +41,8 @@ type SearchResult struct {
 	FocusID         ids.FocusID           `json:"focus_id,omitempty"`
 	Degraded        bool                  `json:"degraded,omitempty"`
 	DegradedReasons []string              `json:"degraded_reasons,omitempty"`
+	// QueryExplain is set for mode=query (operator layer, ADR-0043).
+	QueryExplain *querylang.Explain `json:"query_explain,omitempty"`
 }
 
 func loadIndex(st State) (*index.Memory, ids.SnapshotID, error) {
@@ -79,6 +84,12 @@ func loadIndex(st State) (*index.Memory, ids.SnapshotID, error) {
 // Modes dense and hybrid-dense require PostgreSQL (CONTEXT_PG_DSN or compose defaults).
 // Optional focusID pins RetrievalPlan.FocusID when a FocusProfile exists.
 func Search(dataDir, projectID, query, mode, focusID string) (SearchResult, error) {
+	return SearchWithLang(dataDir, projectID, query, mode, focusID, "")
+}
+
+// SearchWithLang is Search plus an explicit expansion language. Language
+// priority: query lang: directive (mode=query) > lang parameter > CONTEXT_LANG.
+func SearchWithLang(dataDir, projectID, query, mode, focusID, lang string) (SearchResult, error) {
 	ws := Workspace{DataDir: dataDir}
 	st, err := ws.Load()
 	if err != nil {
@@ -93,6 +104,12 @@ func Search(dataDir, projectID, query, mode, focusID string) (SearchResult, erro
 	idx, snap, err := loadIndex(st)
 	if err != nil {
 		return SearchResult{}, err
+	}
+	if lang == "" {
+		lang = strings.TrimSpace(os.Getenv("CONTEXT_LANG"))
+	}
+	if mode == "query" {
+		return searchQueryMode(st, idx, snap, query, focusID, lang, dataDir)
 	}
 	focus, hasFocus, err := resolveFocus(dataDir, string(st.Project.ID), focusID)
 	if err != nil {
@@ -125,6 +142,10 @@ func Search(dataDir, projectID, query, mode, focusID string) (SearchResult, erro
 		Exact:    exact.Retriever{Index: idx},
 		Sparse:   sparseH.Retriever(idx),
 		Reranker: rerank.Identity{}, // intentional post-merge hook (C11)
+	}
+	if ports, ok := registry.ForLanguage(lang); ok {
+		eng.Expander = ports.Expander
+		eng.Language = ports.Language
 	}
 	backend := ""
 	sparseBackend := sparseH.BackendID
@@ -187,7 +208,7 @@ func Search(dataDir, projectID, query, mode, focusID string) (SearchResult, erro
 			{RetrieverID: "dense"},
 		}
 	default:
-		return SearchResult{}, apperr.New(apperr.Validation, "mode must be exact|sparse|hybrid|dense|hybrid-dense")
+		return SearchResult{}, apperr.New(apperr.Validation, "mode must be exact|sparse|hybrid|dense|hybrid-dense|query")
 	}
 
 	res, err := eng.Search(ctx, plan, "cli-q", query)
@@ -207,6 +228,77 @@ func Search(dataDir, projectID, query, mode, focusID string) (SearchResult, erro
 		FocusID:         plan.FocusID,
 		Degraded:        len(degradedReasons) > 0,
 		DegradedReasons: degradedReasons,
+	}, nil
+}
+
+// searchQueryMode runs the operator query layer (ADR-0043): phrases,
+// AND/OR/NOT, grouping, ~ morphology, lang: directive, explain.
+func searchQueryMode(st State, idx *index.Memory, snap ids.SnapshotID, query, focusID, lang, dataDir string) (SearchResult, error) {
+	// The lang: directive inside the query wins over parameter/env defaults,
+	// and it must also drive adapter selection — pre-parse to resolve it.
+	parsed, err := querylang.Parse(query)
+	if err != nil {
+		return SearchResult{}, apperr.Wrap(apperr.Validation, "query operators", err)
+	}
+	if parsed.Language != "" {
+		lang = parsed.Language
+	}
+
+	focus, hasFocus, err := resolveFocus(dataDir, string(st.Project.ID), focusID)
+	if err != nil {
+		return SearchResult{}, err
+	}
+	plan := retrieval.RetrievalPlan{
+		ID: "cli-plan", ProjectID: st.Project.ID, SnapshotID: snap, TopNRawPool: 20,
+		Strategies: []retrieval.RetrieverStrategy{{RetrieverID: querylang.TermRetrieverID}},
+	}
+	if hasFocus {
+		plan.FocusID = focus.ID
+		plan.TaskID = focus.TaskID
+	}
+
+	ctx := context.Background()
+	sparseH, err := OpenSparse(ctx, idx)
+	if err != nil {
+		return SearchResult{}, err
+	}
+	defer sparseH.Closer()
+	if sparseH.UsesFTS {
+		if client, ok := sparseH.Client.(*postgresfts.Client); ok {
+			if err := EnsureFTSFromIndex(ctx, client, idx, st.Project.ID, snap); err != nil {
+				return SearchResult{}, err
+			}
+		}
+	}
+
+	runner := querylang.Runner{
+		Index:  idx,
+		Sparse: sparseH.Retriever(idx),
+	}
+	if ports, ok := registry.ForLanguage(lang); ok {
+		runner.Normalizer = ports.Normalizer
+		runner.Analyzer = ports.Analyzer
+		runner.Expander = ports.Expander
+		runner.Language = ports.Language
+		runner.AdapterID = ports.Version.AdapterID
+	} else if lang != "" {
+		runner.Language = linguistic.LanguageCode(lang)
+	}
+
+	res, err := runner.Run(ctx, plan, "cli-q", query)
+	if err != nil {
+		return SearchResult{}, err
+	}
+	explain := res.Explain
+	return SearchResult{
+		ProjectID:     st.Project.ID,
+		SnapshotID:    snap,
+		Query:         query,
+		Mode:          "query",
+		Candidates:    res.Candidates,
+		SparseBackend: sparseH.BackendID,
+		FocusID:       plan.FocusID,
+		QueryExplain:  &explain,
 	}, nil
 }
 

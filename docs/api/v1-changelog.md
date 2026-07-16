@@ -23,6 +23,13 @@ frozen Lab smoke path (`health` … `jobs`).
 | S3 | No new HTTP routes; public `pkg/langtestkit` + thin adapters | [0037](../decisions/0037-public-langtestkit.md)–[0039](../decisions/0039-s3-adapter-freeze-defer.md) |
 | S4 | No new HTTP routes; graph/query forever-defer docs | [0040](../decisions/0040-graph-consumer-projection.md)–[0041](../decisions/0041-query-ast-defer-fts-filters.md) |
 
+## Post-S5 additives
+
+| When | Surface | ADR |
+| --- | --- | --- |
+| 2026-07-16 | `POST /v1/search`: `mode:"query"` (operators), optional request `lang`, optional response `query_explain`; CLI `--mode query --lang`; `contextkit` `SearchRequest.Lang` / `SearchResult.QueryExplain` | [0043](../decisions/0043-ru-adapter-operator-query-layer.md) |
+| 2026-07-16 | In-repo language adapters: `pkg/lang/ru` (`context-lang-ru`), registry `en`/`ru`; hybrid mode honors expansion language | [0043](../decisions/0043-ru-adapter-operator-query-layer.md) |
+
 ## Client packages
 
 | Package | Role |

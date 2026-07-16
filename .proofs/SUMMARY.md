@@ -36,9 +36,10 @@
 - Language/lexicon: public `pkg/langtestkit` + `context-lang-en` (refen/en);
   curated JSON lexicon (`lexicon/jsonres`); HTML/PDF parsers; NDJSON events
   (S3 / ADR-0037–0038). Richer engines stay external.
-- Eval: offline golden suite `eval-golden-v2` (`internal/evals/golden`) +
+- Eval: offline golden suite `eval-golden-v3` (`internal/evals/golden`) +
   adversarial fixtures (`internal/evals/adversarial`) + `context-dev eval`;
-  report under `.proofs/eval/`.
+  report under `.proofs/eval/`. v3 adds RU morphology recall, operator
+  AND/OR/NOT, lemma-sequence phrase, token-boundary and ё/е cases (ADR-0043).
 - Stabilization Gate S5 passed (2026-07-14): ADR-0042; runbook
   `docs/operations/runbook.md`; API changelog `docs/api/v1-changelog.md`.
 - Service: thin HTTP+JSON `cmd/context-serve` / `internal/httpserver`
@@ -56,7 +57,11 @@
 - Redaction: model/Lab text via `CONTEXT_REDACT` (Chunk 30).
 - Background jobs: in-process AgentRun start/status/cancel (Chunk 31).
 - **Lab gate passed** (Chunk 32): [docs/lab-gate.md](../docs/lab-gate.md), ADR-0027.
-- Multilingual/lexicon proofs use in-memory fixtures with simple-lang adapters; context-lang-* and TEI/SKOS lexicon adapters are not wired.
+- Multilingual/lexicon proofs use in-memory fixtures with simple-lang adapters; TEI/SKOS lexicon adapters are not wired.
+- Language adapters wired at runtime (ADR-0043): `context-lang-ru` (rule-based
+  `pkg/lang/ru`) + `context-lang-en` via `internal/linguistic/registry`;
+  operator search `--mode query` (phrases, AND/OR/NOT, `~` morphology,
+  `lang:`) with `query_explain`.
 
 ## Next decisions
 

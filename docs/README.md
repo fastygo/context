@@ -15,7 +15,8 @@ with integration. Planning-only material lives under [`.project/`](../.project/)
 | What the engine is (and is not) | [Concepts](concepts.md) |
 | End-to-end recipes | [Scenarios](scenarios/README.md) |
 | CLI commands | [CLI reference](cli.md) |
-| Power-user search (no Query AST) | [search-power-user.md](search-power-user.md) |
+| Search operators + morphology (`mode=query`, `lang:ru`) | [search-operators.md](search-operators.md) |
+| Plain modes + filters | [search-power-user.md](search-power-user.md) |
 | HTTP + `contextkit` | [API v1](api/v1.md) |
 | Postgres / dense / FTS / env | [Local operations](operations/local-server.md) |
 | Lab/BFF freeze checklist | [Lab gate](lab-gate.md) |
@@ -28,13 +29,15 @@ with integration. Planning-only material lives under [`.project/`](../.project/)
 
 ```text
 ingest (corpus → chunks + optional dense/FTS)
-  → search (exact | sparse | hybrid | dense*)
+  → search (exact | sparse | hybrid | dense* | query†)
   → context-pack / inspect
   → agent-run (foreground)  OR  jobs (background AgentRun)
   → trace / metrics / quota / ready
 ```
 
-\* Dense needs Postgres/pgvector (`CONTEXT_ENABLE_DENSE=1`).
+\* Dense needs Postgres/pgvector (`CONTEXT_ENABLE_DENSE=1`).  
+† Operator layer with morphology (`"phrase"`, AND/OR/NOT, `~term`, `lang:ru`) —
+see [search-operators.md](search-operators.md) (ADR-0043).
 
 | Surface | Entry |
 | --- | --- |
@@ -42,6 +45,7 @@ ingest (corpus → chunks + optional dense/FTS)
 | HTTP | `go run ./cmd/context-serve --data …` — see [api/v1.md](api/v1.md) |
 | Go client | `github.com/fastygo/context/pkg/contextkit` |
 | Language adapter harness | `pkg/langtestkit` + `pkg/langcontract` |
+| Russian morphology engine | `pkg/lang/ru` (`context-lang-ru`, rule-based) |
 
 **Do not** import `internal/` from Lab or products. **Do not** treat model text
 as source truth (redaction applies to Lab-visible surfaces).

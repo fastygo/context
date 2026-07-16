@@ -208,6 +208,9 @@ type searchRequest struct {
 	Query     string `json:"query"`
 	Mode      string `json:"mode,omitempty"`
 	FocusID   string `json:"focus_id,omitempty"`
+	// Lang selects the expansion language adapter (additive v1, ADR-0043).
+	// mode=query also honors an in-query lang: directive, which wins.
+	Lang string `json:"lang,omitempty"`
 }
 
 func (s *Server) handleSearch(w http.ResponseWriter, r *http.Request) {
@@ -220,7 +223,7 @@ func (s *Server) handleSearch(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, apperr.New(apperr.Validation, "query required"))
 		return
 	}
-	res, err := devcli.Search(s.cfg.DataDir, req.ProjectID, req.Query, req.Mode, req.FocusID)
+	res, err := devcli.SearchWithLang(s.cfg.DataDir, req.ProjectID, req.Query, req.Mode, req.FocusID, req.Lang)
 	if err != nil {
 		writeAppErr(w, err)
 		return

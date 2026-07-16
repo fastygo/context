@@ -127,6 +127,10 @@ const (
 	ReasonDenseSimilarity  ScoreReason = "dense_similarity"
 	ReasonLemmaMatch       ScoreReason = "lemma_match"
 	ReasonWordformExpand   ScoreReason = "wordform_expand"
+	// ReasonTokenTerm marks a token-boundary term hit (querylang leaf).
+	ReasonTokenTerm ScoreReason = "token_term"
+	// ReasonMorphPhrase marks a lemma-sequence phrase hit (querylang leaf).
+	ReasonMorphPhrase ScoreReason = "morph_phrase"
 	ReasonSenseFilter      ScoreReason = "sense_filter"
 	ReasonConceptFilter    ScoreReason = "concept_filter"
 	ReasonAttestationFilter ScoreReason = "attestation_filter"
@@ -138,7 +142,8 @@ const (
 func (r ScoreReason) Validate() error {
 	switch r {
 	case ReasonExactPhrase, ReasonExactSpan, ReasonSparseTerm, ReasonDenseSimilarity,
-		ReasonLemmaMatch, ReasonWordformExpand, ReasonSenseFilter, ReasonConceptFilter,
+		ReasonLemmaMatch, ReasonWordformExpand, ReasonTokenTerm, ReasonMorphPhrase,
+		ReasonSenseFilter, ReasonConceptFilter,
 		ReasonAttestationFilter, ReasonTrustBoost, ReasonRecencyBoost, ReasonCitationBoost:
 		return nil
 	case "":

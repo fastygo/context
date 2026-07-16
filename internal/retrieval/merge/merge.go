@@ -13,6 +13,10 @@ func DefaultWeight(retrieverID string) float64 {
 	switch retrieverID {
 	case "exact":
 		return 1.00
+	case "term":
+		return 0.95
+	case "morphphrase":
+		return 0.90
 	case "sparse":
 		return 0.75
 	case "lemma", "wordform":
@@ -29,12 +33,14 @@ func PriorityRank(retrieverID string) int {
 	switch retrieverID {
 	case "exact":
 		return 0
-	case "sparse":
+	case "term", "morphphrase":
 		return 1
-	case "lemma", "wordform":
+	case "sparse":
 		return 2
-	case "dense":
+	case "lemma", "wordform":
 		return 3
+	case "dense":
+		return 4
 	default:
 		return 9
 	}

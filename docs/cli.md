@@ -13,7 +13,7 @@ need `--project <id>` matching the workspace project.
 | --- | --- |
 | `init-project` | Create workspace + project under `--data` from `--root` corpus |
 | `ingest` | Index corpus (optional `--path`); optional dense/FTS via env |
-| `search` | Retrieve candidates (`--mode exact\|sparse\|hybrid\|dense\|hybrid-dense`) |
+| `search` | Retrieve candidates (`--mode exact\|sparse\|hybrid\|dense\|hybrid-dense\|query`; `query` = operators + morphology, see [search-operators.md](search-operators.md)) |
 | `context-pack` | Build ContextPack from hybrid search |
 | `inspect` | Lab inspector JSON (`--query` and/or `--pack`) |
 | `agent-run` | Foreground agent loop |
@@ -45,7 +45,8 @@ need `--project <id>` matching the workspace project.
 | `--data` | most | Workspace root |
 | `--project` | most | Must match workspace `project_id` |
 | `--query` | search, pack, agent, inspect, jobs | |
-| `--mode` | search | Default hybrid |
+| `--mode` | search | Default hybrid; `query` enables operators |
+| `--lang` | search | Expansion language (`ru`/`en`); also `CONTEXT_LANG` or in-query `lang:` |
 | `--focus` | search/pack/agent | FocusProfile id |
 | `--owner` | job-start | **Required** for background jobs |
 | `--job` | job-status/cancel | |

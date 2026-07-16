@@ -1,16 +1,371 @@
 {
-  "suite_id": "eval-golden-v2",
-  "description": "Neutral offline golden cases (S2/C12). Executed by go test ./internal/evals/golden and context-dev eval.",
+  "ok": true,
+  "suite_id": "eval-golden-v3",
+  "generated_at": "2026-07-16T06:16:58.510009Z",
   "cases": [
-    {"id": "exact-runners", "kind": "exact", "query": "runners", "want_chunk_ids": ["c-run"]},
-    {"id": "sparse-park", "kind": "sparse", "query": "park runners", "want_chunk_ids": ["c-run"]},
-    {"id": "dense-run", "kind": "dense", "query": "runners run in the park", "want_chunk_ids": ["c-run"]},
-    {"id": "hybrid-run-expand", "kind": "hybrid", "query": "run", "want_chunk_ids": ["c-run"]},
-    {"id": "morph-fake-expand", "kind": "hybrid", "query": "run", "want_chunk_ids": ["c-run"]},
-    {"id": "multilingual-en-filter", "kind": "multilingual", "query": "run", "want_chunk_ids": ["c-en"], "language": "en"},
-    {"id": "lexicon-sense-concept", "kind": "lexicon", "query": "runners", "want_chunk_ids": ["c-lex"], "sense_id": "sense-run-sport", "concept_id": "concept-running"},
-    {"id": "sense-attestation-filter", "kind": "lexicon", "query": "runners", "want_chunk_ids": ["c-lex"], "sense_id": "sense-run-sport", "concept_id": "concept-running"},
-    {"id": "event-window", "kind": "event_window", "query": "deploy", "want_chunk_ids": ["c-evt-in"]},
-    {"id": "pack-verify-source", "kind": "pack_verify", "query": "runners", "want_chunk_ids": ["c-run"]}
-  ]
+    {
+      "id": "exact-runners",
+      "kind": "exact",
+      "passed": true,
+      "query": "runners",
+      "want_chunk_ids": [
+        "c-run"
+      ],
+      "got_chunk_ids": [
+        "c-lex",
+        "c-run"
+      ],
+      "score": 1,
+      "reasons": [
+        "exact_phrase"
+      ],
+      "notes": "exact substring hit on sport running chunk"
+    },
+    {
+      "id": "sparse-park",
+      "kind": "sparse",
+      "passed": true,
+      "query": "park runners",
+      "want_chunk_ids": [
+        "c-run"
+      ],
+      "got_chunk_ids": [
+        "c-en",
+        "c-lex",
+        "c-run"
+      ],
+      "score": 0.75,
+      "reasons": [
+        "sparse_term"
+      ],
+      "notes": "fake sparse term overlap"
+    },
+    {
+      "id": "dense-run",
+      "kind": "dense",
+      "passed": true,
+      "query": "runners run in the park",
+      "want_chunk_ids": [
+        "c-run"
+      ],
+      "got_chunk_ids": [
+        "c-bank",
+        "c-en",
+        "c-evt-in",
+        "c-evt-out",
+        "c-lex",
+        "c-ru",
+        "c-ru-dom",
+        "c-ru-home",
+        "c-ru-rail",
+        "c-ru-road",
+        "c-ru-run",
+        "c-ru-yo",
+        "c-run"
+      ],
+      "score": 0.55,
+      "reasons": [
+        "dense_similarity"
+      ],
+      "notes": "offline fake-hash dense similarity"
+    },
+    {
+      "id": "hybrid-run-expand",
+      "kind": "hybrid",
+      "passed": true,
+      "query": "run",
+      "want_chunk_ids": [
+        "c-run"
+      ],
+      "got_chunk_ids": [
+        "c-bank",
+        "c-en",
+        "c-evt-in",
+        "c-evt-out",
+        "c-lex",
+        "c-ru",
+        "c-ru-dom",
+        "c-ru-home",
+        "c-ru-rail",
+        "c-ru-road",
+        "c-ru-run",
+        "c-ru-yo",
+        "c-run"
+      ],
+      "score": 2.986140279991292,
+      "reasons": [
+        "dense_similarity",
+        "exact_phrase",
+        "sparse_term",
+        "wordform_expand"
+      ],
+      "notes": "hybrid exact+sparse+dense with wordform expansion"
+    },
+    {
+      "id": "morph-fake-expand",
+      "kind": "hybrid",
+      "passed": true,
+      "query": "run",
+      "want_chunk_ids": [
+        "c-run"
+      ],
+      "got_chunk_ids": [
+        "c-bank",
+        "c-en",
+        "c-evt-in",
+        "c-evt-out",
+        "c-lex",
+        "c-ru",
+        "c-ru-dom",
+        "c-ru-home",
+        "c-ru-rail",
+        "c-ru-road",
+        "c-ru-run",
+        "c-ru-yo",
+        "c-run"
+      ],
+      "score": 2.986140279991292,
+      "reasons": [
+        "dense_similarity",
+        "exact_phrase",
+        "sparse_term",
+        "wordform_expand"
+      ],
+      "notes": "C12 morph-fake: simple expander maps run→runners"
+    },
+    {
+      "id": "multilingual-en-filter",
+      "kind": "multilingual",
+      "passed": true,
+      "query": "run",
+      "want_chunk_ids": [
+        "c-en"
+      ],
+      "got_chunk_ids": [
+        "c-bank",
+        "c-en",
+        "c-evt-in",
+        "c-evt-out",
+        "c-lex",
+        "c-run"
+      ],
+      "score": 2.6928178809230454,
+      "reasons": [
+        "dense_similarity",
+        "exact_phrase",
+        "sparse_term",
+        "wordform_expand"
+      ],
+      "notes": "language filter keeps en; ru excluded (Chunk 18 fixture)"
+    },
+    {
+      "id": "lexicon-sense-concept",
+      "kind": "lexicon",
+      "passed": true,
+      "query": "runners",
+      "want_chunk_ids": [
+        "c-lex"
+      ],
+      "got_chunk_ids": [
+        "c-lex",
+        "c-run"
+      ],
+      "score": 1,
+      "reasons": [
+        "attestation_filter",
+        "concept_filter",
+        "exact_phrase",
+        "sense_filter"
+      ],
+      "notes": "sense+concept filters preserve original surface (Chunk 18)"
+    },
+    {
+      "id": "sense-attestation-filter",
+      "kind": "lexicon",
+      "passed": true,
+      "query": "runners",
+      "want_chunk_ids": [
+        "c-lex"
+      ],
+      "got_chunk_ids": [
+        "c-lex",
+        "c-run"
+      ],
+      "score": 1,
+      "reasons": [
+        "attestation_filter",
+        "concept_filter",
+        "exact_phrase",
+        "sense_filter"
+      ],
+      "notes": "C12 sense/attestation filter reasons required"
+    },
+    {
+      "id": "event-window",
+      "kind": "event_window",
+      "passed": true,
+      "query": "deploy",
+      "want_chunk_ids": [
+        "c-evt-in"
+      ],
+      "got_chunk_ids": [
+        "c-evt-in"
+      ],
+      "score": 1,
+      "reasons": [
+        "exact_phrase"
+      ],
+      "notes": "C12 temporal event-window keeps in-range chunk only"
+    },
+    {
+      "id": "pack-verify-source",
+      "kind": "pack_verify",
+      "passed": true,
+      "query": "runners",
+      "want_chunk_ids": [
+        "c-run"
+      ],
+      "got_chunk_ids": [
+        "c-lex",
+        "c-run",
+        "c-en"
+      ],
+      "score": 1,
+      "reasons": [
+        "verify_ok",
+        "pack_checksum_ok"
+      ],
+      "notes": "ContextPack build + Verifier OK on source_text evidence"
+    },
+    {
+      "id": "ru-inflection-recall",
+      "kind": "morph_ru",
+      "passed": true,
+      "query": "дорога",
+      "want_chunk_ids": [
+        "c-ru-rail",
+        "c-ru-road"
+      ],
+      "got_chunk_ids": [
+        "c-ru-rail",
+        "c-ru-road"
+      ],
+      "score": 2,
+      "reasons": [
+        "exact_phrase",
+        "sparse_term",
+        "wordform_expand"
+      ],
+      "notes": "context-lang-ru expansion reaches genitive дороги (ADR-0043)"
+    },
+    {
+      "id": "ru-verb-recall",
+      "kind": "morph_ru",
+      "passed": true,
+      "query": "бежать",
+      "want_chunk_ids": [
+        "c-ru-run"
+      ],
+      "got_chunk_ids": [
+        "c-ru",
+        "c-ru-run"
+      ],
+      "score": 2,
+      "reasons": [
+        "exact_phrase",
+        "sparse_term",
+        "wordform_expand"
+      ],
+      "notes": "irregular verb paradigm бегут via exception fixture"
+    },
+    {
+      "id": "query-and-not",
+      "kind": "query",
+      "passed": true,
+      "query": "дорога -железной",
+      "want_chunk_ids": [
+        "c-ru-road"
+      ],
+      "got_chunk_ids": [
+        "c-ru-road"
+      ],
+      "score": 0.95,
+      "reasons": [
+        "sparse_term",
+        "token_term"
+      ],
+      "notes": "operator AND/NOT with morph expansion (ADR-0043)"
+    },
+    {
+      "id": "query-morph-phrase",
+      "kind": "query",
+      "passed": true,
+      "query": "~\"железная дорога\"",
+      "want_chunk_ids": [
+        "c-ru-rail"
+      ],
+      "got_chunk_ids": [
+        "c-ru-rail"
+      ],
+      "score": 0.9,
+      "reasons": [
+        "lemma_match",
+        "morph_phrase"
+      ],
+      "notes": "lemma-sequence phrase matches inflected словосочетание"
+    },
+    {
+      "id": "query-token-boundary",
+      "kind": "query",
+      "passed": true,
+      "query": "дом",
+      "want_chunk_ids": [
+        "c-ru-dom"
+      ],
+      "got_chunk_ids": [
+        "c-ru-dom"
+      ],
+      "score": 0.95,
+      "reasons": [
+        "sparse_term",
+        "token_term"
+      ],
+      "notes": "token-boundary precision: дом must not match Домашний"
+    },
+    {
+      "id": "query-yo-accent",
+      "kind": "query",
+      "passed": true,
+      "query": "ёлка",
+      "want_chunk_ids": [
+        "c-ru-yo"
+      ],
+      "got_chunk_ids": [
+        "c-ru-yo"
+      ],
+      "score": 0.95,
+      "reasons": [
+        "token_term"
+      ],
+      "notes": "ё query reaches е spelling via accent expansion"
+    },
+    {
+      "id": "query-or-group",
+      "kind": "query",
+      "passed": true,
+      "query": "(ёлка OR дом) -реки",
+      "want_chunk_ids": [
+        "c-ru-yo"
+      ],
+      "got_chunk_ids": [
+        "c-ru-yo"
+      ],
+      "score": 0.95,
+      "reasons": [
+        "token_term"
+      ],
+      "notes": "grouping + OR + NOT determinism"
+    }
+  ],
+  "summary": "all golden cases passed"
 }

@@ -31,11 +31,17 @@ context-lang-*
 
 ## Repository Naming
 
+**Shipped in-module (ADR-0038 / ADR-0043):** thin `context-lang-en`
+(`pkg/langtestkit/refen`) and rule-based `context-lang-ru` (`pkg/lang/ru`,
+no dictionaries) prove the harness + runtime path via
+`internal/linguistic/registry`. External dictionary-backed repositories can
+replace them behind the same registry entries without core changes.
+
 Planned repositories:
 
 - `github.com/fastygo/context-lang-testkit`
 - `github.com/fastygo/context-lang-en`
-- `github.com/fastygo/context-lang-ru`
+- `github.com/fastygo/context-lang-ru` (dictionary-backed; supersedes in-repo rules)
 - `github.com/fastygo/context-lang-de`
 - `github.com/fastygo/context-lang-es`
 - `github.com/fastygo/context-lang-fr`

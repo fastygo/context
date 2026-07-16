@@ -15,6 +15,7 @@ import (
 	"github.com/fastygo/context/internal/foundation"
 	"github.com/fastygo/context/internal/ids"
 	"github.com/fastygo/context/internal/indexing"
+	"github.com/fastygo/context/internal/linguistic/registry"
 	"github.com/fastygo/context/internal/linguistic/simple"
 	modelfake "github.com/fastygo/context/internal/models/fake"
 	"github.com/fastygo/context/internal/retrieval"
@@ -25,6 +26,7 @@ import (
 	"github.com/fastygo/context/internal/retrieval/index"
 	"github.com/fastygo/context/internal/retrieval/merge"
 	"github.com/fastygo/context/internal/retrieval/pack"
+	"github.com/fastygo/context/internal/retrieval/querylang"
 	"github.com/fastygo/context/internal/retrieval/rerank"
 	"github.com/fastygo/context/internal/retrieval/sparse"
 )
@@ -32,19 +34,21 @@ import (
 const (
 	ProjectID  = "p_eval"
 	SnapshotID = "snap_eval"
-	SuiteID    = "eval-golden-v2"
+	SuiteID    = "eval-golden-v3"
 )
 
 // CaseSpec is one golden expectation (also serialized under .proofs/eval).
 type CaseSpec struct {
 	ID           string   `json:"id"`
-	Kind         string   `json:"kind"` // exact|sparse|dense|hybrid|multilingual|lexicon|event_window|pack_verify
+	Kind         string   `json:"kind"` // exact|sparse|dense|hybrid|multilingual|lexicon|event_window|pack_verify|morph_ru|query
 	Query        string   `json:"query"`
 	WantChunkIDs []string `json:"want_chunk_ids"`
-	Language     string   `json:"language,omitempty"`
-	SenseID      string   `json:"sense_id,omitempty"`
-	ConceptID    string   `json:"concept_id,omitempty"`
-	Notes        string   `json:"notes,omitempty"`
+	// ForbidChunkIDs fail the case when present in results (precision guard).
+	ForbidChunkIDs []string `json:"forbid_chunk_ids,omitempty"`
+	Language       string   `json:"language,omitempty"`
+	SenseID        string   `json:"sense_id,omitempty"`
+	ConceptID      string   `json:"concept_id,omitempty"`
+	Notes          string   `json:"notes,omitempty"`
 }
 
 // CaseResult is one executed case for Lab.
@@ -122,12 +126,58 @@ func Specs() []CaseSpec {
 			WantChunkIDs: []string{"c-run"},
 			Notes:        "ContextPack build + Verifier OK on source_text evidence",
 		},
+		{
+			ID: "ru-inflection-recall", Kind: "morph_ru", Query: "дорога",
+			WantChunkIDs: []string{"c-ru-rail", "c-ru-road"},
+			Notes:        "context-lang-ru expansion reaches genitive дороги (ADR-0043)",
+		},
+		{
+			ID: "ru-verb-recall", Kind: "morph_ru", Query: "бежать",
+			WantChunkIDs: []string{"c-ru-run"},
+			Notes:        "irregular verb paradigm бегут via exception fixture",
+		},
+		{
+			ID: "query-and-not", Kind: "query", Query: "дорога -железной",
+			WantChunkIDs:   []string{"c-ru-road"},
+			ForbidChunkIDs: []string{"c-ru-rail"},
+			Notes:          "operator AND/NOT with morph expansion (ADR-0043)",
+		},
+		{
+			ID: "query-morph-phrase", Kind: "query", Query: `~"железная дорога"`,
+			WantChunkIDs:   []string{"c-ru-rail"},
+			ForbidChunkIDs: []string{"c-ru-road"},
+			Notes:          "lemma-sequence phrase matches inflected словосочетание",
+		},
+		{
+			ID: "query-token-boundary", Kind: "query", Query: "дом",
+			WantChunkIDs:   []string{"c-ru-dom"},
+			ForbidChunkIDs: []string{"c-ru-home"},
+			Notes:          "token-boundary precision: дом must not match Домашний",
+		},
+		{
+			ID: "query-yo-accent", Kind: "query", Query: "ёлка",
+			WantChunkIDs: []string{"c-ru-yo"},
+			Notes:        "ё query reaches е spelling via accent expansion",
+		},
+		{
+			ID: "query-or-group", Kind: "query", Query: "(ёлка OR дом) -реки",
+			WantChunkIDs:   []string{"c-ru-yo"},
+			ForbidChunkIDs: []string{"c-ru-dom"},
+			Notes:          "grouping + OR + NOT determinism",
+		},
 	}
 }
 
 // Run executes all default golden cases offline.
 func Run(ctx context.Context) (Report, error) {
 	return RunSpecs(ctx, Specs())
+}
+
+// executors bundles the engines used by golden cases.
+type executors struct {
+	eng   hybrid.Engine    // en fixture engine (exact/sparse/dense + simple expander)
+	engRU hybrid.Engine    // context-lang-ru expansion engine (morph_ru cases)
+	ql    querylang.Runner // operator layer runner (query cases, ADR-0043)
 }
 
 // RunSpecs executes the provided cases against the fixture corpus.
@@ -137,14 +187,36 @@ func RunSpecs(ctx context.Context, specs []CaseSpec) (Report, error) {
 	if err != nil {
 		return Report{}, err
 	}
-	eng := hybrid.Engine{
-		Exact:  exact.Retriever{Index: idx},
-		Sparse: sparse.Retriever{Client: fake.SparseClient{Index: idx}, Index: idx, Explanation: "eval fake sparse"},
-		Dense: dense.Retriever{
-			Store: store, Embedder: emb, Index: idx, Namespace: ns,
+	sparseRet := sparse.Retriever{Client: fake.SparseClient{Index: idx}, Index: idx, Explanation: "eval fake sparse"}
+	ex := executors{
+		eng: hybrid.Engine{
+			Exact:  exact.Retriever{Index: idx},
+			Sparse: sparseRet,
+			Dense: dense.Retriever{
+				Store: store, Embedder: emb, Index: idx, Namespace: ns,
+			},
+			Expander: simple.Expander{WordformMap: map[string][]string{"run": {"runners"}}},
+			Reranker: rerank.Identity{},
 		},
-		Expander: simple.Expander{WordformMap: map[string][]string{"run": {"runners"}}},
-		Reranker: rerank.Identity{},
+	}
+	ruPorts, ok := registry.ForLanguage("ru")
+	if ok {
+		ex.engRU = hybrid.Engine{
+			Exact:    exact.Retriever{Index: idx},
+			Sparse:   sparseRet,
+			Expander: ruPorts.Expander,
+			Language: ruPorts.Language,
+			Reranker: rerank.Identity{},
+		}
+		ex.ql = querylang.Runner{
+			Index:      idx,
+			Sparse:     sparseRet,
+			Normalizer: ruPorts.Normalizer,
+			Analyzer:   ruPorts.Analyzer,
+			Expander:   ruPorts.Expander,
+			Language:   ruPorts.Language,
+			AdapterID:  ruPorts.Version.AdapterID,
+		}
 	}
 
 	rep := Report{
@@ -154,7 +226,7 @@ func RunSpecs(ctx context.Context, specs []CaseSpec) (Report, error) {
 	}
 	allOK := true
 	for _, spec := range specs {
-		cr, err := runCase(ctx, eng, idx, spec)
+		cr, err := runCase(ctx, ex, idx, spec)
 		if err != nil {
 			return Report{}, err
 		}
@@ -172,7 +244,8 @@ func RunSpecs(ctx context.Context, specs []CaseSpec) (Report, error) {
 	return rep, nil
 }
 
-func runCase(ctx context.Context, eng hybrid.Engine, idx *index.Memory, spec CaseSpec) (CaseResult, error) {
+func runCase(ctx context.Context, ex executors, idx *index.Memory, spec CaseSpec) (CaseResult, error) {
+	eng := ex.eng
 	cr := CaseResult{
 		ID: spec.ID, Kind: spec.Kind, Query: spec.Query,
 		WantChunkIDs: append([]string(nil), spec.WantChunkIDs...),
@@ -180,6 +253,9 @@ func runCase(ctx context.Context, eng hybrid.Engine, idx *index.Memory, spec Cas
 	}
 	if spec.Kind == "pack_verify" {
 		return runPackVerify(ctx, eng, idx, spec, cr)
+	}
+	if spec.Kind == "query" {
+		return runQueryCase(ctx, ex.ql, spec, cr)
 	}
 
 	plan := retrieval.RetrievalPlan{
@@ -196,6 +272,11 @@ func runCase(ctx context.Context, eng hybrid.Engine, idx *index.Memory, spec Cas
 	case "hybrid", "multilingual":
 		plan.Strategies = []retrieval.RetrieverStrategy{
 			{RetrieverID: "exact"}, {RetrieverID: "sparse"}, {RetrieverID: "dense"},
+		}
+	case "morph_ru":
+		eng = ex.engRU
+		plan.Strategies = []retrieval.RetrieverStrategy{
+			{RetrieverID: "exact"}, {RetrieverID: "sparse"},
 		}
 	case "lexicon":
 		plan.Strategies = []retrieval.RetrieverStrategy{{RetrieverID: "exact"}}
@@ -247,6 +328,10 @@ func runCase(ctx context.Context, eng hybrid.Engine, idx *index.Memory, spec Cas
 	}
 	sort.Strings(cr.Reasons)
 	cr.Passed = containsAll(got, spec.WantChunkIDs) && len(cands) > 0
+	if leaked := firstForbidden(got, spec.ForbidChunkIDs); leaked != "" {
+		cr.Passed = false
+		cr.Notes += "; forbidden chunk " + leaked
+	}
 	if spec.Kind == "multilingual" {
 		for _, id := range got {
 			if id == "c-ru" {
@@ -283,6 +368,68 @@ func runCase(ctx context.Context, eng hybrid.Engine, idx *index.Memory, spec Cas
 		}
 	}
 	return cr, nil
+}
+
+// runQueryCase executes an operator query through the querylang layer.
+func runQueryCase(ctx context.Context, ql querylang.Runner, spec CaseSpec, cr CaseResult) (CaseResult, error) {
+	if ql.Index == nil {
+		cr.Notes += "; querylang runner unavailable"
+		return cr, nil
+	}
+	plan := retrieval.RetrievalPlan{
+		ID: ids.PlanID("eval-" + spec.ID), ProjectID: ProjectID, SnapshotID: SnapshotID,
+		TopNRawPool: 20,
+		Strategies:  []retrieval.RetrieverStrategy{{RetrieverID: querylang.TermRetrieverID}},
+	}
+	res, err := ql.Run(ctx, plan, ids.QueryID("q-"+spec.ID), spec.Query)
+	if err != nil {
+		return CaseResult{}, err
+	}
+	got := make([]string, 0, len(res.Candidates))
+	reasonSet := map[string]struct{}{}
+	for i, c := range res.Candidates {
+		got = append(got, string(c.ChunkID))
+		if i == 0 {
+			cr.Score = c.MergedScore
+		}
+		for _, contrib := range c.Contributions {
+			for _, r := range contrib.Reasons {
+				reasonSet[string(r)] = struct{}{}
+			}
+		}
+	}
+	sort.Strings(got)
+	cr.GotChunkIDs = got
+	for r := range reasonSet {
+		cr.Reasons = append(cr.Reasons, r)
+	}
+	sort.Strings(cr.Reasons)
+	cr.Passed = containsAll(got, spec.WantChunkIDs)
+	if leaked := firstForbidden(got, spec.ForbidChunkIDs); leaked != "" {
+		cr.Passed = false
+		cr.Notes += "; forbidden chunk " + leaked
+	}
+	if res.Explain.Canonical == "" {
+		cr.Passed = false
+		cr.Notes += "; missing canonical explain"
+	}
+	return cr, nil
+}
+
+func firstForbidden(got, forbid []string) string {
+	if len(forbid) == 0 {
+		return ""
+	}
+	set := map[string]struct{}{}
+	for _, g := range got {
+		set[g] = struct{}{}
+	}
+	for _, f := range forbid {
+		if _, ok := set[f]; ok {
+			return f
+		}
+	}
+	return ""
 }
 
 func runPackVerify(ctx context.Context, eng hybrid.Engine, idx *index.Memory, spec CaseSpec, cr CaseResult) (CaseResult, error) {
@@ -377,7 +524,30 @@ func fixtureIndex() *index.Memory {
 		},
 	}
 	recs = append(recs, eventWindowRecords()...)
+	recs = append(recs, russianRecords()...)
 	return index.NewMemory(recs...)
+}
+
+// russianRecords back the morph_ru and query golden cases (ADR-0043).
+func russianRecords() []index.ChunkRecord {
+	rec := func(chunk, source, text string) index.ChunkRecord {
+		return index.ChunkRecord{
+			ProjectID: ProjectID, SnapshotID: SnapshotID,
+			ChunkID: ids.ChunkID(chunk), SourceID: ids.SourceID(source),
+			Span: foundation.ByteSpan{Start: 0, End: uint64(len(text))},
+			Text: text, TextChecksum: foundation.ChecksumHex("h-" + chunk),
+			TrustLevel: foundation.TrustProject, Language: "ru",
+			AnalyzerVersion: "ru-v1",
+		}
+	}
+	return []index.ChunkRecord{
+		rec("c-ru-rail", "s-ru-rail", "Вдоль железной дороги шли люди к станции"),
+		rec("c-ru-road", "s-ru-road", "Новая дорога построена за один год"),
+		rec("c-ru-run", "s-ru-run", "Спортсмены бегут по утреннему парку"),
+		rec("c-ru-dom", "s-ru-dom", "Старый дом стоит у самой реки"),
+		rec("c-ru-home", "s-ru-home", "Домашний уют и тепло очага"),
+		rec("c-ru-yo", "s-ru-yo", "Возле крыльца росла пушистая елка"),
+	}
 }
 
 func eventWindowRecords() []index.ChunkRecord {

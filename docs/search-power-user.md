@@ -1,9 +1,12 @@
-# Power-user search (no Query AST in core)
+# Power-user search (filters + operator layer)
 
-Status: supported path after S4 ([ADR-0041](decisions/0041-query-ast-defer-fts-filters.md)).
+Status: supported path after S4 ([ADR-0041](decisions/0041-query-ast-defer-fts-filters.md));
+extended by the minimal operator layer
+([ADR-0043](decisions/0043-ru-adapter-operator-query-layer.md), mode `query`).
 
-Context Runtime does **not** ship a boolean Query AST. Compose retrieval with
-modes, filters, and (optionally) Postgres FTS at the sparse adapter boundary.
+For operators (`"phrase"`, AND/OR/NOT, `~` morphology, `lang:`) see
+[search-operators.md](search-operators.md). This page covers plain modes and
+filters.
 
 ## Modes
 
@@ -12,7 +15,8 @@ modes, filters, and (optionally) Postgres FTS at the sparse adapter boundary.
 | `exact` | Case-sensitive phrase / substring over chunk text |
 | `sparse` | Fake sparse offline; `postgresfts` when configured |
 | `dense` / `hybrid-dense` | Requires pgvector |
-| `hybrid` | Exact + sparse (+ dense if enabled) |
+| `hybrid` | Exact + sparse (+ dense if enabled); morph expansion with `lang`/`CONTEXT_LANG` |
+| `query` | Operator layer with explain ([search-operators.md](search-operators.md)) |
 
 CLI: `context-dev search --mode …`  
 HTTP: `POST /v1/search` with `mode`.

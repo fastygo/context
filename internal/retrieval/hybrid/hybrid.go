@@ -21,6 +21,7 @@ type Engine struct {
 	Sparse    retrieval.Retriever
 	Dense     retrieval.Retriever
 	Expander  linguistic.QueryExpander
+	Language  linguistic.LanguageCode // expansion language; empty defaults to "en"
 	Reranker  retrieval.Reranker // optional post-merge; Identity is the intentional no-op (C11)
 	Recorder  tracing.Recorder
 	RejectExp map[string]bool // expanded terms that must be ignored (false-positive control)
@@ -50,7 +51,11 @@ func (e Engine) Search(ctx context.Context, plan retrieval.RetrievalPlan, queryI
 
 	terms := []string{query}
 	if e.Expander != nil {
-		exps, err := e.Expander.Expand(ctx, queryID, query, "en")
+		lang := e.Language
+		if lang == "" {
+			lang = "en"
+		}
+		exps, err := e.Expander.Expand(ctx, queryID, query, lang)
 		if err != nil {
 			return Result{}, err
 		}

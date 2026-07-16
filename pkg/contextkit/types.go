@@ -50,11 +50,15 @@ type StatusResponse struct {
 }
 
 // SearchRequest is POST /v1/search.
+// Mode "query" enables the operator layer: quoted phrases, AND/OR/NOT/-,
+// grouping, ~ morphology markers, and an in-query lang: directive (ADR-0043).
 type SearchRequest struct {
 	ProjectID string `json:"project_id"`
 	Query     string `json:"query"`
 	Mode      string `json:"mode,omitempty"`
 	FocusID   string `json:"focus_id,omitempty"`
+	// Lang selects the expansion language adapter (e.g. "ru", "en").
+	Lang string `json:"lang,omitempty"`
 }
 
 // Candidate is a retrieval hit in SearchResult.
@@ -80,6 +84,9 @@ type SearchResult struct {
 	FocusID         string      `json:"focus_id,omitempty"`
 	Degraded        bool        `json:"degraded,omitempty"`
 	DegradedReasons []string    `json:"degraded_reasons,omitempty"`
+	// QueryExplain is set for mode=query: canonical tree, per-leaf
+	// expansions (accepted/rejected), and match counts (additive v1).
+	QueryExplain json.RawMessage `json:"query_explain,omitempty"`
 }
 
 // PackRequest is POST /v1/context-pack and POST /v1/agent-run.

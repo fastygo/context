@@ -20,10 +20,10 @@ Owner for all rows: **core steward**. Reopen only with measured blocker + ADR.
 | L02 Fine-grained ACL | **frozen-deferred** | Project isolation shipped; OIDC/ACL later |
 | L03 Index lifecycle | **closed** | C1 tombstones + lifecycle explain |
 | L03A Snapshot reuse / COW | **partial / frozen** | Export/import (C2); simhash COW deferred |
-| L04 Query AST | **forever-defer** | [ADR-0041](../docs/decisions/0041-query-ast-defer-fts-filters.md) |
+| L04 Query AST | **minimal subset shipped** | Operator layer (phrase/AND-OR-NOT/~morph/lang:) — [ADR-0043](../docs/decisions/0043-ru-adapter-operator-query-layer.md); general DSL & field syntax stay deferred per [ADR-0041](../docs/decisions/0041-query-ast-defer-fts-filters.md) |
 | L04A Focus / memory tiers | **partial** | FocusProfile shipped; deep memory tiers deferred |
 | L05 Snippets | **closed** | C4 / ADR-0033 |
-| L05A Language adapters | **partial** | testkit + en thin; rich engines external |
+| L05A Language adapters | **partial+** | testkit + en thin + **ru rule-based** ([ADR-0043](../docs/decisions/0043-ru-adapter-operator-query-layer.md)); dictionary engines external |
 | L05B Lexicon resources | **partial** | curated JSON; TEI external |
 | L05C Event adapters | **partial** | NDJSON thin; richer exports external |
 | L06 Relevance feedback | **frozen-deferred** | |
@@ -173,10 +173,11 @@ additional safety gates.
 
 ## Layer 04: Query Language And Advanced Search Semantics
 
-> **S4 / C10:** forever-deferred in core — see
-> [ADR-0041](../docs/decisions/0041-query-ast-defer-fts-filters.md) and
-> [docs/search-power-user.md](../docs/search-power-user.md). Reopen only with a
-> measured blocker.
+> **S4 / C10:** the ADR-0041 reopen condition was met by the lexical-search
+> product mandate; a **minimal operator subset** (phrase / AND-OR-NOT / ~morph
+> / lang:) shipped via [ADR-0043](../docs/decisions/0043-ru-adapter-operator-query-layer.md)
+> with golden tests and trace payloads ([docs/search-operators.md](../docs/search-operators.md)).
+> General DSL, field syntax, proximity, and wildcards remain deferred.
 
 ### Why This Matters
 
