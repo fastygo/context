@@ -66,7 +66,9 @@ as source truth (redaction applies to Lab-visible surfaces).
 | **`.project/`** | Plugins, drafts, future roadmaps only |
 | **`.proofs/`** | Measured PoC / eval JSON artifacts |
 
-Deferred work (auth, OpenAPI, richer lang engines, fuzzy): see
-[`.project/future-layer.md`](../.project/future-layer.md) and
+Stabilization Gate **passed** ([ADR-0042](decisions/0042-stabilization-gate.md)).
+Frozen-deferred work (auth, OpenAPI, richer dictionary engines, fuzzy, QDrant,
+…): see [`.project/future-layer.md`](../.project/future-layer.md) and
 [`.project/adapters-backlog.md`](../.project/adapters-backlog.md).
-Thin S3 adapters + public langtestkit are shipped (ADR-0037–0039).
+Shipped thin adapters: S3 HTML/PDF/NDJSON + langtestkit (ADR-0037–0039) and
+in-repo `context-lang-ru` + operator `mode=query` (ADR-0043).

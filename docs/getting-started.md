@@ -23,7 +23,15 @@ go run ./cmd/context-dev context-pack --data "$DATA" --project demo --query 'ZEB
 go run ./cmd/context-dev inspect --data "$DATA" --project demo --query 'ZEBRA42'
 ```
 
-JSON goes to stdout. Host paths never appear in HTTP/Lab JSON (`path_key` only).
+Operator search (phrases / boolean / morphology) uses `--mode query`:
+
+```bash
+go run ./cmd/context-dev search --data "$DATA" --project demo \
+  --mode query --lang en --query '"Exact token" AND ZEBRA42'
+```
+
+See [search-operators.md](search-operators.md). JSON goes to stdout. Host paths
+never appear in HTTP/Lab JSON (`path_key` only).
 
 ## HTTP (same workspace)
 
@@ -40,6 +48,7 @@ Go client: `github.com/fastygo/context/pkg/contextkit` ([api/v1.md](api/v1.md)).
 ## Next
 
 - Completer swap: `CONTEXT_COMPLETER_KIND=localecho`
-- Dense: [operations/local-server.md](operations/local-server.md)
+- Dense / Postgres: [operations/local-server.md](operations/local-server.md)
+- Operator search: [search-operators.md](search-operators.md)
 - Recipes: [scenarios/](scenarios/README.md)
-- Lab freeze: [lab-gate.md](lab-gate.md)
+- Lab + Stabilization freeze: [lab-gate.md](lab-gate.md)

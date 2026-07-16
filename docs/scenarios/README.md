@@ -9,7 +9,10 @@ Copy-paste recipes for common integrations. Each scenario lists CLI and HTTP
 | [Agent run + trace](agent-run.md) | Completer + tool + verify + trace |
 | [Background jobs](background-jobs.md) | Async AgentRun with cancel |
 | [Lab / BFF](lab-bff.md) | Bind without importing `internal/` |
-| [Ops](ops.md) | Quotas, readiness, repair, metrics |
+| [Ops](ops.md) | Quotas, readiness, repair, metrics, schedules |
+
+Operator / morphology search is documented in
+[search-operators.md](../search-operators.md) (`mode=query`, ADR-0043).
 
 Assumes a workspace created as in [getting-started.md](../getting-started.md)
 (`--data` / `--project`).

@@ -12,7 +12,16 @@ go run ./cmd/context-dev inspect --data "$DATA" --project demo \
   --query 'ZEBRA42'
 ```
 
-Modes: `exact` | `sparse` | `hybrid` | `dense` | `hybrid-dense`.
+Modes: `exact` | `sparse` | `hybrid` | `dense` | `hybrid-dense` | `query`.
+
+Operator example:
+
+```bash
+go run ./cmd/context-dev search --data "$DATA" --project demo \
+  --mode query --lang en --query '"Exact token" AND ZEBRA42'
+```
+
+Details: [search-operators.md](../search-operators.md).
 
 Optional focus:
 
