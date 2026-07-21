@@ -11,6 +11,7 @@ How-to for the shipped core: [`docs/README.md`](../docs/README.md).
 | [lexicon-resources.md](lexicon-resources.md) | Dictionaries, thesauri, attestations, historical/regional/community resources |
 | [observation-event-adapters.md](observation-event-adapters.md) | Logs, messages, telemetry, observations, and interaction streams |
 | [grace-vivanov.md](grace-vivanov.md) | Optional contract-first engineering methodology pack |
+| [sadt-contract-agency.md](sadt-contract-agency.md) | SADT-style ICOM contracts with soft agency (free path, fixed Done-iff) |
 
 ## Promotion Rule
 
