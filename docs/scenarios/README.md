@@ -10,6 +10,7 @@ Copy-paste recipes for common integrations. Each scenario lists CLI and HTTP
 | [Background jobs](background-jobs.md) | Async AgentRun with cancel |
 | [Lab / BFF](lab-bff.md) | Bind without importing `internal/` |
 | [Ops](ops.md) | Quotas, readiness, repair, metrics, schedules |
+| [Reusable evidence orchestrator](evidence-orchestrator.md) | Structured artifacts, lineage, FocusProfile steps, external tools |
 
 Operator / morphology search is documented in
 [search-operators.md](../search-operators.md) (`mode=query`, ADR-0043).

@@ -2,6 +2,7 @@
 package localfs
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -57,6 +58,19 @@ func (s *Store) Put(ctx context.Context, projectID ids.ProjectID, artifactID ids
 	dir, err := s.artifactDir(projectID, artifactID)
 	if err != nil {
 		return artifacts.Artifact{}, err
+	}
+	// Artifact identifiers are immutable. Repeating the exact write is
+	// idempotent; changing bytes or metadata requires a new artifact id.
+	if existing, existingBody, getErr := s.Get(ctx, projectID, artifactID); getErr == nil {
+		candidate := artifacts.ApplyPutOptions(existing, opts)
+		if existing.MediaType == mediaType && bytes.Equal(existingBody, body) &&
+			existing.SourceID == candidate.SourceID &&
+			existing.ArtifactType == candidate.ArtifactType && existing.SchemaID == candidate.SchemaID {
+			return existing, nil
+		}
+		return artifacts.Artifact{}, apperr.New(apperr.Conflict, "artifact id already exists with different immutable content or metadata")
+	} else if !apperr.Is(getErr, apperr.NotFound) {
+		return artifacts.Artifact{}, getErr
 	}
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return artifacts.Artifact{}, apperr.Wrap(apperr.Validation, "create artifact dir", err)

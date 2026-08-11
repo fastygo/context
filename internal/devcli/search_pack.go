@@ -6,10 +6,13 @@ import (
 	"strings"
 
 	"github.com/fastygo/context/internal/apperr"
+	"github.com/fastygo/context/internal/artifacts/localfs"
 	"github.com/fastygo/context/internal/config"
 	"github.com/fastygo/context/internal/foundation"
 	"github.com/fastygo/context/internal/ids"
 	"github.com/fastygo/context/internal/indexing"
+	"github.com/fastygo/context/internal/linguistic"
+	"github.com/fastygo/context/internal/linguistic/registry"
 	"github.com/fastygo/context/internal/models"
 	"github.com/fastygo/context/internal/models/factory"
 	"github.com/fastygo/context/internal/ops/failinject"
@@ -20,8 +23,6 @@ import (
 	"github.com/fastygo/context/internal/retrieval/hybrid"
 	"github.com/fastygo/context/internal/retrieval/index"
 	"github.com/fastygo/context/internal/retrieval/merge"
-	"github.com/fastygo/context/internal/linguistic"
-	"github.com/fastygo/context/internal/linguistic/registry"
 	"github.com/fastygo/context/internal/retrieval/pack"
 	"github.com/fastygo/context/internal/retrieval/querylang"
 	"github.com/fastygo/context/internal/retrieval/rerank"
@@ -45,7 +46,7 @@ type SearchResult struct {
 	QueryExplain *querylang.Explain `json:"query_explain,omitempty"`
 }
 
-func loadIndex(st State) (*index.Memory, ids.SnapshotID, error) {
+func loadIndex(dataDir string, st State) (*index.Memory, ids.SnapshotID, error) {
 	if st.Project.ActiveSnapshotID == "" && st.Snapshot.ID == "" {
 		return nil, "", apperr.New(apperr.Validation, "no active snapshot; run ingest")
 	}
@@ -77,6 +78,32 @@ func loadIndex(st State) (*index.Memory, ids.SnapshotID, error) {
 			Tombstoned:      dead,
 		})
 	}
+	if len(st.Artifacts) > 0 {
+		store, err := localfs.New((Workspace{DataDir: dataDir}).ArtifactsDir())
+		if err != nil {
+			return nil, "", err
+		}
+		for _, record := range st.Artifacts {
+			if !searchableMediaType(record.Artifact.MediaType) {
+				continue
+			}
+			_, body, err := store.Get(context.Background(), st.Project.ID, record.Artifact.ID)
+			if err != nil {
+				return nil, "", err
+			}
+			if len(body) == 0 {
+				continue
+			}
+			mem.Add(index.ChunkRecord{
+				ProjectID: st.Project.ID, SnapshotID: snap,
+				ChunkID:  artifactChunkID(record.Artifact.ID),
+				SourceID: artifactSourceID(record.Artifact.ID),
+				Span:     foundation.ByteSpan{Start: 0, End: uint64(len(body))},
+				Text:     string(body), TextChecksum: record.Artifact.Checksum,
+				TrustLevel: record.TrustLevel,
+			})
+		}
+	}
 	return mem, snap, nil
 }
 
@@ -101,7 +128,7 @@ func SearchWithLang(dataDir, projectID, query, mode, focusID, lang string) (Sear
 	if mode == "" {
 		mode = "hybrid"
 	}
-	idx, snap, err := loadIndex(st)
+	idx, snap, err := loadIndex(dataDir, st)
 	if err != nil {
 		return SearchResult{}, err
 	}
@@ -418,7 +445,7 @@ func BuildPack(dataDir, projectID, query, focusID string) (PackResult, error) {
 	if err != nil {
 		return PackResult{}, err
 	}
-	idx, _, err := loadIndex(st)
+	idx, _, err := loadIndex(dataDir, st)
 	if err != nil {
 		return PackResult{}, err
 	}
@@ -443,21 +470,25 @@ func BuildPack(dataDir, projectID, query, focusID string) (PackResult, error) {
 		if ok {
 			surface = rec.Text
 		}
+		class := foundation.EvidenceSourceText
+		if record, ok := artifactRecordForChunk(st, c.ChunkID); ok {
+			class = record.EvidenceClass
+		}
 		items = append(items, pack.DraftItem{
 			ID:        string(c.ChunkID),
-			Class:     foundation.EvidenceSourceText,
+			Class:     class,
 			Surface:   surface,
 			Required:  i == 0,
 			Candidate: c,
 		})
 	}
 	built, err := (pack.Builder{}).Build(context.Background(), pack.BuildRequest{
-		PackID:    ids.PackID("pack_" + string(search.SnapshotID)),
-		ProjectID: st.Project.ID,
-		TaskID:    ids.TaskID(firstNonEmpty(string(focus.TaskID), "cli-task")),
-		PlanID:    "cli-plan",
-		Purpose:   "cli-context-pack",
-		Focus:     focus,
+		PackID:       ids.PackID("pack_" + string(search.SnapshotID)),
+		ProjectID:    st.Project.ID,
+		TaskID:       ids.TaskID(firstNonEmpty(string(focus.TaskID), "cli-task")),
+		PlanID:       "cli-plan",
+		Purpose:      "cli-context-pack",
+		Focus:        focus,
 		Instructions: []string{"Answer using cited evidence only."},
 		Items:        items,
 	})
@@ -469,4 +500,25 @@ func BuildPack(dataDir, projectID, query, focusID string) (PackResult, error) {
 		return PackResult{}, err
 	}
 	return PackResult{Pack: built, FocusID: focus.ID}, nil
+}
+
+func searchableMediaType(mediaType string) bool {
+	return strings.HasPrefix(mediaType, "text/") || strings.Contains(mediaType, "json") || strings.Contains(mediaType, "xml")
+}
+
+func artifactChunkID(id ids.ArtifactID) ids.ChunkID {
+	return ids.ChunkID("artifact_" + sanitizeID(string(id)))
+}
+
+func artifactSourceID(id ids.ArtifactID) ids.SourceID {
+	return ids.SourceID("artifact_" + sanitizeID(string(id)))
+}
+
+func artifactRecordForChunk(st State, chunkID ids.ChunkID) (ArtifactRecord, bool) {
+	for _, record := range st.Artifacts {
+		if artifactChunkID(record.Artifact.ID) == chunkID {
+			return record, true
+		}
+	}
+	return ArtifactRecord{}, false
 }

@@ -13,6 +13,7 @@ import (
 
 	"github.com/fastygo/context/internal/agentruntime/scheduler"
 	"github.com/fastygo/context/internal/apperr"
+	"github.com/fastygo/context/internal/artifacts"
 	"github.com/fastygo/context/internal/devcli"
 	"github.com/fastygo/context/internal/foundation"
 	"github.com/fastygo/context/internal/ids"
@@ -89,6 +90,12 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("POST /v1/context-pack", s.handlePack)
 	s.mux.HandleFunc("POST /v1/agent-run", s.handleAgent)
 	s.mux.HandleFunc("GET /v1/trace", s.handleTrace)
+	s.mux.HandleFunc("PUT /v1/artifacts", s.handleArtifactPut)
+	s.mux.HandleFunc("GET /v1/artifacts", s.handleArtifactList)
+	s.mux.HandleFunc("GET /v1/artifacts/{id}", s.handleArtifactGet)
+	s.mux.HandleFunc("PUT /v1/tools", s.handleToolPut)
+	s.mux.HandleFunc("GET /v1/tools", s.handleToolList)
+	s.mux.HandleFunc("POST /v1/tool-calls", s.handleToolLifecycle)
 	s.mux.HandleFunc("PUT /v1/focus", s.handleFocusPut)
 	s.mux.HandleFunc("GET /v1/focus", s.handleFocusGet)
 	s.mux.HandleFunc("GET /v1/focuses", s.handleFocusList)
@@ -281,6 +288,143 @@ func (s *Server) handleTrace(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	res, err := devcli.Trace(s.cfg.DataDir, projectID, runID)
+	if err != nil {
+		writeAppErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
+}
+
+type artifactPutRequest struct {
+	ProjectID     string                     `json:"project_id"`
+	ArtifactID    string                     `json:"artifact_id"`
+	MediaType     string                     `json:"media_type,omitempty"`
+	ArtifactType  string                     `json:"artifact_type,omitempty"`
+	SchemaID      string                     `json:"schema_id,omitempty"`
+	SourceID      string                     `json:"source_id,omitempty"`
+	Body          []byte                     `json:"body_base64,omitempty"`
+	JSON          json.RawMessage            `json:"json,omitempty"`
+	Checksum      string                     `json:"checksum,omitempty"`
+	TrustLevel    foundation.TrustLevel      `json:"trust_level,omitempty"`
+	EvidenceClass foundation.EvidenceClass   `json:"evidence_class,omitempty"`
+	Lineage       *artifacts.ArtifactLineage `json:"lineage,omitempty"`
+}
+
+func (r artifactPutRequest) input() (devcli.ArtifactPutInput, error) {
+	if len(r.Body) > 0 && len(r.JSON) > 0 {
+		return devcli.ArtifactPutInput{}, apperr.New(apperr.Validation, "provide only one of body_base64 or json")
+	}
+	body := r.Body
+	mediaType := r.MediaType
+	if len(r.JSON) > 0 {
+		body = append([]byte(nil), r.JSON...)
+		if mediaType == "" {
+			mediaType = "application/json"
+		}
+	}
+	return devcli.ArtifactPutInput{
+		ProjectID: r.ProjectID, ArtifactID: r.ArtifactID, MediaType: mediaType,
+		ArtifactType: r.ArtifactType, SchemaID: r.SchemaID, SourceID: r.SourceID,
+		Body: body, ExpectedChecksum: r.Checksum, TrustLevel: r.TrustLevel,
+		EvidenceClass: r.EvidenceClass, Lineage: r.Lineage,
+	}, nil
+}
+
+func (s *Server) handleArtifactPut(w http.ResponseWriter, r *http.Request) {
+	var req artifactPutRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeErr(w, http.StatusBadRequest, err)
+		return
+	}
+	in, err := req.input()
+	if err != nil {
+		writeAppErr(w, err)
+		return
+	}
+	res, err := devcli.PutArtifact(r.Context(), s.cfg.DataDir, in)
+	if err != nil {
+		writeAppErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, res)
+}
+
+func (s *Server) handleArtifactGet(w http.ResponseWriter, r *http.Request) {
+	res, err := devcli.GetArtifact(r.Context(), s.cfg.DataDir, r.URL.Query().Get("project_id"), r.PathValue("id"))
+	if err != nil {
+		writeAppErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
+}
+
+func (s *Server) handleArtifactList(w http.ResponseWriter, r *http.Request) {
+	res, err := devcli.ListArtifacts(s.cfg.DataDir, r.URL.Query().Get("project_id"))
+	if err != nil {
+		writeAppErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
+}
+
+type toolPutRequest struct {
+	ProjectID  string                        `json:"project_id"`
+	Descriptor devcli.ExternalToolDescriptor `json:"descriptor"`
+}
+
+func (s *Server) handleToolPut(w http.ResponseWriter, r *http.Request) {
+	var req toolPutRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeErr(w, http.StatusBadRequest, err)
+		return
+	}
+	res, err := devcli.PutToolDescriptor(s.cfg.DataDir, req.ProjectID, req.Descriptor)
+	if err != nil {
+		writeAppErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
+}
+
+func (s *Server) handleToolList(w http.ResponseWriter, r *http.Request) {
+	res, err := devcli.ListToolDescriptors(s.cfg.DataDir, r.URL.Query().Get("project_id"))
+	if err != nil {
+		writeAppErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
+}
+
+type toolLifecycleRequest struct {
+	ProjectID       string              `json:"project_id"`
+	RunID           string              `json:"run_id"`
+	Owner           string              `json:"owner,omitempty"`
+	TaskID          string              `json:"task_id,omitempty"`
+	ToolCallID      string              `json:"tool_call_id"`
+	ToolName        string              `json:"tool_name,omitempty"`
+	Event           string              `json:"event"`
+	InputArtifactID string              `json:"input_artifact_id,omitempty"`
+	Result          *artifactPutRequest `json:"result,omitempty"`
+	Actor           string              `json:"actor,omitempty"`
+	Verification    string              `json:"verification,omitempty"`
+}
+
+func (s *Server) handleToolLifecycle(w http.ResponseWriter, r *http.Request) {
+	var req toolLifecycleRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeErr(w, http.StatusBadRequest, err)
+		return
+	}
+	in := devcli.ToolLifecycleInput{ProjectID: req.ProjectID, RunID: req.RunID, Owner: req.Owner, TaskID: req.TaskID, ToolCallID: req.ToolCallID, ToolName: req.ToolName, Event: req.Event, InputArtifactID: req.InputArtifactID, Actor: req.Actor, Verification: req.Verification}
+	if req.Result != nil {
+		artifactIn, err := req.Result.input()
+		if err != nil {
+			writeAppErr(w, err)
+			return
+		}
+		in.Result = &artifactIn
+	}
+	res, err := devcli.RecordToolLifecycle(r.Context(), s.cfg.DataDir, in)
 	if err != nil {
 		writeAppErr(w, err)
 		return

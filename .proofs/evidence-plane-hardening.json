@@ -1,0 +1,17 @@
+{
+  "proof_id": "evidence-plane-hardening-v1",
+  "api_version": "v1",
+  "date": "2026-08-11",
+  "tests": {
+    "raw_source_immutable": "internal/artifacts/localfs.TestPutDoesNotOverwriteImmutableArtifact",
+    "schema_lineage_round_trip": "internal/httpserver.TestPublicArtifactRoundTripSearchPackAndImmutability",
+    "citation_and_pack_discovery": "internal/httpserver.TestPublicArtifactRoundTripSearchPackAndImmutability",
+    "trust_and_instruction_separation": "internal/httpserver.TestFocusTrustAndInstructionSeparationForArtifacts",
+    "approval_and_result_artifact": "internal/httpserver.TestExternalToolLifecycleApprovalResultArtifactAndTrace",
+    "no_host_path_leak": "internal/httpserver.TestExternalToolLifecycleApprovalResultArtifactAndTrace"
+  },
+  "consumer_boundary": {
+    "context_owns": ["artifact checksum", "lineage", "pack policy", "tool decision", "trace"],
+    "consumer_owns": ["execution sandbox", "product schema", "connector", "approval UI", "noisy correction engine"]
+  }
+}

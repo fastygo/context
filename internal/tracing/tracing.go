@@ -25,7 +25,11 @@ const (
 	EventContextPackVerified EventType = "context_pack_verified"
 	EventModelCall           EventType = "model_call"
 	EventToolDecision        EventType = "tool_decision"
+	EventToolRequested       EventType = "tool_requested"
+	EventToolApproved        EventType = "tool_approved"
+	EventToolDenied          EventType = "tool_denied"
 	EventToolExecuted        EventType = "tool_executed"
+	EventToolVerified        EventType = "tool_verified"
 	EventSnapshotTransition  EventType = "snapshot_transition"
 	EventPolicyDecision      EventType = "policy_decision"
 )

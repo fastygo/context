@@ -29,6 +29,9 @@ frozen Lab smoke path (`health` … `jobs`).
 | --- | --- | --- |
 | 2026-07-16 | `POST /v1/search`: `mode:"query"` (operators), optional request `lang`, optional response `query_explain`; CLI `--mode query --lang`; `contextkit` `SearchRequest.Lang` / `SearchResult.QueryExplain` | [0043](../decisions/0043-ru-adapter-operator-query-layer.md) |
 | 2026-07-16 | In-repo language adapters: `pkg/lang/ru` (`context-lang-ru`), registry `en`/`ru`; hybrid mode honors expansion language | [0043](../decisions/0043-ru-adapter-operator-query-layer.md) |
+| 2026-08-11 | `PUT/GET /v1/artifacts`, `GET /v1/artifacts/{id}` + contextkit artifact put/get/list; immutable bytes, checksum, `schema_id`, lineage, searchable artifact projection | [0044](../decisions/0044-public-evidence-and-external-tool-lifecycle.md) |
+| 2026-08-11 | `PUT/GET /v1/tools`, `POST /v1/tool-calls` + contextkit descriptor/lifecycle methods; requested/approved/denied/executed/verified trace and result artifacts | [0044](../decisions/0044-public-evidence-and-external-tool-lifecycle.md) |
+| 2026-08-11 | `contextkit.FocusProfile` gains optional full v1 focus fields; server contract unchanged | [0044](../decisions/0044-public-evidence-and-external-tool-lifecycle.md) |
 
 ## Client packages
 

@@ -17,5 +17,6 @@ export CONTEXT_PG_DSN='postgres://context:context@127.0.0.1:5432/context?sslmode
 | `SUMMARY.md` / `SUMMARY.json` | Hypothesis status |
 | `eval/` | Golden catalog + report |
 | `14-sparse-fts-limits.md` | FTS limits notes |
+| `evidence-plane-hardening.json` | Public artifact/tool lifecycle invariant map |
 
 Docs: [docs/](../docs/README.md). Ops: [docs/operations/local-server.md](../docs/operations/local-server.md).

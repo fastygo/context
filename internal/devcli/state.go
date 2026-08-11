@@ -9,6 +9,7 @@ import (
 
 	"github.com/fastygo/context/internal/agentruntime"
 	"github.com/fastygo/context/internal/apperr"
+	"github.com/fastygo/context/internal/artifacts"
 	"github.com/fastygo/context/internal/corpus"
 	"github.com/fastygo/context/internal/foundation"
 	"github.com/fastygo/context/internal/ids"
@@ -23,36 +24,41 @@ const stateFile = "state.json"
 
 // IndexedChunk is a persisted searchable chunk for local CLI workflows.
 type IndexedChunk struct {
-	ChunkID            ids.ChunkID              `json:"chunk_id"`
-	SourceID           ids.SourceID             `json:"source_id"`
-	SnapshotID         ids.SnapshotID           `json:"snapshot_id"`
-	PathKey            string                   `json:"path_key"`
-	RelativePath       string                   `json:"relative_path"`
-	SpanStart          uint64                   `json:"span_start"`
-	SpanEnd            uint64                   `json:"span_end"`
-	Text               string                   `json:"text"`
-	TextChecksum       foundation.ChecksumHex   `json:"text_checksum"`
-	ChunkHash          foundation.ChecksumHex   `json:"chunk_hash"`
-	TrustLevel         foundation.TrustLevel    `json:"trust_level"`
-	ChunkerVersion     string                   `json:"chunker_version,omitempty"`
-	EmbeddingVersion   string                   `json:"embedding_version,omitempty"`
-	MorphVersion       string                   `json:"morph_version,omitempty"`
-	DictionaryVersion  string                   `json:"dictionary_version,omitempty"`
-	SparseVersion      string                   `json:"sparse_version,omitempty"`
-	Language           string                   `json:"language,omitempty"`
+	ChunkID           ids.ChunkID            `json:"chunk_id"`
+	SourceID          ids.SourceID           `json:"source_id"`
+	SnapshotID        ids.SnapshotID         `json:"snapshot_id"`
+	PathKey           string                 `json:"path_key"`
+	RelativePath      string                 `json:"relative_path"`
+	SpanStart         uint64                 `json:"span_start"`
+	SpanEnd           uint64                 `json:"span_end"`
+	Text              string                 `json:"text"`
+	TextChecksum      foundation.ChecksumHex `json:"text_checksum"`
+	ChunkHash         foundation.ChecksumHex `json:"chunk_hash"`
+	TrustLevel        foundation.TrustLevel  `json:"trust_level"`
+	ChunkerVersion    string                 `json:"chunker_version,omitempty"`
+	EmbeddingVersion  string                 `json:"embedding_version,omitempty"`
+	MorphVersion      string                 `json:"morph_version,omitempty"`
+	DictionaryVersion string                 `json:"dictionary_version,omitempty"`
+	SparseVersion     string                 `json:"sparse_version,omitempty"`
+	Language          string                 `json:"language,omitempty"`
 }
 
 // State is the durable local PoC workspace persisted under --data.
 type State struct {
-	Project   corpus.Project           `json:"project"`
-	CorpusRoot string                  `json:"corpus_root"`
-	Snapshot  indexing.IndexSnapshot   `json:"snapshot"`
-	Chunks    []IndexedChunk           `json:"chunks"`
-	Packs     []retrieval.ContextPack  `json:"packs"`
-	Runs      []agentruntime.AgentRun  `json:"runs"`
-	ToolCalls []tools.ToolCall         `json:"tool_calls"`
-	Traces    []tracing.Event          `json:"traces"`
-	Focuses   []retrieval.FocusProfile `json:"focuses,omitempty"`
+	Project    corpus.Project           `json:"project"`
+	CorpusRoot string                   `json:"corpus_root"`
+	Snapshot   indexing.IndexSnapshot   `json:"snapshot"`
+	Chunks     []IndexedChunk           `json:"chunks"`
+	Packs      []retrieval.ContextPack  `json:"packs"`
+	Runs       []agentruntime.AgentRun  `json:"runs"`
+	ToolCalls  []tools.ToolCall         `json:"tool_calls"`
+	Traces     []tracing.Event          `json:"traces"`
+	Focuses    []retrieval.FocusProfile `json:"focuses,omitempty"`
+	// Artifacts are public project-memory records. Blob bytes remain in the
+	// ArtifactStore; state only carries searchable policy metadata.
+	Artifacts   []ArtifactRecord            `json:"artifacts,omitempty"`
+	Lineages    []artifacts.ArtifactLineage `json:"artifact_lineages,omitempty"`
+	ToolSchemas []tools.ToolSchema          `json:"tool_schemas,omitempty"`
 	// TombstonedSourceIDs are soft-deleted sources (stabilization C1). Chunks
 	// from these sources are excluded from search and new context packs.
 	TombstonedSourceIDs []ids.SourceID `json:"tombstoned_source_ids,omitempty"`
@@ -63,6 +69,14 @@ type State struct {
 	// without clearing active_snapshot_id (stabilization C1).
 	IndexOp   *lifecycle.Op `json:"index_op,omitempty"`
 	UpdatedAt time.Time     `json:"updated_at"`
+}
+
+// ArtifactRecord adds retrieval policy to immutable artifact metadata without
+// expanding the storage-domain Artifact contract.
+type ArtifactRecord struct {
+	Artifact      artifacts.Artifact       `json:"artifact"`
+	TrustLevel    foundation.TrustLevel    `json:"trust_level"`
+	EvidenceClass foundation.EvidenceClass `json:"evidence_class"`
 }
 
 // FailedAttempt is a non-active commit retained for repair (ADR-0021).

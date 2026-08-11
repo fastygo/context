@@ -163,6 +163,54 @@ func (c *Client) Trace(ctx context.Context, projectID, runID string) (TraceResul
 	return out, err
 }
 
+// ArtifactPut calls PUT /v1/artifacts.
+func (c *Client) ArtifactPut(ctx context.Context, req ArtifactPutRequest) (ArtifactResult, error) {
+	var out ArtifactResult
+	err := c.do(ctx, http.MethodPut, "/v1/artifacts", nil, req, &out)
+	return out, err
+}
+
+// ArtifactGet calls GET /v1/artifacts/{id}.
+func (c *Client) ArtifactGet(ctx context.Context, projectID, artifactID string) (ArtifactResult, error) {
+	q := url.Values{}
+	q.Set("project_id", projectID)
+	var out ArtifactResult
+	err := c.do(ctx, http.MethodGet, "/v1/artifacts/"+url.PathEscape(artifactID), q, nil, &out)
+	return out, err
+}
+
+// ArtifactList calls GET /v1/artifacts.
+func (c *Client) ArtifactList(ctx context.Context, projectID string) (ArtifactListResult, error) {
+	q := url.Values{}
+	q.Set("project_id", projectID)
+	var out ArtifactListResult
+	err := c.do(ctx, http.MethodGet, "/v1/artifacts", q, nil, &out)
+	return out, err
+}
+
+// ToolPut calls PUT /v1/tools.
+func (c *Client) ToolPut(ctx context.Context, req ToolPutRequest) (ToolDescriptorResult, error) {
+	var out ToolDescriptorResult
+	err := c.do(ctx, http.MethodPut, "/v1/tools", nil, req, &out)
+	return out, err
+}
+
+// ToolList calls GET /v1/tools.
+func (c *Client) ToolList(ctx context.Context, projectID string) (ToolDescriptorListResult, error) {
+	q := url.Values{}
+	q.Set("project_id", projectID)
+	var out ToolDescriptorListResult
+	err := c.do(ctx, http.MethodGet, "/v1/tools", q, nil, &out)
+	return out, err
+}
+
+// ToolLifecycle calls POST /v1/tool-calls.
+func (c *Client) ToolLifecycle(ctx context.Context, req ToolLifecycleRequest) (ToolLifecycleResult, error) {
+	var out ToolLifecycleResult
+	err := c.do(ctx, http.MethodPost, "/v1/tool-calls", nil, req, &out)
+	return out, err
+}
+
 // FocusPut calls PUT /v1/focus.
 func (c *Client) FocusPut(ctx context.Context, req FocusPutRequest) (FocusPutResult, error) {
 	var out FocusPutResult

@@ -1,6 +1,9 @@
 package contextkit
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"time"
+)
 
 // APIError is the JSON error body returned by context-serve.
 type APIError struct {
@@ -74,11 +77,11 @@ type Candidate struct {
 
 // SearchResult is POST /v1/search response.
 type SearchResult struct {
-	ProjectID     string      `json:"project_id"`
-	SnapshotID    string      `json:"snapshot_id"`
-	Query         string      `json:"query"`
-	Mode          string      `json:"mode"`
-	Candidates    []Candidate `json:"candidates"`
+	ProjectID       string      `json:"project_id"`
+	SnapshotID      string      `json:"snapshot_id"`
+	Query           string      `json:"query"`
+	Mode            string      `json:"mode"`
+	Candidates      []Candidate `json:"candidates"`
 	DenseBackend    string      `json:"dense_backend,omitempty"`
 	SparseBackend   string      `json:"sparse_backend,omitempty"`
 	FocusID         string      `json:"focus_id,omitempty"`
@@ -132,15 +135,158 @@ type TraceResult struct {
 	MetaKind string            `json:"meta_kind,omitempty"`
 }
 
+// ByteSpan is a half-open byte range [start,end) in immutable artifact bytes.
+type ByteSpan struct {
+	Start uint64 `json:"start"`
+	End   uint64 `json:"end"`
+}
+
+// SourceRef identifies source-backed lineage without exposing host paths.
+type SourceRef struct {
+	ProjectID  string   `json:"project_id"`
+	SourceID   string   `json:"source_id"`
+	ChunkID    string   `json:"chunk_id,omitempty"`
+	Span       ByteSpan `json:"span"`
+	Checksum   string   `json:"checksum"`
+	ContextRef string   `json:"context_ref,omitempty"`
+}
+
+// ArtifactLineage is immutable derivation metadata for a stored artifact.
+type ArtifactLineage struct {
+	ProjectID          string      `json:"project_id,omitempty"`
+	OutputArtifactID   string      `json:"output_artifact_id,omitempty"`
+	InputArtifactIDs   []string    `json:"input_artifact_ids,omitempty"`
+	SourceRefs         []SourceRef `json:"source_refs,omitempty"`
+	ContextPackID      string      `json:"context_pack_id,omitempty"`
+	AgentRunID         string      `json:"agent_run_id,omitempty"`
+	ToolCallID         string      `json:"tool_call_id,omitempty"`
+	GeneratorID        string      `json:"generator_id"`
+	GeneratorVersion   string      `json:"generator_version"`
+	TransformationKind string      `json:"transformation_kind"`
+	CreatedAt          time.Time   `json:"created_at,omitempty"`
+}
+
+// Artifact is public metadata; adapter storage URIs are deliberately absent.
+type Artifact struct {
+	ArtifactID    string `json:"artifact_id"`
+	ProjectID     string `json:"project_id"`
+	SourceID      string `json:"source_id,omitempty"`
+	MediaType     string `json:"media_type"`
+	ByteSize      int64  `json:"byte_size"`
+	Checksum      string `json:"checksum"`
+	ArtifactType  string `json:"artifact_type"`
+	SchemaID      string `json:"schema_id,omitempty"`
+	TrustLevel    string `json:"trust_level"`
+	EvidenceClass string `json:"evidence_class"`
+}
+
+// ArtifactPutRequest is PUT /v1/artifacts. BodyBase64 is encoded by encoding/json.
+// JSON is a convenience alternative; callers must set only one body field.
+type ArtifactPutRequest struct {
+	ProjectID     string           `json:"project_id,omitempty"`
+	ArtifactID    string           `json:"artifact_id"`
+	MediaType     string           `json:"media_type,omitempty"`
+	ArtifactType  string           `json:"artifact_type,omitempty"`
+	SchemaID      string           `json:"schema_id,omitempty"`
+	SourceID      string           `json:"source_id,omitempty"`
+	BodyBase64    []byte           `json:"body_base64,omitempty"`
+	JSON          json.RawMessage  `json:"json,omitempty"`
+	Checksum      string           `json:"checksum,omitempty"`
+	TrustLevel    string           `json:"trust_level,omitempty"`
+	EvidenceClass string           `json:"evidence_class,omitempty"`
+	Lineage       *ArtifactLineage `json:"lineage,omitempty"`
+}
+
+type ArtifactResult struct {
+	Artifact Artifact         `json:"artifact"`
+	Body     []byte           `json:"body_base64,omitempty"`
+	Lineage  *ArtifactLineage `json:"lineage,omitempty"`
+}
+
+type ArtifactListResult struct {
+	Artifacts []Artifact `json:"artifacts"`
+}
+
+// ToolDescriptor describes an orchestrator-owned tool. Permission is
+// allow|ask|deny; write/external tools still default to ask when omitted.
+type ToolDescriptor struct {
+	Name                string          `json:"name"`
+	Description         string          `json:"description,omitempty"`
+	InputSchema         json.RawMessage `json:"input_schema"`
+	OutputSchema        json.RawMessage `json:"output_schema"`
+	InputSchemaVersion  string          `json:"input_schema_version"`
+	OutputSchemaVersion string          `json:"output_schema_version"`
+	Permission          string          `json:"permission"`
+	Risk                string          `json:"risk"`
+	SideEffect          string          `json:"side_effect"`
+	TimeoutMillis       int64           `json:"timeout_millis"`
+	NeedsApproval       bool            `json:"needs_approval,omitempty"`
+}
+
+type ToolPutRequest struct {
+	ProjectID  string         `json:"project_id"`
+	Descriptor ToolDescriptor `json:"descriptor"`
+}
+
+type ToolDescriptorResult struct {
+	Descriptor ToolDescriptor `json:"descriptor"`
+}
+
+type ToolDescriptorListResult struct {
+	Descriptors []ToolDescriptor `json:"descriptors"`
+}
+
+// ToolLifecycleRequest is POST /v1/tool-calls. Context records and gates the
+// lifecycle; execution remains in the consumer orchestrator.
+type ToolLifecycleRequest struct {
+	ProjectID       string              `json:"project_id"`
+	RunID           string              `json:"run_id"`
+	Owner           string              `json:"owner,omitempty"`
+	TaskID          string              `json:"task_id,omitempty"`
+	ToolCallID      string              `json:"tool_call_id"`
+	ToolName        string              `json:"tool_name,omitempty"`
+	Event           string              `json:"event"`
+	InputArtifactID string              `json:"input_artifact_id,omitempty"`
+	Result          *ArtifactPutRequest `json:"result,omitempty"`
+	Actor           string              `json:"actor,omitempty"`
+	Verification    string              `json:"verification,omitempty"`
+}
+
+type ToolCall struct {
+	ToolCallID       string `json:"tool_call_id"`
+	ProjectID        string `json:"project_id"`
+	RunID            string `json:"run_id"`
+	ToolName         string `json:"tool_name"`
+	InputArtifactID  string `json:"input_artifact_id,omitempty"`
+	OutputArtifactID string `json:"output_artifact_id,omitempty"`
+	Status           string `json:"status"`
+	Decision         string `json:"decision"`
+	Risk             string `json:"risk"`
+	Error            string `json:"error,omitempty"`
+}
+
+type ToolLifecycleResult struct {
+	ToolCall       ToolCall  `json:"tool_call"`
+	ResultArtifact *Artifact `json:"result_artifact,omitempty"`
+}
+
 // FocusProfile is the public FocusProfile JSON shape (subset-safe).
 type FocusProfile struct {
-	ID                 string          `json:"id,omitempty"`
-	ProjectID          string          `json:"project_id,omitempty"`
-	TaskID             string          `json:"task_id,omitempty"`
-	Objective          string          `json:"objective"`
-	RequiredTrustLevel string          `json:"required_trust_level,omitempty"`
-	CitationStrictness string          `json:"citation_strictness,omitempty"`
-	ContextBudget      json.RawMessage `json:"context_budget,omitempty"`
+	ID                   string          `json:"id,omitempty"`
+	ProjectID            string          `json:"project_id,omitempty"`
+	TaskID               string          `json:"task_id,omitempty"`
+	Objective            string          `json:"objective"`
+	Scope                string          `json:"scope,omitempty"`
+	PreferredSourceTypes []string        `json:"preferred_source_types,omitempty"`
+	ForbiddenSourceTypes []string        `json:"forbidden_source_types,omitempty"`
+	RequiredTrustLevel   string          `json:"required_trust_level,omitempty"`
+	FreshnessWindow      string          `json:"freshness_window,omitempty"`
+	ExactnessLevel       string          `json:"exactness_level,omitempty"`
+	CitationStrictness   string          `json:"citation_strictness,omitempty"`
+	ContextBudget        json.RawMessage `json:"context_budget,omitempty"`
+	AllowedTools         []string        `json:"allowed_tools,omitempty"`
+	AllowedSubagents     []string        `json:"allowed_subagents,omitempty"`
+	NegativeAssumptions  []string        `json:"negative_assumptions,omitempty"`
 }
 
 // FocusPutRequest is PUT /v1/focus.

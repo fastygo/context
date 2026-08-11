@@ -3,7 +3,9 @@ package tools
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/fastygo/context/internal/ids"
 	"github.com/fastygo/context/internal/policy"
@@ -13,9 +15,9 @@ import (
 type SideEffectClass string
 
 const (
-	SideEffectNone    SideEffectClass = "none"
-	SideEffectRead    SideEffectClass = "read"
-	SideEffectWrite   SideEffectClass = "write"
+	SideEffectNone     SideEffectClass = "none"
+	SideEffectRead     SideEffectClass = "read"
+	SideEffectWrite    SideEffectClass = "write"
 	SideEffectExternal SideEffectClass = "external"
 )
 
@@ -32,30 +34,47 @@ type ToolSchema struct {
 	SideEffectClass   SideEffectClass
 	TimeoutMillis     int64
 	BackgroundSupport bool
+	NeedsApproval     bool
 }
 
 func (t ToolSchema) Validate() error {
-	if t.Name == "" {
+	if strings.TrimSpace(t.Name) == "" {
 		return fmt.Errorf("tool name: empty")
 	}
 	if t.InputSchemaVer == "" || t.OutputSchemaVer == "" {
 		return fmt.Errorf("tool schema versions required")
+	}
+	if !json.Valid([]byte(t.InputSchemaJSON)) || !json.Valid([]byte(t.OutputSchemaJSON)) {
+		return fmt.Errorf("tool input/output schemas must be valid JSON")
+	}
+	switch t.RiskLevel {
+	case policy.RiskLow, policy.RiskMedium, policy.RiskHigh:
+	default:
+		return fmt.Errorf("tool risk_level: invalid %q", t.RiskLevel)
+	}
+	switch t.SideEffectClass {
+	case SideEffectNone, SideEffectRead, SideEffectWrite, SideEffectExternal:
+	default:
+		return fmt.Errorf("tool side_effect_class: invalid %q", t.SideEffectClass)
+	}
+	if t.TimeoutMillis <= 0 {
+		return fmt.Errorf("tool timeout_millis must be positive")
 	}
 	return nil
 }
 
 // ToolCall is one typed invocation with policy outcome.
 type ToolCall struct {
-	ID              ids.ToolCallID
-	ProjectID       ids.ProjectID
-	RunID           ids.RunID
-	ToolName        string
-	InputArtifactID ids.ArtifactID
+	ID               ids.ToolCallID
+	ProjectID        ids.ProjectID
+	RunID            ids.RunID
+	ToolName         string
+	InputArtifactID  ids.ArtifactID
 	OutputArtifactID ids.ArtifactID
-	Status          string
-	Decision        policy.Decision
-	RiskLevel       policy.RiskLevel
-	Error           string
+	Status           string
+	Decision         policy.Decision
+	RiskLevel        policy.RiskLevel
+	Error            string
 }
 
 func (c ToolCall) Validate() error {

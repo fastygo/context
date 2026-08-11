@@ -129,6 +129,28 @@ func TestPutStructuredWithoutSchemaRejected(t *testing.T) {
 	}
 }
 
+func TestPutDoesNotOverwriteImmutableArtifact(t *testing.T) {
+	store, err := localfs.New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+	first, err := store.Put(ctx, "p1", "immutable-1", "text/plain", []byte("raw noisy text"), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if again, err := store.Put(ctx, "p1", "immutable-1", "text/plain", []byte("raw noisy text"), nil); err != nil || again.Checksum != first.Checksum {
+		t.Fatalf("idempotent put: %#v %v", again, err)
+	}
+	if _, err := store.Put(ctx, "p1", "immutable-1", "text/plain", []byte("normalized replacement"), nil); !apperr.Is(err, apperr.Conflict) {
+		t.Fatalf("expected conflict, got %v", err)
+	}
+	_, body, err := store.Get(ctx, "p1", "immutable-1")
+	if err != nil || string(body) != "raw noisy text" {
+		t.Fatalf("immutable body=%q err=%v", body, err)
+	}
+}
+
 func TestGetMissingNotFound(t *testing.T) {
 	t.Parallel()
 	store, err := localfs.New(t.TempDir())

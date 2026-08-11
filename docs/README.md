@@ -57,6 +57,7 @@ as source truth (redaction applies to Lab-visible surfaces).
 3. [Background jobs](scenarios/background-jobs.md)
 4. [Lab / BFF consumer](scenarios/lab-bff.md)
 5. [Ops: quotas, readiness, repair](scenarios/ops.md)
+6. [Reusable evidence orchestrator](scenarios/evidence-orchestrator.md)
 
 ## Planning vs shipped docs
 

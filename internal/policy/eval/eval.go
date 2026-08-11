@@ -28,6 +28,9 @@ func (e Engine) Decide(toolName string, schema tools.ToolSchema) (policy.Decisio
 			return rule.Decision, nil
 		}
 	}
+	if schema.NeedsApproval {
+		return policy.DecisionAsk, nil
+	}
 	switch schema.SideEffectClass {
 	case tools.SideEffectWrite, tools.SideEffectExternal:
 		return policy.DecisionAsk, nil

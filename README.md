@@ -18,7 +18,7 @@ planning-only material lives in [`.project/`](.project/).
 | Lab / BFF contract | Passed (2026-07-13) | [docs/lab-gate.md](docs/lab-gate.md), ADR-0027 |
 | Stabilization S0–S5 | Passed (2026-07-14) | [ADR-0042](docs/decisions/0042-stabilization-gate.md) |
 | Public API | `v1` frozen; additives only | [docs/api/v1.md](docs/api/v1.md), [changelog](docs/api/v1-changelog.md) |
-| ADRs | Through ADR-0043 | [docs/decisions/](docs/decisions/README.md) |
+| ADRs | Through ADR-0044 | [docs/decisions/](docs/decisions/README.md) |
 
 Default stance after S5: **do not reopen the core** without a measured blocker,
 superseding ADR, and tests. Prefer adapters or downstream consumers.
@@ -52,6 +52,7 @@ ingest (corpus → chunks + optional dense/FTS)
   → agent-run (foreground)  OR  jobs (background AgentRun)
   → schedules (durable tick/fire → jobs)
   → trace / metrics / quota / ready / index-status
+  → public evidence artifacts / external tool lifecycle
   → tombstone / snapshot export-import / project export-delete
 ```
 
@@ -283,7 +284,7 @@ and [adapters-backlog](.project/adapters-backlog.md)):
 | Architecture baseline | Accepted (`.project/roadmap-context-core.md`) |
 | Lab Gate | Passed — [docs/lab-gate.md](docs/lab-gate.md) |
 | Stabilization Gate S5 | Passed — [ADR-0042](docs/decisions/0042-stabilization-gate.md) |
-| Architecture decisions | ADRs under `docs/decisions/` (through ADR-0043) |
+| Architecture decisions | ADRs under `docs/decisions/` (through ADR-0044) |
 | Go implementation | Lab-ready + stabilized core; Phase 4+ planned after S5 |
 | Public API | HTTP v1 + `pkg/contextkit` (+ lang harness packages) |
 | Dependencies | Prefer stdlib + narrow adapters (`pgx` when Postgres gated) |
