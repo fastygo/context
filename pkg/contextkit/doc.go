@@ -3,4 +3,7 @@
 // Downstream Lab/BFF code should import this package (and speak HTTP+JSON) rather
 // than github.com/fastygo/context/internal/*. Types here mirror the Chunk 20
 // service contract (ADR-0024) and must not pull domain ports into pkg/.
+//
+// For bounded in-process exact retrieval and packing without HTTP or storage,
+// use the separate pkg/contextkit/runtime adapter (ADR-0045).
 package contextkit

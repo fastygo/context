@@ -10,6 +10,11 @@ This gate freezes the Core → Lab/BFF contract. Lab may bind to HTTP +
 `pkg/contextkit` only. Context must not import Lab; Lab must not import
 `internal/`.
 
+Additive embedded path: [pkg/contextkit/runtime](embedded-runtime.md) supports
+bounded immutable exact retrieval and packing under ADR-0045. The Lab HTTP
+contract and the parent client remain unchanged; external consumers still never
+import internal packages.
+
 ## Consumer contract
 
 | Rule | Detail |

@@ -33,6 +33,14 @@ frozen Lab smoke path (`health` … `jobs`).
 | 2026-08-11 | `PUT/GET /v1/tools`, `POST /v1/tool-calls` + contextkit descriptor/lifecycle methods; requested/approved/denied/executed/verified trace and result artifacts | [0044](../decisions/0044-public-evidence-and-external-tool-lifecycle.md) |
 | 2026-08-11 | `contextkit.FocusProfile` gains optional full v1 focus fields; server contract unchanged | [0044](../decisions/0044-public-evidence-and-external-tool-lifecycle.md) |
 
+## Embedded runtime additive (2026-09-21)
+
+Module tag v0.1.0 adds pkg/contextkit/runtime: bounded immutable source snapshots,
+exact retrieval, and existing ContextPack construction without HTTP or storage.
+See [usage and limitations](../embedded-runtime.md) and
+[ADR-0045](../decisions/0045-embedded-memory-runtime.md). No HTTP routes, DTOs,
+or parent-client semantics change.
+
 ## Client packages
 
 | Package | Role |

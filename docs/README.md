@@ -7,6 +7,9 @@ verification → replayable traces).
 This tree is the primary guide for mid-level engineers and for LLMs helping
 with integration. Planning-only material lives under [`.project/`](../.project/).
 
+Embedded consumers can use [the memory runtime](embedded-runtime.md) for bounded
+exact retrieval and packing without HTTP, disk, or a database (ADR-0045).
+
 ## Start here
 
 | If you need… | Go to |

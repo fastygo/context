@@ -18,10 +18,17 @@ planning-only material lives in [`.project/`](.project/).
 | Lab / BFF contract | Passed (2026-07-13) | [docs/lab-gate.md](docs/lab-gate.md), ADR-0027 |
 | Stabilization S0–S5 | Passed (2026-07-14) | [ADR-0042](docs/decisions/0042-stabilization-gate.md) |
 | Public API | `v1` frozen; additives only | [docs/api/v1.md](docs/api/v1.md), [changelog](docs/api/v1-changelog.md) |
-| ADRs | Through ADR-0044 | [docs/decisions/](docs/decisions/README.md) |
+| ADRs | Through ADR-0045 | [docs/decisions/](docs/decisions/README.md) |
 
 Default stance after S5: **do not reopen the core** without a measured blocker,
 superseding ADR, and tests. Prefer adapters or downstream consumers.
+
+## Embedded Go integration
+
+Module tag v0.1.0 adds [pkg/contextkit/runtime](docs/embedded-runtime.md): a
+bounded immutable RAM runtime for exact retrieval and ContextPack construction.
+The HTTP client remains available. No database, filesystem, or network is
+required by the embedded path; full CLI feature parity is not claimed.
 
 ## Why
 

@@ -78,6 +78,8 @@ Status: **closed** — ADR-0015–0021 (and later Lab-ready ADRs through 0027).
 | [0043](0043-ru-adapter-operator-query-layer.md) | In-repo context-lang-ru + operator query layer | Accepted |
 | [0044](0044-public-evidence-and-external-tool-lifecycle.md) | Public evidence write and external tool lifecycle | Accepted |
 
+| [0045](0045-embedded-memory-runtime.md) | Embedded immutable memory runtime | Accepted |
+
 ## Writing a new ADR
 
 1. Copy the numbering scheme (`00NN-slug.md`).
